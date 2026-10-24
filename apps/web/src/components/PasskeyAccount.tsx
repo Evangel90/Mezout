@@ -107,8 +107,9 @@ export function PasskeyAccount({ session, onSignOut }: { session: PasskeySession
           />
           <button
             type="button"
+            disabled={balance === null}
             onClick={() => balance !== null && setAmount(formatUnits(balance, 18))}
-            className="rounded-lg border border-stone-300 px-3 text-sm hover:bg-stone-100"
+            className="rounded-lg border border-stone-300 px-3 text-sm hover:bg-stone-100 disabled:opacity-50"
           >
             Max
           </button>
