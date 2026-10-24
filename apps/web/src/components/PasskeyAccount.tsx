@@ -51,7 +51,9 @@ export function PasskeyAccount({ session, onSignOut }: { session: PasskeySession
       const { quote, userOpHash } = await post({ step: "quote", account: session.address, to, amount });
       const signature = await passkeySign(session, userOpHash);
       const { hash } = await post({ step: "submit", account: session.address, ...quote, signature });
-      const receipt = await client.waitForTransactionReceipt({ hash });
+      const receipt = await client.waitForTransactionReceipt({ hash, timeout: 90_000 }).catch(() => {
+        throw new Error(`Submitted, but confirmation is taking a while. Check ${explorerTx(hash)}`);
+      });
       const [event] = parseEventLogs({ abi: entryPoint07Abi, eventName: "UserOperationEvent", logs: receipt.logs });
       if (!event?.args.success) throw new Error("The withdrawal was rejected on-chain. Nothing was sent.");
       setDone(hash);

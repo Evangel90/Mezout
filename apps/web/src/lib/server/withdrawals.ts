@@ -26,8 +26,12 @@ const MIN_FEE = 1_000n;
 
 export class WithdrawalError extends Error {}
 
-/** The few values the client echoes back; everything else is rebuilt by the server. */
-export type WithdrawalQuote = { to: Address; amount: bigint; nonce: bigint; maxFeePerGas: bigint };
+/**
+ * The few values the client echoes back; everything else is rebuilt by the server. Chain reads (nonce, deployed) are
+ * pinned in the quote because RPC nodes can lag: re-reading them at submit time could rebuild a different operation
+ * than the one the passkey signed. A wrong echoed value only makes the EntryPoint reject the operation in simulation.
+ */
+export type WithdrawalQuote = { to: Address; amount: bigint; nonce: bigint; maxFeePerGas: bigint; deployed: boolean };
 
 export async function quoteWithdrawal(
   client: PublicClient,
@@ -36,19 +40,21 @@ export async function quoteWithdrawal(
   amount: bigint,
 ): Promise<WithdrawalQuote> {
   const sender = account.accountAddress as Address;
-  const [balance, nonce, gasPrice] = await Promise.all([
+  const [balance, nonce, gasPrice, deployed] = await Promise.all([
     client.readContract({ address: mezoTestnetAddresses.musd, abi: erc20Abi, functionName: "balanceOf", args: [sender] }),
     client.readContract({ address: entryPoint07Address, abi: entryPoint07Abi, functionName: "getNonce", args: [sender, 0n] }),
     client.getGasPrice(),
+    isDeployed(client, sender),
   ]);
   if (amount <= 0n) throw new WithdrawalError("Amount must be positive");
   if (balance < amount) throw new WithdrawalError("The account does not hold that much MUSD");
   const fee = gasPrice * 2n;
-  return { to, amount, nonce, maxFeePerGas: fee > MIN_FEE ? fee : MIN_FEE };
+  return { to, amount, nonce, maxFeePerGas: fee > MIN_FEE ? fee : MIN_FEE, deployed };
 }
 
-/** Rebuilds the user operation for a quote. `deployed` decides whether initCode deploys the account. */
-export function buildWithdrawalOp(account: Passkey, quote: WithdrawalQuote, deployed: boolean) {
+/** Rebuilds the user operation for a quote. `quote.deployed` decides whether initCode deploys the account. */
+export function buildWithdrawalOp(account: Passkey, quote: WithdrawalQuote) {
+  const { deployed } = quote;
   const { qx, qy } = splitPublicKey(account.publicKey as Hex);
   const userOperation: UserOperation<"0.7"> = {
     sender: account.accountAddress as Address,

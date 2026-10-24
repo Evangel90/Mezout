@@ -112,15 +112,23 @@ describe("withdrawal operations", () => {
     const db = await testDb();
     const pk = softPasskey();
     const row = await registerPasskey(db, { credentialId: pk.credentialId, publicKey: pk.publicKey }, predict);
-    const quote = { to: getAddress("0x36A95C939Fa70F29421261C770160645Efa9F9E4"), amount: 5n * 10n ** 18n, nonce: 0n, maxFeePerGas: 1_000n };
+    const quote = {
+      to: getAddress("0x36A95C939Fa70F29421261C770160645Efa9F9E4"),
+      amount: 5n * 10n ** 18n,
+      nonce: 0n,
+      maxFeePerGas: 1_000n,
+      deployed: false,
+    };
 
-    const fresh = buildWithdrawalOp(row, quote, false);
-    const deployed = buildWithdrawalOp(row, quote, true);
+    const fresh = buildWithdrawalOp(row, quote);
+    const deployed = buildWithdrawalOp(row, { ...quote, deployed: true });
     expect(fresh.userOperation.factory).toBe(mezoTestnetAddresses.mezoutAccountFactory);
     expect(deployed.userOperation.factory).toBeUndefined();
     expect(fresh.userOpHash).not.toBe(deployed.userOpHash);
     expect(decodeMusdWithdrawal(fresh.userOperation.callData)).toEqual({ to: quote.to, amount: quote.amount });
-    expect(buildWithdrawalOp(row, { ...quote, amount: 1n }, true).userOpHash).not.toBe(deployed.userOpHash);
+    expect(buildWithdrawalOp(row, { ...quote, deployed: true, amount: 1n }).userOpHash).not.toBe(deployed.userOpHash);
+    // The same quote always rebuilds the same operation, whatever the chain looks like at submit time.
+    expect(buildWithdrawalOp(row, { ...quote }).userOpHash).toBe(fresh.userOpHash);
     expect(fresh.maxCost).toBe((2_500_000n + 200_000n + 100_000n) * 1_000n);
   });
 });

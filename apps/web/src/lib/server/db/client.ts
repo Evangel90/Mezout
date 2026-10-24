@@ -11,6 +11,8 @@ const globalForDb = globalThis as unknown as { mezoutPool?: Pool };
 export function getDb(): Db {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error("Missing environment variable DATABASE_URL");
-  globalForDb.mezoutPool ??= new Pool({ connectionString: url, max: 5 });
+  // pg already treats sslmode=require as verify-full; saying so explicitly silences its per-connection warning.
+  const connectionString = url.replace(/sslmode=require\b/, "sslmode=verify-full");
+  globalForDb.mezoutPool ??= new Pool({ connectionString, max: 5 });
   return drizzle(globalForDb.mezoutPool, { schema });
 }
