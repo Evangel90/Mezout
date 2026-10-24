@@ -2,7 +2,17 @@
 
 Merchant checkout on Mezo: customers pay with MUSD, by borrowing against their BTC, with MEZO, or with BTC, and the merchant always receives the exact invoiced amount in MUSD. Mezout never holds funds. Built for the Mezo Buildathon (Access & Distribution track), Mezo testnet only.
 
-Status: Milestone 0 (setup and verification). See `docs/BRIEF.md` for the plan and `docs/M0-findings.md` for what has been verified.
+Status: Milestone 1 in progress. The router (MUSD and borrow paths), hosted checkout, relayer and payment-link dashboard are built and tested; testnet deployment is next. See `docs/BRIEF.md` for the plan and `docs/M0-findings.md` for what has been verified.
+
+## How a payment works
+
+1. The merchant creates a payment link in `/dashboard`. The server signs an EIP-712 invoice (merchant, amount, fee, order id, expiry) with the invoice signer key; the link carries the signed invoice.
+2. The customer opens `/pay/<link>`, connects a wallet with Mezo Passport, and picks **Pay with MUSD** or **Borrow against my BTC**.
+3. The customer signs a `Payment` message naming that invoice, plus an MUSD permit and, for borrowing, a `WithdrawMUSD` authorization.
+4. The relayer (`/api/relay`) simulates the call and submits it to `MezoutRouter`, paying the gas.
+5. The router sends the merchant exactly the invoiced amount minus the fee in one transaction, and reverts if a borrow would leave the customer's loan under 160%.
+
+Bitcoin wallets in Passport use smart accounts, which cannot sign MUSD permits, so they pay with MUSD directly from their account and pay their own gas.
 
 ## Layout
 
@@ -41,6 +51,25 @@ In your Mac terminal, inside the `Mezout/contracts` folder (needs internet; the 
 
 ```
 forge test -vv
+```
+
+## Deploy the router (Mezo testnet)
+
+The relayer key in `.env.local` deploys and needs test BTC from faucet.test.mezo.org. In your Mac terminal, inside the `Mezout/contracts` folder:
+
+```
+set -a; source ../.env.local; set +a
+forge script script/Deploy.s.sol --rpc-url mezo_testnet --private-key $RELAYER_PRIVATE_KEY --broadcast
+```
+
+Put the printed address in `.env.local` as `NEXT_PUBLIC_ROUTER_ADDRESS`.
+
+## Pay an invoice from a script
+
+With the web app running, in your Mac terminal, inside the `Mezout/apps/web` folder (the payer needs test MUSD):
+
+```
+APP_URL=http://localhost:3000 ROUTER=<router address> PAYER_PRIVATE_KEY=<test key> MERCHANT=<payout address> AMOUNT=25 node scripts/pay-invoice.mjs
 ```
 
 ## Run the web app
