@@ -2,7 +2,7 @@
 
 Merchant checkout on Mezo: customers pay with MUSD, by borrowing against their BTC, with MEZO, or with BTC, and the merchant always receives the exact invoiced amount in MUSD. Mezout never holds funds. Built for the Mezo Buildathon (Access & Distribution track), Mezo testnet only.
 
-Status: Milestone 1 in progress. The router (MUSD and borrow paths), hosted checkout, relayer and payment-link dashboard are built and tested; testnet deployment is next. See `docs/BRIEF.md` for the plan and `docs/M0-findings.md` for what has been verified.
+Status: Milestone 1 in progress. The router (MUSD and borrow paths), hosted checkout, relayer and payment-link dashboard are built and tested; deployed to Mezo testnet with two live reference payments. See `docs/BRIEF.md` for the plan and `docs/M0-findings.md` for what has been verified.
 
 ## Testnet deployment
 
@@ -12,6 +12,15 @@ Status: Milestone 1 in progress. The router (MUSD and borrow paths), hosted chec
 | Invoice signer | `0x289E256BF9Fb2ce0AF3186B015c371C5b3965943` |
 | Fee recipient | `0x36A95C939Fa70F29421261C770160645Efa9F9E4` |
 | Network | Mezo testnet, chain 31611 |
+
+### Reference transactions (24 Oct 2026)
+
+Both relayed by `0x7ECf…9a15`, so the customer paid no gas. Merchant `0x36A9…F9E4`.
+
+| Path | Amount | Transaction | Gas |
+| --- | --- | --- | --- |
+| Pay with MUSD (permit) | 100 MUSD | [`0x4f97…cc48`](https://explorer.test.mezo.org/tx/0x4f9731b8b02102690edd793177e9bdc0a4b9456109f9c217d558c5fcd05bcc48) | 138,637 |
+| Borrow against BTC | 150 MUSD, all borrowed; loan ratio 198% → 184% | [`0x6b8c…11ae`](https://explorer.test.mezo.org/tx/0x6b8c1ba62cddf247e14837380fbb8c154dc2b87e76d0c1b8afc867ec229711ae) | 513,935 |
 
 ## How a payment works
 

@@ -1,14 +1,23 @@
 // Acts as a customer: creates an invoice through the API, signs it like a wallet would, and pays via the relayer.
 // Usage (Mac terminal, inside Mezout/apps/web):
-//   APP_URL=http://localhost:3000 PAYER_PRIVATE_KEY=0x... MERCHANT=0x... AMOUNT=25 node scripts/pay-invoice.mjs
+//   APP_URL=http://localhost:3000 ROUTER=0x... PAYER_PRIVATE_KEY=0x... MERCHANT=0x... AMOUNT=25 [METHOD=BORROW FROM_BALANCE=0] node scripts/pay-invoice.mjs
 import { createPublicClient, http, parseAbi, parseSignature } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
-const { APP_URL = "http://localhost:3000", PAYER_PRIVATE_KEY, MERCHANT, AMOUNT = "25", ROUTER, RPC_URL = "https://rpc.test.mezo.org" } =
-  process.env;
+const {
+  APP_URL = "http://localhost:3000",
+  PAYER_PRIVATE_KEY,
+  MERCHANT,
+  AMOUNT = "25",
+  ROUTER,
+  RPC_URL = "https://rpc.test.mezo.org",
+  METHOD = "MUSD",
+  FROM_BALANCE = "0",
+} = process.env;
 if (!PAYER_PRIVATE_KEY || !MERCHANT || !ROUTER) throw new Error("Set PAYER_PRIVATE_KEY, MERCHANT and ROUTER");
 
 const MUSD = "0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503";
+const BOS = "0xD757e3646AF370b15f32EB557F0F8380Df7D639e";
 const payer = privateKeyToAccount(PAYER_PRIVATE_KEY);
 const client = createPublicClient({ transport: http(RPC_URL) });
 const chainId = await client.getChainId();
@@ -17,6 +26,7 @@ const musd = parseAbi([
   "function balanceOf(address) view returns (uint256)",
 ]);
 const router = parseAbi(["function paid(bytes32) view returns (bool)"]);
+const bos = parseAbi(["function getNonce(address) view returns (uint256)"]);
 
 const post = async (path, body) => {
   const res = await fetch(new URL(path, APP_URL), { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
@@ -44,30 +54,61 @@ const payerSig = await payer.signTypedData({
   message: { invoice, payer: payer.address },
 });
 const deadline = BigInt(Math.floor(Date.now() / 1000) + 600);
-const permitSig = await payer.signTypedData({
-  domain: { name: "Mezo USD", version: "1", chainId, verifyingContract: MUSD },
-  types: {
-    Permit: [
-      { name: "owner", type: "address" },
-      { name: "spender", type: "address" },
-      { name: "value", type: "uint256" },
-      { name: "nonce", type: "uint256" },
-      { name: "deadline", type: "uint256" },
-    ],
-  },
-  primaryType: "Permit",
-  message: { owner: payer.address, spender: ROUTER, value: invoice.amount, nonce: await client.readContract({ address: MUSD, abi: musd, functionName: "nonces", args: [payer.address] }), deadline },
-});
-const { r, s, v, yParity } = parseSignature(permitSig);
+const permitTypes = {
+  Permit: [
+    { name: "owner", type: "address" },
+    { name: "spender", type: "address" },
+    { name: "value", type: "uint256" },
+    { name: "nonce", type: "uint256" },
+    { name: "deadline", type: "uint256" },
+  ],
+};
+const signPermit = async (value) => {
+  const nonce = await client.readContract({ address: MUSD, abi: musd, functionName: "nonces", args: [payer.address] });
+  const sig = await payer.signTypedData({
+    domain: { name: "Mezo USD", version: "1", chainId, verifyingContract: MUSD },
+    types: permitTypes,
+    primaryType: "Permit",
+    message: { owner: payer.address, spender: ROUTER, value, nonce, deadline },
+  });
+  const { r, s, v, yParity } = parseSignature(sig);
+  return { deadline: deadline.toString(), v: Number(v ?? BigInt(yParity + 27)), r, s };
+};
+const zero = `0x${"00".repeat(32)}`;
 
 const before = await client.readContract({ address: MUSD, abi: musd, functionName: "balanceOf", args: [MERCHANT] });
-const { hash } = await post("/api/relay", {
-  method: "MUSD",
-  token,
-  payer: payer.address,
-  payerSig,
-  permit: { deadline: deadline.toString(), v: Number(v ?? BigInt(yParity + 27)), r, s },
-});
+let body;
+if (METHOD === "BORROW") {
+  const fromBalance = BigInt(FROM_BALANCE) * 10n ** 18n;
+  const borrowed = invoice.amount - fromBalance;
+  const nonce = await client.readContract({ address: BOS, abi: bos, functionName: "getNonce", args: [payer.address] });
+  const signature = await payer.signTypedData({
+    domain: { name: "BorrowerOperationsSignatures", version: "1", chainId, verifyingContract: BOS },
+    types: {
+      WithdrawMUSD: [
+        { name: "amount", type: "uint256" },
+        { name: "borrower", type: "address" },
+        { name: "recipient", type: "address" },
+        { name: "nonce", type: "uint256" },
+        { name: "deadline", type: "uint256" },
+      ],
+    },
+    primaryType: "WithdrawMUSD",
+    message: { amount: borrowed, borrower: payer.address, recipient: ROUTER, nonce, deadline },
+  });
+  body = {
+    method: "BORROW",
+    token,
+    payer: payer.address,
+    payerSig,
+    fromBalance: fromBalance.toString(),
+    permit: fromBalance > 0n ? await signPermit(fromBalance) : { deadline: "0", v: 0, r: zero, s: zero },
+    borrow: { deadline: deadline.toString(), signature },
+  };
+} else {
+  body = { method: "MUSD", token, payer: payer.address, payerSig, permit: await signPermit(invoice.amount) };
+}
+const { hash } = await post("/api/relay", body);
 console.log("tx", hash);
 const receipt = await client.waitForTransactionReceipt({ hash });
 const after = await client.readContract({ address: MUSD, abi: musd, functionName: "balanceOf", args: [MERCHANT] });
