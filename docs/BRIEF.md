@@ -328,7 +328,7 @@ The owner's approval below authorizes the agent to start M0 and M1 under these l
 | Product | Merchant checkout platform, named Mezout |
 | Buildathon track | Access & Distribution |
 | Network | Mezo testnet only until an audit and owner approval |
-| Merchant settlement | Always MUSD, exact invoiced amount |
+| Merchant settlement | Always MUSD: exactly the invoiced amount minus the signed platform fee, which the merchant pays (0% during the buildathon) |
 | Customer payment options | MUSD, borrow against BTC, MEZO, native BTC on Mezo |
 | Custody | None; the router holds nothing between transactions |
 | Upgradeability | None; fixes ship as a new router deployment |
@@ -343,6 +343,15 @@ The owner's approval below authorizes the agent to start M0 and M1 under these l
 - [x] Hosting: Vercel plus a managed Postgres (Neon or Supabase)? Decided 24 Oct: Vercel, with Neon Postgres unless the owner prefers Supabase.
 - [x] Fee level after the buildathon. Decided 24 Oct: a fee will apply after the buildathon, level to be set; it stays 0% until then, and the router design must leave room for it.
 - [x] Confirm Wave 1 is submitted by 26 Oct; the announcement says Wave 1 projects advance to Wave 2, so skipping it may forfeit Wave 2. Confirmed 24 Oct: the owner submits Wave 1 by 26 Oct.
+
+**Decisions at the M0 gate (24 Oct)** — findings in `docs/M0-findings.md`
+
+| Question | Decision |
+| --- | --- |
+| Who pays the platform fee | The merchant: the invoice carries a signed fee (0 now), deducted from the payout; the router is built with this field from M1 |
+| Gasless signatures are EOA-only | Wave 1 demo uses an EVM wallet through the relayer; Bitcoin-wallet accounts get a direct, self-paid path once verified |
+| No MUSD/MEZO liquidity on testnet | Create and fund a MUSD/MEZO test pool on Tigris in M2 |
+| Tigris has no exact-output swap | Router computes the exact input from the pool's reserves, swaps only that, and refunds unused BTC or MEZO (standard Tigris pools only) |
 
 **Approval**
 

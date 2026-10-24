@@ -59,6 +59,13 @@ Ignore the look-alike "MUSD" token at `0xCa54…F234D` (it has a BTC pool on Tig
 6. **Fee room in the router.** The owner confirmed a fee after the buildathon. Because the router cannot be upgraded, the invoice should carry a signed `fee` field now (set to 0) plus a fixed fee recipient, so turning on a fee later needs no redeploy. The locked decision says the merchant always receives the exact invoiced amount, so the fee is either paid by the customer on top or deducted from the merchant's payout. **Owner to choose which.**
 7. **Protocol contracts are upgradeable proxies.** Mezo governance can change their behaviour; the fork tests pin a block and should be re-run before each deploy.
 
+## Owner decisions at the gate (24 Oct)
+
+1. Fee: the merchant pays it; the invoice carries a signed `fee`, deducted from the payout (0 during the buildathon).
+2. Wave 1 demo uses an EVM wallet through the relayer; Bitcoin-wallet accounts get a direct, self-paid path once verified.
+3. MEZO: create and fund a MUSD/MEZO test pool on Tigris in M2.
+4. Swaps: option C. The router computes the exact input from the pool's reserves, swaps only that, and refunds unused BTC or MEZO.
+
 ## How to re-run the checks
 
 In your Mac terminal, inside the `Mezout/contracts` folder:
