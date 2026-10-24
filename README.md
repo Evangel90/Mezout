@@ -22,7 +22,7 @@ All relayed by `0x7ECf…9a15`, so the customer paid no gas. Merchant `0x36A9…
 | --- | --- | --- | --- |
 | Pay with MUSD (permit) | 100 MUSD | [`0x4f97…cc48`](https://explorer.test.mezo.org/tx/0x4f9731b8b02102690edd793177e9bdc0a4b9456109f9c217d558c5fcd05bcc48) | 138,637 |
 | Borrow against BTC | 150 MUSD, all borrowed; loan ratio 198% → 184% | [`0x6b8c…11ae`](https://explorer.test.mezo.org/tx/0x6b8c1ba62cddf247e14837380fbb8c154dc2b87e76d0c1b8afc867ec229711ae) | 513,935 |
-| Pay with MUSD, invoice from `POST /v1/invoices` | 12.5 MUSD to a new API merchant `0x7049…E264` | [`0x5886…45b7`](https://explorer.test.mezo.org/tx/0x5886bb2404b759d9a593bd4ef10338618aeb53aeac007641572bb84089dc45b7) | 150,000 |
+| Pay with MUSD, invoice from production `POST /v1/invoices` | 12.5 MUSD to a new API merchant `0x9013…81C9` | [`0xf80d…2ade`](https://explorer.test.mezo.org/tx/0xf80ddf1aa4f9618eb00942606741d017941355fe568b314d87b11e9fd20e2ade) | 150,000 |
 
 ## How a payment works
 
