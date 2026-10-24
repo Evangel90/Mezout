@@ -96,13 +96,11 @@ Put the printed address in `.env.local` as `NEXT_PUBLIC_ROUTER_ADDRESS`.
 
 ## Apply migrations to production
 
-After the Vercel Postgres (Neon) database exists, copy its connection string into `DATABASE_URL` in `.env.local`, then in your Mac terminal, inside the `Mezout/apps/web` folder:
+Production uses a Neon database added through the Vercel integration. Vercel's development and production environments share it, so local development keeps `DATABASE_URL` pointed at local Postgres (`vercel env pull` overwrites that line; set it back afterwards). To migrate production, in your Mac terminal, inside the `Mezout/apps/web` folder:
 
 ```
-pnpm db:migrate
+DATABASE_URL="$(grep '^DATABASE_URL_UNPOOLED=' ../../.env.local | cut -d= -f2- | tr -d '"')" pnpm db:migrate
 ```
-
-Put the local `DATABASE_URL` back afterwards.
 
 ## Pay an invoice from a script
 

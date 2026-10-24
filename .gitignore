@@ -15,3 +15,8 @@ contracts/broadcast/*/31611/dry-run/
 .vercel
 .env*
 !.env.example
+
+# Agent skills installed by the Vercel Neon integration
+.agents/
+.claude/skills/
+skills-lock.json
