@@ -41,3 +41,22 @@ export const invoices = pgTable(
   },
   (t) => [index("invoices_merchant_idx").on(t.merchantId)],
 );
+
+// A merchant whose payout address is a MezoutAccount owned by a passkey. The public key is only revealed when the
+// passkey is created, so it is stored here; it is public data, not a secret.
+export const passkeys = pgTable(
+  "passkeys",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    merchantId: uuid("merchant_id")
+      .notNull()
+      .references(() => merchants.id),
+    // Not unique: credential ids are client-reported, so a stranger could register someone else's id with their own
+    // key. Lookups return every match and the client keeps the one whose key verifies its assertion.
+    credentialId: text("credential_id").notNull(),
+    publicKey: text("public_key").notNull().unique(),
+    accountAddress: text("account_address").notNull().unique(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("passkeys_credential_idx").on(t.credentialId)],
+);

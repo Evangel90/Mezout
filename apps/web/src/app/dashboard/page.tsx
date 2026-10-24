@@ -1,15 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { QRCodeSVG } from "qrcode.react";
-import { useAccount } from "wagmi";
+import { hashMessage } from "viem";
+import { useAccount, useSignMessage } from "wagmi";
 import { ApiKeyPanel } from "@/components/ApiKeyPanel";
+import { PasskeyAccount } from "@/components/PasskeyAccount";
+import { PasskeyOnboarding } from "@/components/PasskeyOnboarding";
+import { loadSession, passkeySign, saveSession, type PasskeySession } from "@/lib/passkey";
 
 type Created = { url: string; orderId: string; expiry: string };
 
 export default function Dashboard() {
-  const { address } = useAccount();
+  const { address: walletAddress } = useAccount();
+  const { signMessageAsync } = useSignMessage();
+  const [session, setSession] = useState<PasskeySession | null>(null);
+  useEffect(() => setSession(loadSession()), []);
+  const setPasskeySession = (next: PasskeySession | null) => {
+    saveSession(next);
+    setSession(next);
+  };
+  // A passkey account takes precedence over a connected wallet; signing out of it falls back to the wallet.
+  const address = session?.address ?? walletAddress;
+  const signMessage = (message: string) =>
+    session ? passkeySign(session, hashMessage(message)) : signMessageAsync({ message });
   const [amount, setAmount] = useState("");
   const [created, setCreated] = useState<Created | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -39,15 +54,18 @@ export default function Dashboard() {
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">Payment links</h1>
-        <ConnectButton showBalance={false} />
+        <h1 className="text-2xl font-semibold tracking-tight">Merchant dashboard</h1>
+        {!session && <ConnectButton showBalance={false} />}
       </div>
 
+      {session && <PasskeyAccount session={session} onSignOut={() => setPasskeySession(null)} />}
+
       {!address ? (
-        <p className="text-stone-600">Connect the wallet that should receive MUSD. It becomes the payout address.</p>
+        <PasskeyOnboarding onSession={setPasskeySession} />
       ) : (
         <form onSubmit={create} className="space-y-4 rounded-xl border border-stone-200 bg-white p-6">
-          <p className="text-sm text-stone-600">
+          <h2 className="text-lg font-semibold">Payment link</h2>
+          <p className="break-all text-sm text-stone-600">
             Payout address <span className="font-mono">{address}</span>
           </p>
           <label className="block space-y-1">
@@ -94,7 +112,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {address && <ApiKeyPanel address={address} />}
+      {address && <ApiKeyPanel key={address} address={address} signMessage={signMessage} />}
     </div>
   );
 }

@@ -1,12 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useSignMessage } from "wagmi";
-import type { Address } from "viem";
+import type { Address, Hex } from "viem";
 import { keyRequestMessage } from "@mezout/sdk";
 
-export function ApiKeyPanel({ address }: { address: Address }) {
-  const { signMessageAsync } = useSignMessage();
+/** `signMessage` comes from the merchant's wallet, or from their passkey for Mezout passkey accounts. */
+export function ApiKeyPanel({ address, signMessage }: { address: Address; signMessage: (message: string) => Promise<Hex> }) {
   const [key, setKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -16,7 +15,7 @@ export function ApiKeyPanel({ address }: { address: Address }) {
     setError(null);
     try {
       const issuedAt = new Date().toISOString();
-      const signature = await signMessageAsync({ message: keyRequestMessage(address, issuedAt) });
+      const signature = await signMessage(keyRequestMessage(address, issuedAt));
       const res = await fetch("/api/keys", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -38,8 +37,8 @@ export function ApiKeyPanel({ address }: { address: Address }) {
         <h2 className="text-lg font-semibold">API key</h2>
         <p className="text-sm text-stone-600">
           For your store or backend: create invoices with <span className="font-mono">POST /v1/invoices</span> and check
-          them with <span className="font-mono">GET /v1/invoices/:id</span>. Invoices pay the address above. You sign a
-          message to prove you own it; this costs no gas.
+          them with <span className="font-mono">GET /v1/invoices/:id</span>. Invoices pay the address above. You confirm
+          with your wallet or passkey to prove you own it; this costs no gas.
         </p>
       </div>
       {key ? (

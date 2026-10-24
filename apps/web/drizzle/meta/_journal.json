@@ -8,6 +8,13 @@
       "when": 1792859055487,
       "tag": "0000_handy_hairball",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792861417098,
+      "tag": "0001_nifty_katie_power",
+      "breakpoints": true
     }
   ]
 }
