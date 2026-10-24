@@ -113,6 +113,14 @@ forge script script/Deploy.s.sol --rpc-url mezo_testnet --private-key $RELAYER_P
 
 Put the printed address in `.env.local` as `NEXT_PUBLIC_ROUTER_ADDRESS`.
 
+## Deploy the web app (Vercel)
+
+In your Mac terminal, inside the `Mezout` folder itself, not `Mezout/apps/web` (the Vercel project link lives at the repo root; from `apps/web` the CLI creates a new, empty project):
+
+```
+pnpm dlx vercel deploy --prod --yes
+```
+
 ## Apply migrations to production
 
 Production uses a Neon database added through the Vercel integration. Vercel's development and production environments share it, so local development keeps `DATABASE_URL` pointed at local Postgres (`vercel env pull` overwrites that line; set it back afterwards). To migrate production, in your Mac terminal, inside the `Mezout/apps/web` folder:
