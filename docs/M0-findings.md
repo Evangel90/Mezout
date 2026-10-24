@@ -66,6 +66,19 @@ Ignore the look-alike "MUSD" token at `0xCa54…F234D` (it has a BTC pool on Tig
 3. MEZO: create and fund a MUSD/MEZO test pool on Tigris in M2.
 4. Swaps: option C. The router computes the exact input from the pool's reserves, swaps only that, and refunds unused BTC or MEZO.
 
+## Account abstraction on Mezo testnet (checked 24 Oct)
+
+| Fact | Result |
+| --- | --- |
+| ERC-4337 EntryPoint v0.7 `0x0000000071727De22E5E9d8BAf0edAc6f37da032` | Deployed; code hash `0x8db5ff69…fc58`, identical to Ethereum mainnet |
+| EntryPoint v0.6, v0.8, v0.9 | Not deployed (OpenZeppelin 5.6 `Account` defaults to v0.9, so `MezoutAccount` overrides `entryPoint()` to v0.7) |
+| Safe 1.4.1 and Safe 4337 module | Deployed (not used) |
+| RIP-7212 P-256 precompile at `0x…0100` | Present: a valid test vector returns 1, so passkey checks are cheap on-chain |
+| Gas price | ~146 wei; a passkey account deployment plus withdrawal costs a fraction of a satoshi |
+| Block gas limit | 10,000,000 |
+| Gas charged | At least half the transaction's gas limit (e.g. 550,000 charged for a 1.1M limit; 150,000 for 300,000). Generous limits roughly double the cost, which is negligible at these prices |
+| Bundlers | No public bundler found; Mezout's relayer calls `handleOps` itself and tops up each account's EntryPoint deposit |
+
 ## How to re-run the checks
 
 In your Mac terminal, inside the `Mezout/contracts` folder:

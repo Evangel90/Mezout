@@ -353,6 +353,12 @@ The owner's approval below authorizes the agent to start M0 and M1 under these l
 | No MUSD/MEZO liquidity on testnet | Create and fund a MUSD/MEZO test pool on Tigris in M2 |
 | Tigris has no exact-output swap | Router computes the exact input from the pool's reserves, swaps only that, and refunds unused BTC or MEZO (standard Tigris pools only) |
 
+**Decision after M1 (24 Oct)**
+
+| Question | Decision |
+| --- | --- |
+| Merchants without a wallet | Brought into Wave 1 at the owner's request: merchants can sign up with a passkey. Each passkey owns a `MezoutAccount` (OpenZeppelin ERC-4337 account with a WebAuthn signer, EntryPoint v0.7) that receives payouts; Mezout's relayer bundles and sponsors withdrawals. Mezout holds no keys and custody is unchanged. Wallet merchants work as before. |
+
 **Approval**
 
 - [ ] Approved to start M0 and M1 — @DefiDevrel

@@ -2,7 +2,7 @@
 
 Merchant checkout on Mezo: customers pay with MUSD, by borrowing against their BTC, with MEZO, or with BTC, and the merchant always receives the exact invoiced amount in MUSD. Mezout never holds funds. Built for the Mezo Buildathon (Access & Distribution track), Mezo testnet only.
 
-Status: Milestone 1 in progress. The router (MUSD and borrow paths), hosted checkout, relayer, payment-link dashboard and a minimal merchant API (API keys, create and retrieve invoices) are built and tested; deployed to Mezo testnet with live reference payments. See `docs/BRIEF.md` for the plan, `docs/M0-findings.md` for what has been verified and `docs/API.md` for the API.
+Status: Milestone 1 in progress. The router (MUSD and borrow paths), hosted checkout, relayer, payment-link dashboard, a minimal merchant API (API keys, create and retrieve invoices) and walletless merchant accounts (passkey smart accounts, ERC-4337) are built and tested; deployed to Mezo testnet with live reference payments. See `docs/BRIEF.md` for the plan, `docs/M0-findings.md` for what has been verified and `docs/API.md` for the API.
 
 ## Testnet deployment
 
@@ -10,6 +10,8 @@ Status: Milestone 1 in progress. The router (MUSD and borrow paths), hosted chec
 | --- | --- |
 | Live app | https://mezout-snowy.vercel.app (dashboard: `/dashboard`, status: `/api/health`) |
 | MezoutRouter | [`0xAF79AB1cdB38c0C3944bB9440614B58871Ba6199`](https://explorer.test.mezo.org/address/0xAF79AB1cdB38c0C3944bB9440614B58871Ba6199) (block 16,341,328) |
+| MezoutAccountFactory | [`0xeE85EE32488FF2D63eFe48159ddB59e6863cdF79`](https://explorer.test.mezo.org/address/0xeE85EE32488FF2D63eFe48159ddB59e6863cdF79) (block 16,343,339) |
+| EntryPoint v0.7 | `0x0000000071727De22E5E9d8BAf0edAc6f37da032` (canonical, already on Mezo) |
 | Invoice signer | `0x289E256BF9Fb2ce0AF3186B015c371C5b3965943` |
 | Fee recipient | `0x36A95C939Fa70F29421261C770160645Efa9F9E4` |
 | Network | Mezo testnet, chain 31611 |
@@ -24,6 +26,15 @@ All relayed by `0x7ECf…9a15`, so the customer paid no gas. Merchant `0x36A9…
 | Borrow against BTC | 150 MUSD, all borrowed; loan ratio 198% → 184% | [`0x6b8c…11ae`](https://explorer.test.mezo.org/tx/0x6b8c1ba62cddf247e14837380fbb8c154dc2b87e76d0c1b8afc867ec229711ae) | 513,935 |
 | Pay with MUSD, invoice from production `POST /v1/invoices` | 12.5 MUSD to a new API merchant `0x9013…81C9` | [`0xf80d…2ade`](https://explorer.test.mezo.org/tx/0xf80ddf1aa4f9618eb00942606741d017941355fe568b314d87b11e9fd20e2ade) | 150,000 |
 
+### Passkey merchant account (24 Oct 2026)
+
+Driven through the dashboard in Chrome with a virtual passkey: account created without a wallet, paid 3 MUSD by a customer, API key created with the passkey, then two withdrawals. The account never held BTC.
+
+| Step | Transaction |
+| --- | --- |
+| First withdrawal, 2 MUSD (also deploys the account through EntryPoint v0.7) | [`0x1a64…e478`](https://explorer.test.mezo.org/tx/0x1a6425e129bd79336a399f2016c75374d3ebfdc34d3815f1cb53c7ffe433e478) |
+| Second withdrawal after signing out and back in with the passkey | [`0x0963…2f43`](https://explorer.test.mezo.org/tx/0x09633b328d2fc193d6f2c128004b053d67480a717e35d729eceead8939692f43) |
+
 ## How a payment works
 
 1. The merchant creates a payment link in `/dashboard`, or their backend calls `POST /v1/invoices` with an API key (see `docs/API.md`). The server signs an EIP-712 invoice (merchant, amount, fee, order id, expiry) with the invoice signer key; the link carries the signed invoice.
@@ -33,6 +44,14 @@ All relayed by `0x7ECf…9a15`, so the customer paid no gas. Merchant `0x36A9…
 5. The router sends the merchant exactly the invoiced amount minus the fee in one transaction, and reverts if a borrow would leave the customer's loan under 160%.
 
 Bitcoin wallets in Passport use smart accounts, which cannot sign MUSD permits, so they pay with MUSD directly from their account and pay their own gas.
+
+## Merchants without a wallet
+
+On `/dashboard` a merchant can choose **Create account with passkey** instead of connecting a wallet. The passkey (Face ID, Touch ID, Windows Hello or a phone) owns a `MezoutAccount`: an OpenZeppelin ERC-4337 account with a WebAuthn signer, at an address fixed by the passkey's public key. Payouts land there before the account even exists on-chain.
+
+To withdraw, the merchant enters an address and amount and confirms with the passkey. The server builds the user operation, the passkey signs its hash, and the relayer checks the signature, tops up the account's EntryPoint deposit and submits it through EntryPoint v0.7. The first withdrawal deploys the account. The relayer only submits single MUSD transfers out of registered accounts. Mezout never sees the passkey's private key and cannot move the funds.
+
+A passkey is bound to this site's domain. Moving the app to another domain, or losing every device that holds the passkey, means losing access to the account; adding a recovery key is planned before any mainnet use.
 
 ## Layout
 

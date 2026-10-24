@@ -102,3 +102,5 @@ Network: Mezo testnet (31611)
 ```
 
 The request must be under 5 minutes old and each signed message can create one key. Smart-account signatures (ERC-1271 and ERC-6492, used by Bitcoin wallets in Mezo Passport) are accepted. `keyRequestMessage` in `@mezout/sdk` builds the text.
+
+For a Mezout passkey account, `signature` is a WebAuthn assertion whose challenge is the message's EIP-191 hash (`hashMessage`), encoded with `encodeWebAuthnSignature` from `@mezout/sdk`. The server checks it against the passkey's registered public key, this site's domain and origin, and user verification.
