@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { QRCodeSVG } from "qrcode.react";
 import { useAccount } from "wagmi";
+import { ApiKeyPanel } from "@/components/ApiKeyPanel";
 
 type Created = { url: string; orderId: string; expiry: string };
 
@@ -92,6 +93,8 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {address && <ApiKeyPanel address={address} />}
     </div>
   );
 }

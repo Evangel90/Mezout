@@ -1,6 +1,7 @@
 // Acts as a customer: creates an invoice through the API, signs it like a wallet would, and pays via the relayer.
 // Usage (Mac terminal, inside Mezout/apps/web):
 //   APP_URL=http://localhost:3000 ROUTER=0x... PAYER_PRIVATE_KEY=0x... MERCHANT=0x... AMOUNT=25 [METHOD=BORROW FROM_BALANCE=0] node scripts/pay-invoice.mjs
+// To pay an invoice created with POST /v1/invoices, pass TOKEN=<the part of checkout_url after /pay/> instead of MERCHANT and AMOUNT.
 import { createPublicClient, http, parseAbi, parseSignature } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
@@ -13,8 +14,9 @@ const {
   RPC_URL = "https://rpc.test.mezo.org",
   METHOD = "MUSD",
   FROM_BALANCE = "0",
+  TOKEN,
 } = process.env;
-if (!PAYER_PRIVATE_KEY || !MERCHANT || !ROUTER) throw new Error("Set PAYER_PRIVATE_KEY, MERCHANT and ROUTER");
+if (!PAYER_PRIVATE_KEY || !ROUTER || !(MERCHANT || TOKEN)) throw new Error("Set PAYER_PRIVATE_KEY, ROUTER and MERCHANT or TOKEN");
 
 const MUSD = "0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503";
 const BOS = "0xD757e3646AF370b15f32EB557F0F8380Df7D639e";
@@ -35,10 +37,10 @@ const post = async (path, body) => {
   return json;
 };
 
-const { token, orderId } = await post("/api/invoices", { merchant: MERCHANT, amount: AMOUNT });
+const { token } = TOKEN ? { token: TOKEN } : await post("/api/invoices", { merchant: MERCHANT, amount: AMOUNT });
 const w = JSON.parse(Buffer.from(token, "base64url").toString());
 const invoice = { merchant: w.m, amount: BigInt(w.a), fee: BigInt(w.f), orderId: w.o, expiry: BigInt(w.e) };
-console.log("invoice", orderId, `${AMOUNT} MUSD`);
+console.log("invoice", invoice.orderId, `${Number(invoice.amount) / 1e18} MUSD`);
 
 const invoiceFields = [
   { name: "merchant", type: "address" },
@@ -76,7 +78,7 @@ const signPermit = async (value) => {
 };
 const zero = `0x${"00".repeat(32)}`;
 
-const before = await client.readContract({ address: MUSD, abi: musd, functionName: "balanceOf", args: [MERCHANT] });
+const before = await client.readContract({ address: MUSD, abi: musd, functionName: "balanceOf", args: [invoice.merchant] });
 let body;
 if (METHOD === "BORROW") {
   const fromBalance = BigInt(FROM_BALANCE) * 10n ** 18n;
@@ -111,7 +113,7 @@ if (METHOD === "BORROW") {
 const { hash } = await post("/api/relay", body);
 console.log("tx", hash);
 const receipt = await client.waitForTransactionReceipt({ hash });
-const after = await client.readContract({ address: MUSD, abi: musd, functionName: "balanceOf", args: [MERCHANT] });
+const after = await client.readContract({ address: MUSD, abi: musd, functionName: "balanceOf", args: [invoice.merchant] });
 const isPaid = await client.readContract({ address: ROUTER, abi: router, functionName: "paid", args: [invoice.orderId] });
 console.log("status", receipt.status, "paid", isPaid, "merchant received", (after - before).toString());
 if (receipt.status !== "success" || !isPaid || after - before !== invoice.amount - invoice.fee) process.exit(1);
