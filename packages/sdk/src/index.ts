@@ -1,0 +1,1 @@
+export { mezoTestnet } from "./chains";
