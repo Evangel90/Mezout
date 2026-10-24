@@ -11,6 +11,13 @@ const uint = z.string().regex(/^\d+$/).transform(BigInt);
 const bytes32 = z.string().regex(/^0x[0-9a-fA-F]{64}$/, "expected 32 bytes") as unknown as z.ZodType<Hex>;
 const permit = z.object({ deadline: uint, v: z.number().int().min(0).max(255), r: bytes32, s: bytes32 });
 
+// Some Mezo RPC nodes estimate below their own EIP-7623 calldata floor; observed use is ~139k (MUSD) and ~514k (BORROW).
+const MIN_GAS = { MUSD: 300_000n, BORROW: 1_000_000n } as const;
+const gasLimit = (estimate: bigint, method: keyof typeof MIN_GAS) => {
+  const bumped = (estimate * 13n) / 10n;
+  return bumped > MIN_GAS[method] ? bumped : MIN_GAS[method];
+};
+
 const body = z.discriminatedUnion("method", [
   z.object({ method: z.literal("MUSD"), token: z.string(), payer: z.string(), payerSig: hex, permit }),
   z.object({
@@ -49,18 +56,20 @@ export async function POST(req: Request) {
   try {
     let hash: Hex;
     if (input.method === "MUSD") {
-      const { request } = await client.simulateContract({
+      const call = {
         account: wallet.account,
         address: router,
         abi: mezoutRouterAbi,
         functionName: "payWithMUSD",
         args: [invoice, invoiceSig, payer, input.payerSig, input.permit],
-      });
+      } as const;
+      const estimate = await client.estimateContractGas(call).catch(() => 0n);
+      const { request } = await client.simulateContract({ ...call, gas: gasLimit(estimate, "MUSD") });
       hash = await wallet.writeContract(request);
     } else {
       const borrowed = invoice.amount - input.fromBalance;
       const hints = await getBorrowHints(client, payer, borrowed);
-      const { request } = await client.simulateContract({
+      const call = {
         account: wallet.account,
         address: router,
         abi: mezoutRouterAbi,
@@ -74,12 +83,17 @@ export async function POST(req: Request) {
           input.permit,
           { deadline: input.borrow.deadline, ...hints, signature: input.borrow.signature },
         ],
-      });
+      } as const;
+      const estimate = await client.estimateContractGas(call).catch(() => 0n);
+      const { request } = await client.simulateContract({ ...call, gas: gasLimit(estimate, "BORROW") });
       hash = await wallet.writeContract(request);
     }
     return NextResponse.json({ hash });
   } catch (err) {
     // Never echo request bodies: they carry signatures.
+    if (err instanceof BaseError) {
+      console.error("relay failed", { method: input.method, name: err.name, short: err.shortMessage, details: err.details });
+    }
     return NextResponse.json({ error: revertMessage(err) }, { status: 422 });
   }
 }

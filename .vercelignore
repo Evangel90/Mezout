@@ -1,0 +1,12 @@
+contracts/lib
+contracts/out
+contracts/cache
+contracts/broadcast
+plugins
+.env
+.env.*
+!.env.example
+node_modules
+**/node_modules
+**/.next
+.vercel

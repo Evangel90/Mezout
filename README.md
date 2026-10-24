@@ -8,6 +8,7 @@ Status: Milestone 1 in progress. The router (MUSD and borrow paths), hosted chec
 
 | | |
 | --- | --- |
+| Live app | https://mezout-snowy.vercel.app (dashboard: `/dashboard`, status: `/api/health`) |
 | MezoutRouter | [`0xAF79AB1cdB38c0C3944bB9440614B58871Ba6199`](https://explorer.test.mezo.org/address/0xAF79AB1cdB38c0C3944bB9440614B58871Ba6199) (block 16,341,328) |
 | Invoice signer | `0x289E256BF9Fb2ce0AF3186B015c371C5b3965943` |
 | Fee recipient | `0x36A95C939Fa70F29421261C770160645Efa9F9E4` |
