@@ -8,7 +8,7 @@ Status: Milestone 1 in progress. The router (MUSD and borrow paths), hosted chec
 
 | | |
 | --- | --- |
-| Live app | https://mezout-snowy.vercel.app (dashboard: `/dashboard`, status: `/api/health`) |
+| Live app | https://usemezout.vercel.app (dashboard: `/dashboard`, status: `/api/health`) |
 | MezoutRouter | [`0xAF79AB1cdB38c0C3944bB9440614B58871Ba6199`](https://explorer.test.mezo.org/address/0xAF79AB1cdB38c0C3944bB9440614B58871Ba6199) (block 16,341,328) |
 | MezoutAccountFactory | [`0xeE85EE32488FF2D63eFe48159ddB59e6863cdF79`](https://explorer.test.mezo.org/address/0xeE85EE32488FF2D63eFe48159ddB59e6863cdF79) (block 16,343,339) |
 | EntryPoint v0.7 | `0x0000000071727De22E5E9d8BAf0edAc6f37da032` (canonical, already on Mezo) |
@@ -51,7 +51,7 @@ On `/dashboard` a merchant can choose **Create account with passkey** instead of
 
 To withdraw, the merchant enters an address and amount and confirms with the passkey. The server builds the user operation, the passkey signs its hash, and the relayer checks the signature, tops up the account's EntryPoint deposit and submits it through EntryPoint v0.7. The first withdrawal deploys the account. The relayer only submits single MUSD transfers out of registered accounts. Mezout never sees the passkey's private key and cannot move the funds.
 
-A passkey is bound to this site's domain. Moving the app to another domain, or losing every device that holds the passkey, means losing access to the account; adding a recovery key is planned before any mainnet use.
+A passkey is bound to this site's domain, `usemezout.vercel.app`; the first domain, `mezout-snowy.vercel.app`, permanently redirects there (`apps/web/src/middleware.ts`). Moving the app to another domain, or losing every device that holds the passkey, means losing access to the account; adding a recovery key is planned before any mainnet use.
 
 ## Layout
 

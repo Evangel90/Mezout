@@ -1,6 +1,6 @@
 # Mezout merchant API (testnet)
 
-Base URL: `https://mezout-snowy.vercel.app` (or `http://localhost:3000` when running locally). Everything is on Mezo testnet; amounts are test MUSD.
+Base URL: `https://usemezout.vercel.app` (or `http://localhost:3000` when running locally). Everything is on Mezo testnet; amounts are test MUSD.
 
 ## Get an API key
 
@@ -30,7 +30,7 @@ Authorization: Bearer mzk_test_…
 In your Mac terminal, in any folder (replace the key):
 
 ```
-curl -s https://mezout-snowy.vercel.app/v1/invoices \
+curl -s https://usemezout.vercel.app/v1/invoices \
   -H "Authorization: Bearer mzk_test_YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{"amount":"25.00","reference":"order-1001","expires_in":3600}'
@@ -49,7 +49,7 @@ Response `201`:
   "currency": "MUSD",
   "reference": "order-1001",
   "status": "pending",
-  "checkout_url": "https://mezout-snowy.vercel.app/pay/eyJtIjoi…",
+  "checkout_url": "https://usemezout.vercel.app/pay/eyJtIjoi…",
   "expires_at": "2026-10-24T17:27:37.000Z",
   "created_at": "2026-10-24T16:27:37.382Z"
 }
@@ -64,7 +64,7 @@ Send the customer to `checkout_url`. `order_id` is the id the `MezoutRouter` con
 In your Mac terminal, in any folder:
 
 ```
-curl -s https://mezout-snowy.vercel.app/v1/invoices/inv_3bf9a158b706b1412e77528f \
+curl -s https://usemezout.vercel.app/v1/invoices/inv_3bf9a158b706b1412e77528f \
   -H "Authorization: Bearer mzk_test_YOUR_KEY"
 ```
 
