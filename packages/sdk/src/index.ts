@@ -6,3 +6,6 @@ export { mezoutRouterAbi } from "./abi/mezoutRouter";
 export * from "./abi/mezo";
 export * from "./trove";
 export * from "./apiKey";
+export * from "./account";
+export { mezoutAccountAbi } from "./abi/mezoutAccount";
+export { mezoutAccountFactoryAbi } from "./abi/mezoutAccountFactory";

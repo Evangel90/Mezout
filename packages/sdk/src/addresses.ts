@@ -12,4 +12,8 @@ export const mezoTestnetAddresses = {
   btcToken: "0x7b7C000000000000000000000000000000000000",
   mezoToken: "0x7B7c000000000000000000000000000000000001",
   tigrisRouter: "0x9a1ff7FE3a0F69959A3fBa1F1e5ee18e1A9CD7E9",
+  /** Canonical ERC-4337 EntryPoint v0.7; bytecode identical to Ethereum mainnet. */
+  entryPoint07: "0x0000000071727De22E5E9d8BAf0edAc6f37da032",
+  /** Mezout passkey account factory, deployed at block 16,343,339. */
+  mezoutAccountFactory: "0xeE85EE32488FF2D63eFe48159ddB59e6863cdF79",
 } as const satisfies Record<string, Address>;
