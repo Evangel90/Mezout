@@ -4,6 +4,15 @@ Merchant checkout on Mezo: customers pay with MUSD, by borrowing against their B
 
 Status: Milestone 1 in progress. The router (MUSD and borrow paths), hosted checkout, relayer and payment-link dashboard are built and tested; testnet deployment is next. See `docs/BRIEF.md` for the plan and `docs/M0-findings.md` for what has been verified.
 
+## Testnet deployment
+
+| | |
+| --- | --- |
+| MezoutRouter | [`0xAF79AB1cdB38c0C3944bB9440614B58871Ba6199`](https://explorer.test.mezo.org/address/0xAF79AB1cdB38c0C3944bB9440614B58871Ba6199) (block 16,341,328) |
+| Invoice signer | `0x289E256BF9Fb2ce0AF3186B015c371C5b3965943` |
+| Fee recipient | `0x36A95C939Fa70F29421261C770160645Efa9F9E4` |
+| Network | Mezo testnet, chain 31611 |
+
 ## How a payment works
 
 1. The merchant creates a payment link in `/dashboard`. The server signs an EIP-712 invoice (merchant, amount, fee, order id, expiry) with the invoice signer key; the link carries the signed invoice.
@@ -59,7 +68,8 @@ The relayer key in `.env.local` deploys and needs test BTC from faucet.test.mezo
 
 ```
 set -a; source ../.env.local; set +a
-forge script script/Deploy.s.sol --rpc-url mezo_testnet --private-key $RELAYER_PRIVATE_KEY --broadcast
+forge script script/Deploy.s.sol --rpc-url mezo_testnet --private-key $RELAYER_PRIVATE_KEY --broadcast \
+  --verify --verifier blockscout --verifier-url https://api.explorer.test.mezo.org/api/
 ```
 
 Put the printed address in `.env.local` as `NEXT_PUBLIC_ROUTER_ADDRESS`.
