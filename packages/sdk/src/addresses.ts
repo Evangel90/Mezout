@@ -12,6 +12,10 @@ export const mezoTestnetAddresses = {
   btcToken: "0x7b7C000000000000000000000000000000000000",
   mezoToken: "0x7B7c000000000000000000000000000000000001",
   tigrisRouter: "0x9a1ff7FE3a0F69959A3fBa1F1e5ee18e1A9CD7E9",
+  tigrisPoolFactory: "0x4947243CC818b627A5D06d14C4eCe7398A23Ce1A",
+  tigrisMusdBtcPool: "0xd16A5Df82120ED8D626a1a15232bFcE2366d6AA9",
+  /** First MezoutRouter (MUSD and BORROW only). Payment links without a router field were signed for it. */
+  mezoutRouterV1: "0xAF79AB1cdB38c0C3944bB9440614B58871Ba6199",
   /** Canonical ERC-4337 EntryPoint v0.7; bytecode identical to Ethereum mainnet. */
   entryPoint07: "0x0000000071727De22E5E9d8BAf0edAc6f37da032",
   /** Mezout passkey account factory, deployed at block 16,343,339. */

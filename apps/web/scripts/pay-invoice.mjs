@@ -1,6 +1,7 @@
 // Acts as a customer: creates an invoice through the API, signs it like a wallet would, and pays via the relayer.
 // Usage (Mac terminal, inside Mezout/apps/web):
 //   APP_URL=http://localhost:3000 ROUTER=0x... PAYER_PRIVATE_KEY=0x... MERCHANT=0x... AMOUNT=25 [METHOD=BORROW FROM_BALANCE=0] node scripts/pay-invoice.mjs
+// METHOD=MEZO or METHOD=BTC swaps on Tigris with a 1% slippage cap (SLIPPAGE_BPS=100).
 // To pay an invoice created with POST /v1/invoices, pass TOKEN=<the part of checkout_url after /pay/> instead of MERCHANT and AMOUNT.
 import { createPublicClient, http, parseAbi, parseSignature } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
@@ -14,12 +15,17 @@ const {
   RPC_URL = "https://rpc.test.mezo.org",
   METHOD = "MUSD",
   FROM_BALANCE = "0",
+  SLIPPAGE_BPS = "100",
   TOKEN,
 } = process.env;
 if (!PAYER_PRIVATE_KEY || !ROUTER || !(MERCHANT || TOKEN)) throw new Error("Set PAYER_PRIVATE_KEY, ROUTER and MERCHANT or TOKEN");
 
 const MUSD = "0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503";
 const BOS = "0xD757e3646AF370b15f32EB557F0F8380Df7D639e";
+const SWAP_TOKENS = {
+  BTC: { address: "0x7b7C000000000000000000000000000000000000", name: "BTC" },
+  MEZO: { address: "0x7B7c000000000000000000000000000000000001", name: "MEZO" },
+};
 const payer = privateKeyToAccount(PAYER_PRIVATE_KEY);
 const client = createPublicClient({ transport: http(RPC_URL) });
 const chainId = await client.getChainId();
@@ -27,7 +33,10 @@ const musd = parseAbi([
   "function nonces(address) view returns (uint256)",
   "function balanceOf(address) view returns (uint256)",
 ]);
-const router = parseAbi(["function paid(bytes32) view returns (bool)"]);
+const router = parseAbi([
+  "function paid(bytes32) view returns (bool)",
+  "function quoteSwapIn(address tokenIn, uint256 amountOut) view returns (uint256)",
+]);
 const bos = parseAbi(["function getNonce(address) view returns (uint256)"]);
 
 const post = async (path, body) => {
@@ -65,10 +74,10 @@ const permitTypes = {
     { name: "deadline", type: "uint256" },
   ],
 };
-const signPermit = async (value) => {
-  const nonce = await client.readContract({ address: MUSD, abi: musd, functionName: "nonces", args: [payer.address] });
+const signPermit = async (value, token = { address: MUSD, name: "Mezo USD" }) => {
+  const nonce = await client.readContract({ address: token.address, abi: musd, functionName: "nonces", args: [payer.address] });
   const sig = await payer.signTypedData({
-    domain: { name: "Mezo USD", version: "1", chainId, verifyingContract: MUSD },
+    domain: { name: token.name, version: "1", chainId, verifyingContract: token.address },
     types: permitTypes,
     primaryType: "Permit",
     message: { owner: payer.address, spender: ROUTER, value, nonce, deadline },
@@ -106,6 +115,35 @@ if (METHOD === "BORROW") {
     fromBalance: fromBalance.toString(),
     permit: fromBalance > 0n ? await signPermit(fromBalance) : { deadline: "0", v: 0, r: zero, s: zero },
     borrow: { deadline: deadline.toString(), signature },
+  };
+} else if (SWAP_TOKENS[METHOD]) {
+  const tokenIn = SWAP_TOKENS[METHOD];
+  const quote = await client.readContract({ address: ROUTER, abi: router, functionName: "quoteSwapIn", args: [tokenIn.address, invoice.amount] });
+  const maxAmountIn = (quote * (10_000n + BigInt(SLIPPAGE_BPS))) / 10_000n;
+  const limit = { maxAmountIn, deadline: BigInt(Math.floor(Date.now() / 1000) + 120) };
+  console.log(`quote ${Number(quote) / 1e18} ${METHOD}, cap ${Number(maxAmountIn) / 1e18}`);
+  const swapSig = await payer.signTypedData({
+    domain: { name: "MezoutRouter", version: "1", chainId, verifyingContract: ROUTER },
+    types: {
+      SwapPayment: [
+        { name: "invoice", type: "Invoice" },
+        { name: "payer", type: "address" },
+        { name: "tokenIn", type: "address" },
+        { name: "maxAmountIn", type: "uint256" },
+        { name: "deadline", type: "uint256" },
+      ],
+      Invoice: invoiceFields,
+    },
+    primaryType: "SwapPayment",
+    message: { invoice, payer: payer.address, tokenIn: tokenIn.address, ...limit },
+  });
+  body = {
+    method: METHOD,
+    token,
+    payer: payer.address,
+    payerSig: swapSig,
+    limit: { maxAmountIn: maxAmountIn.toString(), deadline: limit.deadline.toString() },
+    permit: await signPermit(maxAmountIn, tokenIn),
   };
 } else {
   body = { method: "MUSD", token, payer: payer.address, payerSig, permit: await signPermit(invoice.amount) };

@@ -32,6 +32,21 @@ export const mezoutRouterAbi = [
         "name": "feeRecipient_",
         "type": "address",
         "internalType": "address"
+      },
+      {
+        "name": "tigrisFactory_",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "btc_",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "mezo_",
+        "type": "address",
+        "internalType": "address"
       }
     ],
     "stateMutability": "nonpayable"
@@ -81,6 +96,19 @@ export const mezoutRouterAbi = [
   },
   {
     "type": "function",
+    "name": "SWAP_PAYMENT_TYPEHASH",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "borrowerOperationsSignatures",
     "inputs": [],
     "outputs": [
@@ -88,6 +116,19 @@ export const mezoutRouterAbi = [
         "name": "",
         "type": "address",
         "internalType": "contract IBorrowerOperationsSignatures"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "btc",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IERC20"
       }
     ],
     "stateMutability": "view"
@@ -260,6 +301,79 @@ export const mezoutRouterAbi = [
   },
   {
     "type": "function",
+    "name": "hashSwapPayment",
+    "inputs": [
+      {
+        "name": "invoice",
+        "type": "tuple",
+        "internalType": "struct MezoutRouter.Invoice",
+        "components": [
+          {
+            "name": "merchant",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "amount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "fee",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "orderId",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "expiry",
+            "type": "uint64",
+            "internalType": "uint64"
+          }
+        ]
+      },
+      {
+        "name": "payer",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "tokenIn",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "limit",
+        "type": "tuple",
+        "internalType": "struct MezoutRouter.SwapLimit",
+        "components": [
+          {
+            "name": "maxAmountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "invoiceSigner",
     "inputs": [],
     "outputs": [
@@ -267,6 +381,19 @@ export const mezoutRouterAbi = [
         "name": "",
         "type": "address",
         "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "mezo",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IERC20"
       }
     ],
     "stateMutability": "view"
@@ -302,6 +429,105 @@ export const mezoutRouterAbi = [
       }
     ],
     "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "payWithBTC",
+    "inputs": [
+      {
+        "name": "invoice",
+        "type": "tuple",
+        "internalType": "struct MezoutRouter.Invoice",
+        "components": [
+          {
+            "name": "merchant",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "amount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "fee",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "orderId",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "expiry",
+            "type": "uint64",
+            "internalType": "uint64"
+          }
+        ]
+      },
+      {
+        "name": "invoiceSig",
+        "type": "bytes",
+        "internalType": "bytes"
+      },
+      {
+        "name": "payer",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "payerSig",
+        "type": "bytes",
+        "internalType": "bytes"
+      },
+      {
+        "name": "limit",
+        "type": "tuple",
+        "internalType": "struct MezoutRouter.SwapLimit",
+        "components": [
+          {
+            "name": "maxAmountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
+      },
+      {
+        "name": "permit",
+        "type": "tuple",
+        "internalType": "struct MezoutRouter.PermitSig",
+        "components": [
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "v",
+            "type": "uint8",
+            "internalType": "uint8"
+          },
+          {
+            "name": "r",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "s",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          }
+        ]
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -419,6 +645,105 @@ export const mezoutRouterAbi = [
   },
   {
     "type": "function",
+    "name": "payWithMEZO",
+    "inputs": [
+      {
+        "name": "invoice",
+        "type": "tuple",
+        "internalType": "struct MezoutRouter.Invoice",
+        "components": [
+          {
+            "name": "merchant",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "amount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "fee",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "orderId",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "expiry",
+            "type": "uint64",
+            "internalType": "uint64"
+          }
+        ]
+      },
+      {
+        "name": "invoiceSig",
+        "type": "bytes",
+        "internalType": "bytes"
+      },
+      {
+        "name": "payer",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "payerSig",
+        "type": "bytes",
+        "internalType": "bytes"
+      },
+      {
+        "name": "limit",
+        "type": "tuple",
+        "internalType": "struct MezoutRouter.SwapLimit",
+        "components": [
+          {
+            "name": "maxAmountIn",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
+      },
+      {
+        "name": "permit",
+        "type": "tuple",
+        "internalType": "struct MezoutRouter.PermitSig",
+        "components": [
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "v",
+            "type": "uint8",
+            "internalType": "uint8"
+          },
+          {
+            "name": "r",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "s",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          }
+        ]
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "payWithMUSD",
     "inputs": [
       {
@@ -514,6 +839,43 @@ export const mezoutRouterAbi = [
   },
   {
     "type": "function",
+    "name": "quoteSwapIn",
+    "inputs": [
+      {
+        "name": "tokenIn",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "amountOut",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "amountIn",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "tigrisFactory",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract ITigrisPoolFactory"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "troveManager",
     "inputs": [],
     "outputs": [
@@ -599,6 +961,11 @@ export const mezoutRouterAbi = [
   },
   {
     "type": "error",
+    "name": "InsufficientLiquidity",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "InvalidBorrowAmount",
     "inputs": []
   },
@@ -634,7 +1001,17 @@ export const mezoutRouterAbi = [
   },
   {
     "type": "error",
+    "name": "NoPool",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "PermitFailed",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "QuoteExpired",
     "inputs": []
   },
   {
@@ -655,6 +1032,22 @@ export const mezoutRouterAbi = [
   },
   {
     "type": "error",
+    "name": "SlippageExceeded",
+    "inputs": [
+      {
+        "name": "amountIn",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "maxAmountIn",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
     "name": "StringTooLong",
     "inputs": [
       {
@@ -663,6 +1056,11 @@ export const mezoutRouterAbi = [
         "internalType": "string"
       }
     ]
+  },
+  {
+    "type": "error",
+    "name": "SwapMismatch",
+    "inputs": []
   },
   {
     "type": "error",

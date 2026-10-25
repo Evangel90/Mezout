@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
-import type { Hex } from "viem";
+import { getAddress, type Hex } from "viem";
 import { mezoutRouterAbi } from "@mezout/sdk";
 import { publicClient } from "@/lib/server/clients";
 import { getDb } from "@/lib/server/db/client";
-import { serverEnv } from "@/lib/server/env";
 import { findInvoice, invoiceJson, invoiceStatus } from "@/lib/server/invoices";
 import { apiError, requireMerchant } from "@/lib/server/v1";
 
@@ -18,7 +17,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   let paid: boolean;
   try {
     paid = await publicClient().readContract({
-      address: serverEnv.router(),
+      address: getAddress(row.router),
       abi: mezoutRouterAbi,
       functionName: "paid",
       args: [row.orderId as Hex],

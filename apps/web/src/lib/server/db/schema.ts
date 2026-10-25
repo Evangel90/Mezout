@@ -36,6 +36,9 @@ export const invoices = pgTable(
     currency: text("currency").notNull().default("MUSD"),
     reference: text("reference"),
     token: text("token").notNull(),
+    // The MezoutRouter the invoice was signed for, which records its payment. Rows from before routers were
+    // tracked were all signed for the first router.
+    router: text("router").notNull().default("0xAF79AB1cdB38c0C3944bB9440614B58871Ba6199"),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },

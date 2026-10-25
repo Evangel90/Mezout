@@ -80,6 +80,16 @@ describe("invoices", () => {
     db = await testDb();
   });
 
+  it("records the router the invoice was signed for", async () => {
+    const { merchant } = await issueApiKey(db, await signedRequest(), verify, now);
+    const router = "0xe132f9a1c8dbc31015C3Cf4eE8706c9031bFa431";
+    const sign = async (invoice: Parameters<typeof encodeSignedInvoice>[0]["invoice"]) =>
+      encodeSignedInvoice({ invoice, signature: "0x01", router });
+    const row = await createInvoice(db, merchant, { amount: "1", expiresIn: 3600 }, sign, now);
+    expect(row.router).toBe(router);
+    expect(decodeSignedInvoice(row.token).router).toBe(router);
+  });
+
   it("creates a signed invoice that pays the key's merchant", async () => {
     const { merchant } = await issueApiKey(db, await signedRequest(), verify, now);
     const row = await createInvoice(db, merchant, { amount: "25.5", reference: "order-42", expiresIn: 3600 }, fakeSign, now);
@@ -90,6 +100,8 @@ describe("invoices", () => {
     expect(invoice.fee).toBe(0n);
     expect(invoice.orderId).toBe(row.orderId);
     expect(invoice.expiry).toBe(BigInt(now / 1000 + 3600));
+    // fakeSign names no router, so the row records the first router, as for links made before routers were tracked.
+    expect(row.router).toBe("0xAF79AB1cdB38c0C3944bB9440614B58871Ba6199");
 
     const json = invoiceJson(row, merchant, "pending", "https://mezout.test/v1/invoices");
     expect(json).toMatchObject({

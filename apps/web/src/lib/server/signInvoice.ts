@@ -17,5 +17,5 @@ export const signInvoiceToken: InvoiceSigner = async (invoice) => {
     primaryType: "Invoice",
     message: invoice,
   });
-  return encodeSignedInvoice({ invoice, signature });
+  return encodeSignedInvoice({ invoice, signature, router });
 };

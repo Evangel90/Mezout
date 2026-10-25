@@ -28,6 +28,20 @@ export const paymentTypes = {
   Invoice: invoiceFields,
 } as const;
 
+/** The payer's terms for a swap payment: input token, slippage cap and quote deadline. */
+export type SwapLimit = { maxAmountIn: bigint; deadline: bigint };
+
+export const swapPaymentTypes = {
+  SwapPayment: [
+    { name: "invoice", type: "Invoice" },
+    { name: "payer", type: "address" },
+    { name: "tokenIn", type: "address" },
+    { name: "maxAmountIn", type: "uint256" },
+    { name: "deadline", type: "uint256" },
+  ],
+  Invoice: invoiceFields,
+} as const;
+
 export const permitTypes = {
   Permit: [
     { name: "owner", type: "address" },
@@ -53,6 +67,13 @@ export const routerDomain = (router: Address, chainId: number = mezoTestnet.id) 
 
 export const musdDomain = (chainId: number = mezoTestnet.id) =>
   ({ name: "Mezo USD", version: "1", chainId, verifyingContract: mezoTestnetAddresses.musd }) as const;
+
+/** Permit domains of Mezo's BTC and MEZO precompile tokens, matched against their DOMAIN_SEPARATOR on testnet. */
+export const btcDomain = (chainId: number = mezoTestnet.id) =>
+  ({ name: "BTC", version: "1", chainId, verifyingContract: mezoTestnetAddresses.btcToken }) as const;
+
+export const mezoDomain = (chainId: number = mezoTestnet.id) =>
+  ({ name: "MEZO", version: "1", chainId, verifyingContract: mezoTestnetAddresses.mezoToken }) as const;
 
 export const borrowerOperationsSignaturesDomain = (chainId: number = mezoTestnet.id) =>
   ({

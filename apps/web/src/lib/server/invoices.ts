@@ -2,7 +2,7 @@ import "server-only";
 import { randomBytes } from "node:crypto";
 import { and, eq } from "drizzle-orm";
 import { formatUnits, getAddress, parseUnits, type Hex } from "viem";
-import type { Invoice } from "@mezout/sdk";
+import { decodeSignedInvoice, linkRouter, type Invoice } from "@mezout/sdk";
 import type { Db } from "./db/client";
 import { invoices } from "./db/schema";
 import type { Merchant } from "./apiKeys";
@@ -41,6 +41,7 @@ export async function createInvoice(
       fee: invoice.fee.toString(),
       reference: input.reference ?? null,
       token,
+      router: linkRouter(decodeSignedInvoice(token)),
       expiresAt,
     })
     .returning();
