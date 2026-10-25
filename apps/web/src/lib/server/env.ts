@@ -18,4 +18,12 @@ export const serverEnv = {
   router: () => address("NEXT_PUBLIC_ROUTER_ADDRESS"),
   relayerKey: () => required("RELAYER_PRIVATE_KEY") as Hex,
   invoiceSignerKey: () => required("INVOICE_SIGNER_PRIVATE_KEY") as Hex,
+  webhookSigningSecret: () => required("WEBHOOK_SIGNING_SECRET"),
+  cronSecret: () => required("CRON_SECRET"),
+  // Absolute links in webhook payloads. Vercel sets VERCEL_PROJECT_PRODUCTION_URL to the production domain.
+  appUrl: () =>
+    process.env.APP_URL ??
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : "http://localhost:3000"),
 };

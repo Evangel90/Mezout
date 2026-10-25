@@ -1,0 +1,19 @@
+# Runs Mezout's indexer every 5 minutes: records new payments, announces expiries and sends due webhooks.
+# Vercel's Hobby plan only allows daily cron jobs, so GitHub Actions calls /api/cron instead. The checkout also
+# triggers an immediate sync after each payment, so this run is the backstop, not the fast path.
+name: Indexer
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+permissions: {}
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Call /api/cron
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          curl -fsS -m 90 -H "Authorization: Bearer $CRON_SECRET" https://usemezout.vercel.app/api/cron

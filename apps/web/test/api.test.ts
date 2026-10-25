@@ -4,7 +4,7 @@ import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { decodeSignedInvoice, encodeSignedInvoice, keyRequestMessage } from "@mezout/sdk";
 import type { Db } from "@/lib/server/db/client";
 import { authenticate, issueApiKey, MAX_ACTIVE_KEYS, REQUEST_TTL_MS } from "@/lib/server/apiKeys";
-import { createInvoice, findInvoice, invoiceJson, invoiceStatus } from "@/lib/server/invoices";
+import { createInvoice, findInvoice, invoiceJson, invoiceStatus, type PaymentRow } from "@/lib/server/invoices";
 import { testDb } from "./db";
 
 const verify = (args: { address: Hex; message: string; signature: Hex }) => verifyMessage(args);
@@ -103,7 +103,7 @@ describe("invoices", () => {
     // fakeSign names no router, so the row records the first router, as for links made before routers were tracked.
     expect(row.router).toBe("0xAF79AB1cdB38c0C3944bB9440614B58871Ba6199");
 
-    const json = invoiceJson(row, merchant, "pending", "https://mezout.test/v1/invoices");
+    const json = invoiceJson({ row, payment: null, refunded: 0n }, merchant, "https://mezout.test/v1/invoices", now);
     expect(json).toMatchObject({
       object: "invoice",
       amount: "25.5",
@@ -111,6 +111,8 @@ describe("invoices", () => {
       currency: "MUSD",
       reference: "order-42",
       status: "pending",
+      amount_refunded: "0",
+      payment: null,
       expires_at: "2026-10-24T13:00:00.000Z",
     });
     expect(json.id).toMatch(/^inv_[0-9a-f]{24}$/);
@@ -126,11 +128,14 @@ describe("invoices", () => {
     expect(await findInvoice(db, b, row.id)).toBeNull();
   });
 
-  it("derives status from the chain and the expiry", async () => {
+  it("derives status from the indexed payment, refunds and the expiry", async () => {
     const { merchant } = await issueApiKey(db, await signedRequest(), verify, now);
     const row = await createInvoice(db, merchant, { amount: "1", expiresIn: 3600 }, fakeSign, now);
-    expect(invoiceStatus(row, false, now)).toBe("pending");
-    expect(invoiceStatus(row, false, now + 3600_000)).toBe("expired");
-    expect(invoiceStatus(row, true, now + 3600_000)).toBe("paid");
+    const payment = { amount: "1000000000000000000" } as PaymentRow;
+    expect(invoiceStatus({ row, payment: null, refunded: 0n }, now)).toBe("pending");
+    expect(invoiceStatus({ row, payment: null, refunded: 0n }, now + 3600_000)).toBe("expired");
+    expect(invoiceStatus({ row, payment, refunded: 0n }, now + 3600_000)).toBe("paid");
+    expect(invoiceStatus({ row, payment, refunded: 1n }, now)).toBe("paid");
+    expect(invoiceStatus({ row, payment, refunded: 10n ** 18n }, now)).toBe("refunded");
   });
 });

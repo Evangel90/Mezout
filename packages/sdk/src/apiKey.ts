@@ -9,3 +9,13 @@ export function keyRequestMessage(address: Address, issuedAt: string): string {
     "Network: Mezo testnet (31611)",
   ].join("\n");
 }
+
+/** The exact text a merchant signs to sign in to the dashboard. Signing costs no gas. */
+export function signInMessage(address: Address, issuedAt: string): string {
+  return [
+    "Mezout: sign in to the dashboard",
+    `Payout address: ${getAddress(address)}`,
+    `Issued at: ${issuedAt}`,
+    "Network: Mezo testnet (31611)",
+  ].join("\n");
+}

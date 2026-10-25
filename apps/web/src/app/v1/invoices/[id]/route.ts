@@ -1,31 +1,22 @@
 import { NextResponse } from "next/server";
-import { getAddress, type Hex } from "viem";
-import { mezoutRouterAbi } from "@mezout/sdk";
-import { publicClient } from "@/lib/server/clients";
 import { getDb } from "@/lib/server/db/client";
-import { findInvoice, invoiceJson, invoiceStatus } from "@/lib/server/invoices";
+import { findInvoiceView, invoiceJson } from "@/lib/server/invoices";
+import { syncIfStale } from "@/lib/server/sync";
 import { apiError, requireMerchant } from "@/lib/server/v1";
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   const merchant = await requireMerchant(req);
   if (merchant instanceof NextResponse) return merchant;
 
-  const row = await findInvoice(getDb(), merchant, params.id);
-  if (!row) return apiError(404, "No such invoice");
+  const db = getDb();
+  let view = await findInvoiceView(db, merchant, params.id);
+  if (!view) return apiError(404, "No such invoice");
 
-  // The router is the source of truth for payment; this read is replaced by the indexer in M3.
-  let paid: boolean;
-  try {
-    paid = await publicClient().readContract({
-      address: getAddress(row.router),
-      abi: mezoutRouterAbi,
-      functionName: "paid",
-      args: [row.orderId as Hex],
-    });
-  } catch {
-    return apiError(503, "Could not read payment status from Mezo. Try again.");
+  // Status comes only from indexed Paid events. If the indexer has not run for a few seconds, catch it up first so
+  // a poll right after checkout sees the payment.
+  if (!view.payment && view.row.expiresAt.getTime() > Date.now() - 10 * 60_000) {
+    const synced = await syncIfStale(5_000).catch(() => null);
+    if (synced?.recorded) view = (await findInvoiceView(db, merchant, params.id)) ?? view;
   }
-  return NextResponse.json(invoiceJson(row, merchant, invoiceStatus(row, paid), req.url), {
-    headers: { "cache-control": "no-store" },
-  });
+  return NextResponse.json(invoiceJson(view, merchant, req.url), { headers: { "cache-control": "no-store" } });
 }
