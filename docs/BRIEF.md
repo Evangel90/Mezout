@@ -268,9 +268,9 @@ M0 and M1 must be done by Sunday 26 Oct for the Wave 1 submission. M2–M6 fill 
 
 ### M2 — Swap paths (31 Oct)
 
-- [ ] `payWithMEZO` and `payWithBTC` via Tigris, with slippage cap, deadline and leftover refunds
-- [ ] Checkout shows only the paths the connected wallet can actually use
-- [ ] Fork tests for both swap paths, including slippage failures
+- [ ] `payWithMEZO` and `payWithBTC` via Tigris, with slippage cap, deadline and leftover refunds (BTC live on testnet; MEZO waits on the MUSD/MEZO test pool)
+- [x] Checkout shows only the paths the connected wallet can actually use
+- [x] Fork tests for both swap paths, including slippage failures
 
 ### M3 — Merchant platform (4 Nov)
 
@@ -358,6 +358,15 @@ The owner's approval below authorizes the agent to start M0 and M1 under these l
 | Question | Decision |
 | --- | --- |
 | Merchants without a wallet | Brought into Wave 1 at the owner's request: merchants can sign up with a passkey. Each passkey owns a `MezoutAccount` (OpenZeppelin ERC-4337 account with a WebAuthn signer, EntryPoint v0.7) that receives payouts; Mezout's relayer bundles and sponsors withdrawals. Mezout holds no keys and custody is unchanged. Wallet merchants work as before. |
+
+**Implementation notes for M2 (25 Oct)**
+
+| Question | What was built |
+| --- | --- |
+| How `payWithBTC` takes BTC | Through Mezo's BTC ERC-20 and its permit, not `msg.value`: it shares a balance with native BTC, so BTC payments are gasless and relayed like MUSD. Bitcoin-wallet smart accounts approve and call the router themselves. |
+| Leftover refunds (option C) | The router computes the least input from the pool's reserves at execution and pulls only that from the payer into the pool, so nothing is left to refund. The payer signs a cap (quote plus 1%) and a deadline in a `SwapPayment` message that a relayer cannot change. |
+| Which pools | Volatile Tigris pools, looked up in the Tigris factory; both MUSD/BTC and the new MUSD/MEZO pool are volatile. |
+| Router upgrade | The router cannot be upgraded, so router v2 is a new deployment. Payment links and invoices record their router; v1 keeps paying older links with MUSD or borrowing. |
 
 **Approval**
 

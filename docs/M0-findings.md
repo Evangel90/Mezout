@@ -66,6 +66,18 @@ Ignore the look-alike "MUSD" token at `0xCa54…F234D` (it has a BTC pool on Tig
 3. MEZO: create and fund a MUSD/MEZO test pool on Tigris in M2.
 4. Swaps: option C. The router computes the exact input from the pool's reserves, swaps only that, and refunds unused BTC or MEZO.
 
+## Swap facts (checked 25 Oct)
+
+| Fact | Result |
+| --- | --- |
+| Tigris pool fee | Volatile default 4 basis points (0.04%), per pool via `PoolFactory.getFee(pool, stable)`; taken from the input, rounded down, and moved out of the pool before the `x*y` check |
+| Least input for an exact output | `net = ceil(rIn * out / (rOut - out))`, then `amountIn = floor((net - 1) * 10000 / (10000 - fee)) + 1`. Fuzzed against a model pool and checked on a fork of the real MUSD/BTC pool: the quote passes, the quote minus 1 wei fails with `K()` |
+| BTC and MEZO tokens | Both precompiles implement EIP-2612 permit; domains `("BTC", "1")` and `("MEZO", "1")`, chain 31611, verifying contract = token address (matched to `DOMAIN_SEPARATOR()`); no `eip712Domain()` |
+| Native BTC and the BTC ERC-20 | One balance: a relayed `payWithBTC` moved exactly the quoted amount out of the payer's native balance ([`0x264e…a06b`](https://explorer.test.mezo.org/tx/0x264ee62d25265c7686153f0962ad96d8dc44272fc07e2ef297de5dab8819a06b)). This answers finding 4: no `msg.value` needed |
+| MUSD/BTC pool | `0xd16A…6AA9`, volatile, ~102.5M MUSD and ~1,304 BTC: about 78,600 MUSD per BTC, so checkout payments barely move it |
+| Pool creation | `PoolFactory.createPool` is permissionless, and the Tigris Router's `addLiquidity` creates a missing pool and funds it in one call |
+| Foundry and precompiles | `forge script` cannot move BTC or MEZO (its local simulation has no precompiles), so the pool is seeded with `cast` |
+
 ## Account abstraction on Mezo testnet (checked 24 Oct)
 
 | Fact | Result |
