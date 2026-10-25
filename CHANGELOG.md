@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Landing page rewritten for judges and merchants (passkey sign-up, gasless payments, API, verified contracts); wallet providers now load only on `/dashboard` and `/pay`, so the landing page is server-rendered.
+- Contracts verified on Sourcify (exact match); the Mezo explorer cannot verify Cancun builds.
 - Canonical domain is now `usemezout.vercel.app`; `mezout-snowy.vercel.app` redirects there (308), since passkeys are bound to one domain.
 - M1: walletless merchants: `MezoutAccount` (OpenZeppelin ERC-4337 account with a passkey/WebAuthn signer, EntryPoint v0.7) and `MezoutAccountFactory` deployed to testnet; passkey sign-up, sign-in, API keys and relayer-sponsored MUSD withdrawals in the dashboard.
 - M1: minimal merchant API: wallet-signed API key issuance (`/api/keys`, dashboard panel), `POST /v1/invoices` and `GET /v1/invoices/:id` with on-chain status; Postgres via Drizzle with migrations; reference in `docs/API.md`.

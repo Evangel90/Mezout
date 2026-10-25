@@ -77,6 +77,7 @@ Ignore the look-alike "MUSD" token at `0xCa54…F234D` (it has a BTC pool on Tig
 | Gas price | ~146 wei; a passkey account deployment plus withdrawal costs a fraction of a satoshi |
 | Block gas limit | 10,000,000 |
 | Gas charged | At least half the transaction's gas limit (e.g. 550,000 charged for a 1.1M limit; 150,000 for 300,000). Generous limits roughly double the cost, which is negligible at these prices |
+| Explorer source verification | Fails for every method: the verifier's EVM versions stop at `london` (no `paris`, `shanghai`, `cancun`), and our contracts need Cancun (transient storage). On-chain bytecode matches our build exactly; Sourcify (which supports chain 31611) verifies both contracts as exact matches |
 | Bundlers | No public bundler found; Mezout's relayer calls `handleOps` itself and tops up each account's EntryPoint deposit |
 
 ## How to re-run the checks
