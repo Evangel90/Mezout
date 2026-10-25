@@ -259,11 +259,11 @@ M0 and M1 must be done by Sunday 26 Oct for the Wave 1 submission. M2–M6 fill 
 
 ### M1 — Wave 1 MVP (26 Oct)
 
-- [ ] `payWithMUSD` and `payWithBorrow` with invoice signing, deployed and verified on Mezo testnet
-- [ ] Hosted checkout with Mezo Passport pays a test invoice end to end through the relayer
-- [ ] Merchant can create a payment link and QR from a minimal dashboard page
-- [ ] README with what it is, the live link, contract address, and how to run it (every command says where it runs)
-- [ ] Two reference testnet transactions linked in the README
+- [x] `payWithMUSD` and `payWithBorrow` with invoice signing, deployed and verified on Mezo testnet (verified on Sourcify; the Mezo explorer cannot verify Cancun builds)
+- [x] Hosted checkout with Mezo Passport pays a test invoice end to end through the relayer
+- [x] Merchant can create a payment link and QR from a minimal dashboard page
+- [x] README with what it is, the live link, contract address, and how to run it (every command says where it runs)
+- [x] Two reference testnet transactions linked in the README
 - [ ] **Gate:** owner submits Wave 1 on AKINDO
 
 ### M2 — Swap paths (31 Oct)
