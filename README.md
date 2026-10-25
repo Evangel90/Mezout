@@ -2,7 +2,7 @@
 
 Merchant checkout on Mezo: customers pay with MUSD, by borrowing against their BTC, with MEZO, or with BTC, and the merchant always receives the exact invoiced amount in MUSD. Mezout never holds funds. Built for the Mezo Buildathon (Access & Distribution track), Mezo testnet only.
 
-Status: Milestone 2 in progress: paying with MEZO or BTC through Tigris swaps is built, tested and live for BTC; MEZO waits on a MUSD/MEZO test pool. Already built in M1: the router (MUSD and borrow paths), hosted checkout, relayer, payment-link dashboard, a minimal merchant API (API keys, create and retrieve invoices) and walletless merchant accounts (passkey smart accounts, ERC-4337) are built and tested; deployed to Mezo testnet with live reference payments. See `docs/BRIEF.md` for the plan, `docs/M0-findings.md` for what has been verified and `docs/API.md` for the API.
+Status: Milestone 2 built: customers can pay with MEZO or BTC, swapped to exact MUSD on Tigris, live on testnet. Already built in M1: the router (MUSD and borrow paths), hosted checkout, relayer, payment-link dashboard, a minimal merchant API (API keys, create and retrieve invoices) and walletless merchant accounts (passkey smart accounts, ERC-4337) are built and tested; deployed to Mezo testnet with live reference payments. See `docs/BRIEF.md` for the plan, `docs/M0-findings.md` for what has been verified and `docs/API.md` for the API.
 
 ## Testnet deployment
 
@@ -12,6 +12,7 @@ Status: Milestone 2 in progress: paying with MEZO or BTC through Tigris swaps is
 | MezoutRouter | [`0xe132f9a1c8dbc31015C3Cf4eE8706c9031bFa431`](https://explorer.test.mezo.org/address/0xe132f9a1c8dbc31015C3Cf4eE8706c9031bFa431) (block 16,367,275): MUSD, borrow, MEZO and BTC |
 | MezoutRouter v1 | [`0xAF79AB1cdB38c0C3944bB9440614B58871Ba6199`](https://explorer.test.mezo.org/address/0xAF79AB1cdB38c0C3944bB9440614B58871Ba6199) (block 16,341,328): MUSD and borrow only; still pays links made before 25 Oct |
 | MezoutAccountFactory | [`0xeE85EE32488FF2D63eFe48159ddB59e6863cdF79`](https://explorer.test.mezo.org/address/0xeE85EE32488FF2D63eFe48159ddB59e6863cdF79) (block 16,343,339) |
+| Tigris MUSD/MEZO pool | [`0x8eb88d745B0aFFF9D71AbC40d7F550Cded7bB342`](https://explorer.test.mezo.org/address/0x8eb88d745B0aFFF9D71AbC40d7F550Cded7bB342): created by Mezout with test tokens at 1 MUSD per MEZO (80 + 80) |
 | EntryPoint v0.7 | `0x0000000071727De22E5E9d8BAf0edAc6f37da032` (canonical, already on Mezo) |
 | Invoice signer | `0x289E256BF9Fb2ce0AF3186B015c371C5b3965943` |
 | Fee recipient | `0x36A95C939Fa70F29421261C770160645Efa9F9E4` |
@@ -28,14 +29,15 @@ All relayed by `0x7ECf…9a15`, so the customer paid no gas. Merchant `0x36A9…
 | Borrow against BTC | 150 MUSD, all borrowed; loan ratio 198% → 184% | [`0x6b8c…11ae`](https://explorer.test.mezo.org/tx/0x6b8c1ba62cddf247e14837380fbb8c154dc2b87e76d0c1b8afc867ec229711ae) | 513,935 |
 | Pay with MUSD, invoice from production `POST /v1/invoices` | 12.5 MUSD to a new API merchant `0x9013…81C9` | [`0xf80d…2ade`](https://explorer.test.mezo.org/tx/0xf80ddf1aa4f9618eb00942606741d017941355fe568b314d87b11e9fd20e2ade) | 150,000 |
 
-### Pay with BTC (25 Oct 2026)
+### Pay with BTC or MEZO (25 Oct 2026)
 
-Relayed, so the customer paid no gas. The customer was charged exactly the router's quote in native BTC and the merchant received exactly 1 MUSD.
+Relayed, so the customer paid no gas. Each time the customer was charged exactly the router's quote and the merchant received exactly the invoiced MUSD.
 
 | Path | Amount | Transaction |
 | --- | --- | --- |
 | Pay with BTC from `scripts/pay-invoice.mjs` | 1 MUSD for 0.0000127 BTC | [`0x264e…a06b`](https://explorer.test.mezo.org/tx/0x264ee62d25265c7686153f0962ad96d8dc44272fc07e2ef297de5dab8819a06b) |
 | Pay with BTC clicked through the checkout in Chrome | 1 MUSD | [`0x79d8…afff`](https://explorer.test.mezo.org/tx/0x79d84d8a7e4d523b08c757c4e0870107b3fe30d0fd9fdc7827b3e491c544afff) |
+| Pay with MEZO clicked through the checkout in Chrome | 2 MUSD for 2.052 MEZO | [`0x3c7e…126a`](https://explorer.test.mezo.org/tx/0x3c7ea6fb940eb06f93c1d276129ab94a7dec6d625efa10422918722a0cb8126a) |
 
 ### Passkey merchant account (24 Oct 2026)
 

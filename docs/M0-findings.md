@@ -75,6 +75,7 @@ Ignore the look-alike "MUSD" token at `0xCa54…F234D` (it has a BTC pool on Tig
 | BTC and MEZO tokens | Both precompiles implement EIP-2612 permit; domains `("BTC", "1")` and `("MEZO", "1")`, chain 31611, verifying contract = token address (matched to `DOMAIN_SEPARATOR()`); no `eip712Domain()` |
 | Native BTC and the BTC ERC-20 | One balance: a relayed `payWithBTC` moved exactly the quoted amount out of the payer's native balance ([`0x264e…a06b`](https://explorer.test.mezo.org/tx/0x264ee62d25265c7686153f0962ad96d8dc44272fc07e2ef297de5dab8819a06b)). This answers finding 4: no `msg.value` needed |
 | MUSD/BTC pool | `0xd16A…6AA9`, volatile, ~102.5M MUSD and ~1,304 BTC: about 78,600 MUSD per BTC, so checkout payments barely move it |
+| MUSD/MEZO pool | Created by Mezout at [`0x8eb88d745B0aFFF9D71AbC40d7F550Cded7bB342`](https://explorer.test.mezo.org/address/0x8eb88d745B0aFFF9D71AbC40d7F550Cded7bB342) with 80 MUSD and 80 MEZO from the faucet (a test price of 1 MUSD per MEZO; testnet MEZO has no market price). Small, so MEZO payments above a few MUSD move the price noticeably; more faucet MEZO deepens it |
 | Pool creation | `PoolFactory.createPool` is permissionless, and the Tigris Router's `addLiquidity` creates a missing pool and funds it in one call |
 | Foundry and precompiles | `forge script` cannot move BTC or MEZO (its local simulation has no precompiles), so the pool is seeded with `cast` |
 

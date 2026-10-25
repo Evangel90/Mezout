@@ -268,7 +268,7 @@ M0 and M1 must be done by Sunday 26 Oct for the Wave 1 submission. M2–M6 fill 
 
 ### M2 — Swap paths (31 Oct)
 
-- [ ] `payWithMEZO` and `payWithBTC` via Tigris, with slippage cap, deadline and leftover refunds (BTC live on testnet; MEZO waits on the MUSD/MEZO test pool)
+- [x] `payWithMEZO` and `payWithBTC` via Tigris, with slippage cap, deadline and leftover refunds (both live on testnet; MUSD/MEZO test pool seeded at 1 MUSD per MEZO)
 - [x] Checkout shows only the paths the connected wallet can actually use
 - [x] Fork tests for both swap paths, including slippage failures
 
