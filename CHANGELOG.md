@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Dashboard redesign: sign-in is one clear choice between a passkey account and a Mezo wallet, each a separate merchant account; creating or choosing a passkey signs in straight away, and a remembered passkey signs back in with one tap. Signed in, the dashboard has Overview, Payments, Developers and Account tabs, with an account chip showing which method is in use. Payment links show a full-size QR code with Copy and Open buttons. Landing page updated for BTC and MEZO payments, webhooks and router v2.
+
 - M3: indexer (`apps/web/src/lib/server/indexer.ts`) reads `Paid` events from both routers in chunks of up to 10,000 blocks, one block behind the head, with backfill from v1's deploy block. Invoices become paid only from indexed events. Runs from `/api/cron` (every 5 minutes through `.github/workflows/indexer.yml`), after each checkout payment (`/api/sync`), and when an unpaid invoice is read while the index is stale. New status `refunded`; invoices gain `amount_refunded` and `payment`. Migration `0003`.
 - M3: signed webhooks: `invoice.paid`, `invoice.expired`, `refund.completed` and `ping`, HMAC-SHA256 `Mezout-Signature` header, retries with backoff for 24 hours, a delivery log with Retry now, up to 3 endpoints per merchant (`/v1/webhook_endpoints`). Deliveries go only to public https addresses, checked after DNS resolution and without following redirects.
 - M3: refunds: `POST /v1/refunds` requests one; the dashboard sends MUSD from the payout address to the customer and Mezout verifies the transfer on-chain before marking it completed.

@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { formatUnits, getAddress, parseUnits, type Address, type Hex } from "viem";
 import { api, errorText } from "@/lib/api";
 import { txUrl } from "@/lib/config";
+import { useMerchant } from "@/lib/merchant";
 
 type Order = {
   invoiceId: string | null;
@@ -32,10 +34,12 @@ const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 const wei = (v: string) => parseUnits(v, 18);
 
 /**
- * Orders: every stored invoice and every payment to an older link, with refunds. A refund is an MUSD transfer the
- * merchant sends from their own account (sendMusd); Mezout then checks it on-chain and records it.
+ * Payments: every stored invoice and every payment to an older link, with refunds. A refund is an MUSD transfer the
+ * merchant sends from their own account (sendMusd); Mezout then checks it on-chain and records it. With `limit`, it is
+ * the short "recent payments" list on the overview.
  */
-export function OrdersPanel({ sendMusd }: { sendMusd: (to: Address, amount: bigint) => Promise<Hex> }) {
+export function OrdersPanel({ limit }: { limit?: number }) {
+  const { sendMusd } = useMerchant();
   const [orders, setOrders] = useState<Order[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,7 +48,7 @@ export function OrdersPanel({ sendMusd }: { sendMusd: (to: Address, amount: bigi
       setOrders((await api<{ orders: Order[] }>("/api/dashboard/orders")).orders);
       setError(null);
     } catch (err) {
-      setError(errorText(err, "Could not load orders"));
+      setError(errorText(err, "Could not load payments"));
     }
   }, []);
 
@@ -57,35 +61,52 @@ export function OrdersPanel({ sendMusd }: { sendMusd: (to: Address, amount: bigi
   return (
     <div className="space-y-4 rounded-xl border border-stone-200 bg-white p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-lg font-semibold">Orders</h2>
-        <div className="flex gap-2">
-          <button onClick={load} className="rounded border border-stone-300 px-3 py-1 text-sm hover:bg-stone-100">
-            Refresh
-          </button>
-          <a
-            href="/api/dashboard/orders?format=csv"
-            className="rounded border border-stone-300 px-3 py-1 text-sm hover:bg-stone-100"
-          >
-            Export CSV
-          </a>
-        </div>
+        <h2 className="text-lg font-semibold">{limit ? "Recent payments" : "Payments"}</h2>
+        {limit ? (
+          <Link href="/dashboard/payments" className="text-sm text-stone-600 underline hover:text-stone-900">
+            View all
+          </Link>
+        ) : (
+          <div className="flex gap-2">
+            <button onClick={load} className="rounded border border-stone-300 px-3 py-1 text-sm hover:bg-stone-100">
+              Refresh
+            </button>
+            <a href="/api/dashboard/orders?format=csv" className="rounded border border-stone-300 px-3 py-1 text-sm hover:bg-stone-100">
+              Export CSV
+            </a>
+          </div>
+        )}
       </div>
       {error && <p className="text-sm text-red-700">{error}</p>}
       {orders === null ? (
         <p className="text-sm text-stone-500">Loading…</p>
       ) : orders.length === 0 ? (
-        <p className="text-sm text-stone-500">No orders yet. Create a payment link above, or one with the API.</p>
+        <p className="text-sm text-stone-500">
+          {limit ? (
+            "No payments yet. Payments to your links and invoices appear here within seconds."
+          ) : (
+            <>
+              No payments yet. Create a payment link on the{" "}
+              <Link href="/dashboard" className="underline">
+                Overview
+              </Link>{" "}
+              tab, or an invoice with the API.
+            </>
+          )}
+        </p>
       ) : (
         <ul className="divide-y divide-stone-200">
-          {orders.map((o) => (
+          {orders.slice(0, limit).map((o) => (
             <OrderRow key={`${o.invoiceId ?? ""}:${o.orderId}`} order={o} sendMusd={sendMusd} onChange={load} />
           ))}
         </ul>
       )}
-      <p className="text-xs text-stone-500">
-        Payments appear here once they are on-chain, usually within seconds. Refunds go from your account back to the
-        customer; Mezout never holds the funds.
-      </p>
+      {!limit && (
+        <p className="text-xs text-stone-500">
+          Payments appear here once they are on-chain, usually within seconds. Refunds go from your account back to the
+          customer; Mezout never holds the funds.
+        </p>
+      )}
     </div>
   );
 }

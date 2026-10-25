@@ -4,8 +4,8 @@ Base URL: `https://usemezout.vercel.app` (or `http://localhost:3000` when runnin
 
 ## Get an API key
 
-1. Open `/dashboard`, sign up with a passkey or connect the wallet that should receive MUSD, and click **Sign in**. Signing costs no gas. The address becomes your payout address.
-2. Click **Create API key**.
+1. Open `/dashboard` and pick one way to get paid: create a passkey account, or connect the wallet that should receive MUSD and click **Sign in with this wallet**. Signing costs no gas. The address becomes your payout address.
+2. On the **Developers** tab, click **Create API key**.
 3. Copy the key (`mzk_test_…`). It is shown once. Mezout stores only a SHA-256 hash of it.
 
 Each payout address can hold up to 5 active keys. Every invoice created with a key pays that key's payout address; the request body cannot change it.

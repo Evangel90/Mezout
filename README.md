@@ -74,11 +74,12 @@ A passkey is bound to this site's domain, `usemezout.vercel.app`; the first doma
 
 ## Orders, refunds and webhooks
 
-Merchants sign in to `/dashboard` by signing a message (or with their passkey); the server sets a 12-hour HttpOnly session cookie. Signed in, the dashboard shows:
+`/dashboard` asks the merchant to pick one way to get paid: a **passkey account** (no wallet needed) or their own **Mezo wallet**. Each is a separate merchant account with its own payout address. Signing in is one signed message, which the server turns into a 12-hour HttpOnly session cookie. Signed in, the dashboard has four tabs:
 
-- **Orders**: every invoice and payment link with its status, payment method and customer, a CSV export, and **Refund**. A refund sends MUSD from the payout address straight back to the customer. Mezout verifies the transaction on-chain before marking it completed, and refunds can never add up to more than the payment.
-- **Webhooks**: up to 3 endpoints, each with its own signing secret, a test event, and a log of every delivery attempt. Failed deliveries retry with backoff for 24 hours.
-- **API keys**, created from the session.
+- **Overview**: the payout balance, a form that makes a payment link and QR code, and recent payments.
+- **Payments**: every invoice and payment link with its status, payment method and customer, a CSV export, and **Refund**. A refund sends MUSD from the payout address straight back to the customer. Mezout verifies the transaction on-chain before marking it completed, and refunds can never add up to more than the payment.
+- **Developers**: API keys, and up to 3 webhook endpoints, each with its own signing secret, a test event, and a log of every delivery attempt. Failed deliveries retry with backoff for 24 hours.
+- **Account**: the payout address, gasless withdrawals for passkey accounts, and sign out.
 
 Webhook events, signatures and the refund API are in `docs/API.md`.
 

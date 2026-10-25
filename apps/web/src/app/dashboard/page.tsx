@@ -1,10 +1,15 @@
 "use client";
 
-import dynamic from "next/dynamic";
+import { BalanceCard } from "@/components/dashboard/BalanceCard";
+import { PaymentLinkForm } from "@/components/dashboard/PaymentLinkForm";
+import { OrdersPanel } from "@/components/OrdersPanel";
 
-// The dashboard uses Mezo Passport hooks, and Passport touches `document` on import, so it renders in the browser only.
-const Dashboard = dynamic(() => import("@/components/Dashboard").then((m) => m.Dashboard), { ssr: false });
-
-export default function DashboardPage() {
-  return <Dashboard />;
+export default function OverviewPage() {
+  return (
+    <div className="space-y-6">
+      <BalanceCard />
+      <PaymentLinkForm />
+      <OrdersPanel limit={5} />
+    </div>
+  );
 }

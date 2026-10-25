@@ -6,28 +6,28 @@ const SOURCIFY = "https://repo.sourcify.dev/31611";
 
 const features = [
   {
-    title: "No wallet needed",
-    body: "Sign up with a passkey: Face ID, Touch ID, Windows Hello or your phone. Payments land in your own ERC-4337 smart account, and withdrawals are gasless. Mezout never holds your funds or your key.",
-  },
-  {
     title: "Customers pay their way",
-    body: "From their MUSD balance, or by borrowing MUSD against their BTC in the same transaction. Mezout pays the gas, and a borrow that would take a loan below 160% collateral is refused.",
+    body: "With MUSD, BTC or MEZO, or by borrowing MUSD against their BTC in the same transaction. Swaps run on Tigris at a quoted price, and a borrow that would take a loan below 160% collateral is refused.",
   },
   {
     title: "Exact MUSD, every time",
-    body: "You receive exactly the invoiced amount in one on-chain transaction. Share a payment link or QR code, or create invoices from your store with the API.",
+    body: "You receive exactly the invoiced amount in one on-chain transaction, with nothing held by Mezout. Share a payment link or QR code, or create invoices from your store with the API.",
+  },
+  {
+    title: "Sign up your way",
+    body: "No wallet? Create an account with a passkey (Face ID, Touch ID, Windows Hello or your phone) and withdraw without gas. Already on Mezo? Get paid straight into your wallet.",
   },
 ];
 
 const steps = [
   "Create a payment link in the dashboard, or call POST /v1/invoices from your backend.",
-  "Your customer opens the link, connects a Mezo wallet and picks Pay with MUSD or Borrow against my BTC.",
-  "They approve in their wallet. Mezout's relayer submits the payment and pays the gas.",
-  "The router sends you the MUSD and records the invoice as paid on Mezo.",
+  "Your customer opens the link, connects a Mezo wallet and picks how to pay: MUSD, BTC, MEZO or borrowing against BTC.",
+  "They sign in their wallet. Mezout's relayer submits the payment and pays the gas.",
+  "The router sends you the exact MUSD. Mezout sees the payment on-chain, marks the order paid and notifies your store by webhook.",
 ];
 
 const contracts = [
-  { name: "MezoutRouter", address: "0xAF79AB1cdB38c0C3944bB9440614B58871Ba6199" },
+  { name: "MezoutRouter", address: "0xe132f9a1c8dbc31015C3Cf4eE8706c9031bFa431" },
   { name: "MezoutAccountFactory", address: "0xeE85EE32488FF2D63eFe48159ddB59e6863cdF79" },
 ];
 
@@ -44,8 +44,8 @@ export default function Home() {
           Get paid in MUSD. Let customers pay with Bitcoin.
         </h1>
         <p className="max-w-xl text-lg text-stone-600">
-          A checkout for Mezo: customers pay from their MUSD balance or borrow against their BTC, and you receive the
-          exact amount, without needing a wallet yourself.
+          A checkout for Mezo: customers pay with MUSD, BTC or MEZO, or borrow against their BTC, and you always receive
+          the exact amount in MUSD. No wallet needed to get started.
         </p>
         <div className="flex flex-wrap gap-3">
           <Link href="/dashboard" className="rounded-lg bg-stone-900 px-4 py-2 text-white hover:bg-stone-700">
@@ -87,8 +87,8 @@ export default function Home() {
         <h2 className="text-xl font-semibold tracking-tight">For developers</h2>
         <p className="text-stone-600">
           Get an API key in the dashboard, create invoices from your server and send customers to the returned{" "}
-          <span className="font-mono text-sm">checkout_url</span>. Check status with{" "}
-          <span className="font-mono text-sm">GET /v1/invoices/:id</span>.
+          <span className="font-mono text-sm">checkout_url</span>. Signed webhooks tell your server when an invoice is
+          paid, expires or is refunded.
         </p>
         <pre className="overflow-x-auto rounded-xl bg-stone-900 p-4 text-xs leading-relaxed text-stone-100">
           <code>{curl}</code>

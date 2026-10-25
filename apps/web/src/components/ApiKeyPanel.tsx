@@ -28,7 +28,10 @@ export function ApiKeyPanel() {
         <p className="text-sm text-stone-600">
           For your store or backend: create invoices with <span className="font-mono">POST /v1/invoices</span>, check
           them with <span className="font-mono">GET /v1/invoices/:id</span> and request refunds with{" "}
-          <span className="font-mono">POST /v1/refunds</span>. Invoices pay your payout address.
+          <span className="font-mono">POST /v1/refunds</span>. Invoices pay your payout address.{" "}
+          <a href="https://github.com/Evangel90/Mezout/blob/main/docs/API.md" target="_blank" rel="noreferrer" className="underline">
+            API reference
+          </a>
         </p>
       </div>
       {key ? (
