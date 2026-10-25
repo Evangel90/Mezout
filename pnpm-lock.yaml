@@ -28,6 +28,9 @@ importers:
       drizzle-orm:
         specifier: ^0.36.4
         version: 0.36.4(@electric-sql/pglite@0.2.17)(@types/pg@8.23.1)(@types/react@18.3.31)(pg@8.23.1)(react@18.3.1)
+      marked:
+        specifier: 18.0.14
+        version: 18.0.14
       next:
         specifier: 14.2.35
         version: 14.2.35(@babel/core@7.29.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -4555,6 +4558,11 @@ packages:
   mapbox-gl@1.13.3:
     resolution: {integrity: sha512-p8lJFEiqmEQlyv+DQxFAOG/XPWN0Wp7j/Psq93Zywz7qt9CcUKFYDBOoOEKzqe6gudHVJY8/Bhqw6VDpX2lSBg==}
     engines: {node: '>=6.4.0'}
+
+  marked@18.0.14:
+    resolution: {integrity: sha512-mBHK6FBHuBAlhgRe88w9F0O1AbwwXJUcQibUbC/QcdTbVGAD7aWza+xt3N6oT/jCZx3/OMeS+8rnuiHZcQ9s7A==}
+    engines: {node: '>= 20'}
+    hasBin: true
 
   math-intrinsics@1.1.0:
     resolution: {integrity: sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==}
@@ -12004,6 +12012,8 @@ snapshots:
       supercluster: 7.1.5
       tinyqueue: 2.0.3
       vt-pbf: 3.1.3
+
+  marked@18.0.14: {}
 
   math-intrinsics@1.1.0: {}
 

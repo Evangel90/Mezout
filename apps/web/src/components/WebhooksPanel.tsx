@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { api, errorText } from "@/lib/api";
 
@@ -18,7 +19,7 @@ type Attempt = {
   delivery_id: string;
 };
 
-const DOCS = "https://github.com/Evangel90/Mezout/blob/main/docs/API.md#webhooks";
+const DOCS = "/docs#verifying-signatures";
 
 /** Webhook endpoints, their signing secrets, test events and the delivery log. */
 export function WebhooksPanel() {
@@ -63,9 +64,9 @@ export function WebhooksPanel() {
           Mezout POSTs <span className="font-mono">invoice.paid</span>, <span className="font-mono">invoice.expired</span>{" "}
           and <span className="font-mono">refund.completed</span> to your server, signed with the endpoint&apos;s secret.
           Failed deliveries are retried for 24 hours.{" "}
-          <a href={DOCS} target="_blank" rel="noreferrer" className="underline">
+          <Link href={DOCS} className="underline">
             How to verify them
-          </a>
+          </Link>
         </p>
       </div>
 

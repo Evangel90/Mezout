@@ -8,7 +8,7 @@ Status: Milestone 3 built. Merchants get a platform: an on-chain indexer that ma
 
 | | |
 | --- | --- |
-| Live app | https://usemezout.vercel.app (dashboard: `/dashboard`, status: `/api/health`) |
+| Live app | https://usemezout.vercel.app (dashboard: `/dashboard`, API reference: `/docs`, status: `/api/health`) |
 | MezoutRouter | [`0xe132f9a1c8dbc31015C3Cf4eE8706c9031bFa431`](https://explorer.test.mezo.org/address/0xe132f9a1c8dbc31015C3Cf4eE8706c9031bFa431) (block 16,367,275): MUSD, borrow, MEZO and BTC |
 | MezoutRouter v1 | [`0xAF79AB1cdB38c0C3944bB9440614B58871Ba6199`](https://explorer.test.mezo.org/address/0xAF79AB1cdB38c0C3944bB9440614B58871Ba6199) (block 16,341,328): MUSD and borrow only; still pays links made before 25 Oct |
 | MezoutAccountFactory | [`0xeE85EE32488FF2D63eFe48159ddB59e6863cdF79`](https://explorer.test.mezo.org/address/0xeE85EE32488FF2D63eFe48159ddB59e6863cdF79) (block 16,343,339) |
@@ -81,7 +81,7 @@ A passkey is bound to this site's domain, `usemezout.vercel.app`; the first doma
 - **Developers**: API keys, and up to 3 webhook endpoints, each with its own signing secret, a test event, and a log of every delivery attempt. Failed deliveries retry with backoff for 24 hours.
 - **Account**: the payout address, gasless withdrawals for passkey accounts, and sign out.
 
-Webhook events, signatures and the refund API are in `docs/API.md`.
+Webhook events, signatures and the refund API are in `docs/API.md`, which the site also publishes at `/docs` (rendered from that file at build time, so edit the file, not the page).
 
 ## Layout
 

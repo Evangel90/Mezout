@@ -51,12 +51,9 @@ export default function Home() {
           <Link href="/dashboard" className="rounded-lg bg-stone-900 px-4 py-2 text-white hover:bg-stone-700">
             Start accepting payments
           </Link>
-          <a
-            href={`${REPO}/blob/main/docs/API.md`}
-            className="rounded-lg border border-stone-300 bg-white px-4 py-2 hover:bg-stone-100"
-          >
+          <Link href="/docs" className="rounded-lg border border-stone-300 bg-white px-4 py-2 hover:bg-stone-100">
             API docs
-          </a>
+          </Link>
         </div>
       </section>
 

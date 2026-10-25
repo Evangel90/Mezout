@@ -22,6 +22,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               Mezout
             </Link>
             <div className="flex items-center gap-4 text-sm">
+              <Link href="/docs" className="text-stone-600 hover:text-stone-900">
+                Docs
+              </Link>
               <Link href="/dashboard" className="text-stone-600 hover:text-stone-900">
                 Dashboard
               </Link>
