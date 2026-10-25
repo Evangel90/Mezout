@@ -10,6 +10,9 @@ contract Deploy is Script {
     address internal constant BORROWER_OPERATIONS_SIGNATURES = 0xD757e3646AF370b15f32EB557F0F8380Df7D639e;
     address internal constant TROVE_MANAGER = 0xE47c80e8c23f6B4A1aE41c34837a0599D5D16bb0;
     address internal constant PRICE_FEED = 0x86bCF0841622a5dAC14A313a15f96A95421b9366;
+    address internal constant TIGRIS_POOL_FACTORY = 0x4947243CC818b627A5D06d14C4eCe7398A23Ce1A;
+    address internal constant BTC_TOKEN = 0x7b7C000000000000000000000000000000000000;
+    address internal constant MEZO_TOKEN = 0x7B7c000000000000000000000000000000000001;
 
     function run() external returns (MezoutRouter router) {
         require(block.chainid == 31611, "Mezo testnet only");
@@ -18,7 +21,15 @@ contract Deploy is Script {
 
         vm.startBroadcast();
         router = new MezoutRouter(
-            MUSD, BORROWER_OPERATIONS_SIGNATURES, TROVE_MANAGER, PRICE_FEED, invoiceSigner, feeRecipient
+            MUSD,
+            BORROWER_OPERATIONS_SIGNATURES,
+            TROVE_MANAGER,
+            PRICE_FEED,
+            invoiceSigner,
+            feeRecipient,
+            TIGRIS_POOL_FACTORY,
+            BTC_TOKEN,
+            MEZO_TOKEN
         );
         vm.stopBroadcast();
 

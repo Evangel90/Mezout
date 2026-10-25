@@ -44,7 +44,10 @@ contract MezoutRouterForkTest is Test {
             MezoTestnet.TROVE_MANAGER,
             MezoTestnet.PRICE_FEED,
             vm.addr(signerPk),
-            feeRecipient
+            feeRecipient,
+            MezoTestnet.TIGRIS_POOL_FACTORY,
+            MezoTestnet.BTC_TOKEN,
+            MezoTestnet.MEZO_TOKEN
         );
 
         // Payer opens a real trove: 0.1 BTC (8,000 MUSD of value) against 2,000 MUSD net debt.

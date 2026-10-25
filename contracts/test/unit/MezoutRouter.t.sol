@@ -36,7 +36,15 @@ contract MezoutRouterTest is Test {
         troveManager = new MockTroveManager();
         bos = new MockBorrowerOperationsSignatures(musd, troveManager);
         router = new MezoutRouter(
-            address(musd), address(bos), address(troveManager), address(priceFeed), signer, feeRecipient
+            address(musd),
+            address(bos),
+            address(troveManager),
+            address(priceFeed),
+            signer,
+            feeRecipient,
+            makeAddr("tigrisFactory"),
+            makeAddr("btc"),
+            makeAddr("mezo")
         );
         musd.mint(payer, 10_000e18);
         // 1 BTC at 80,000 against 10,000 MUSD debt: 800%.
