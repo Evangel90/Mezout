@@ -9,7 +9,8 @@
     "lint": "next lint",
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "db:migrate:prod": "MIGRATE_TARGET=production drizzle-kit migrate"
   },
   "dependencies": {
     "@mezo-org/passport": "0.17.2",

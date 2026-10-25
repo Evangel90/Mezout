@@ -2,7 +2,7 @@
 
 Merchant checkout on Mezo: customers pay with MUSD, by borrowing against their BTC, with MEZO, or with BTC, and the merchant always receives the exact invoiced amount in MUSD. Mezout never holds funds. Built for the Mezo Buildathon (Access & Distribution track), Mezo testnet only.
 
-Status: Milestone 2 built: customers can pay with MEZO or BTC, swapped to exact MUSD on Tigris, live on testnet. Already built in M1: the router (MUSD and borrow paths), hosted checkout, relayer, payment-link dashboard, a minimal merchant API (API keys, create and retrieve invoices) and walletless merchant accounts (passkey smart accounts, ERC-4337) are built and tested; deployed to Mezo testnet with live reference payments. See `docs/BRIEF.md` for the plan, `docs/M0-findings.md` for what has been verified and `docs/API.md` for the API.
+Status: Milestone 2 built: customers can pay with MEZO or BTC, swapped to exact MUSD on Tigris, live on testnet and in production at usemezout.vercel.app (router v2). Already built in M1: the router (MUSD and borrow paths), hosted checkout, relayer, payment-link dashboard, a minimal merchant API (API keys, create and retrieve invoices) and walletless merchant accounts (passkey smart accounts, ERC-4337) are built and tested; deployed to Mezo testnet with live reference payments. See `docs/BRIEF.md` for the plan, `docs/M0-findings.md` for what has been verified and `docs/API.md` for the API.
 
 ## Testnet deployment
 
@@ -156,11 +156,13 @@ pnpm dlx vercel deploy --prod --yes
 
 ## Apply migrations to production
 
-Production uses a Neon database added through the Vercel integration. Vercel's development and production environments share it, so local development keeps `DATABASE_URL` pointed at local Postgres (`vercel env pull` overwrites that line; set it back afterwards). To migrate production, in your Mac terminal, inside the `Mezout/apps/web` folder:
+Production uses a Neon database added through the Vercel integration. Vercel's development and production environments share it, so local development keeps `DATABASE_URL` pointed at local Postgres (`vercel env pull` overwrites that line; set it back afterwards). To migrate production, in your Mac terminal, inside the `Mezout` folder:
 
 ```
-DATABASE_URL="$(grep '^DATABASE_URL_UNPOOLED=' ../../.env.local | cut -d= -f2- | tr -d '"')" pnpm db:migrate
+pnpm --dir apps/web db:migrate:prod
 ```
+
+This uses `DATABASE_URL_UNPOOLED` (Neon's direct URL) from `.env.local` instead of `DATABASE_URL`.
 
 ## Pay an invoice from a script
 
