@@ -1,5 +1,7 @@
 import { PublicKey, WebAuthnP256 } from "ox";
-import { bytesToHex, getAddress, type Address, type Hex } from "viem";
+import { bytesToHex, getAddress, parseEventLogs, type Address, type Hex, type Log } from "viem";
+import { entryPoint07Abi } from "viem/account-abstraction";
+import { txUrl } from "./config";
 import { encodeWebAuthnSignature } from "@mezout/sdk";
 
 /** A merchant signed in with a passkey. All three values are public; the private key never leaves the device. */
@@ -79,4 +81,35 @@ export async function passkeySign(session: PasskeySession, hash: Hex): Promise<H
     challengeIndex: metadata.challengeIndex ?? clientDataJSON.indexOf('"challenge"'),
     typeIndex: metadata.typeIndex ?? clientDataJSON.indexOf('"type"'),
   });
+}
+
+/**
+ * Sends MUSD out of a passkey MezoutAccount (a withdrawal or a refund): the server builds the operation, the passkey
+ * signs its hash, and Mezout sponsors the gas. Resolves once it succeeded on-chain.
+ */
+export async function passkeySendMusd(
+  session: PasskeySession,
+  to: Address,
+  amount: string,
+  waitForReceipt: (hash: Hex) => Promise<{ logs: Log[] }>,
+): Promise<Hex> {
+  const { quote, userOpHash } = await post<{ quote: Record<string, unknown>; userOpHash: Hex }>("/api/account/withdraw", {
+    step: "quote",
+    account: session.address,
+    to,
+    amount,
+  });
+  const signature = await passkeySign(session, userOpHash);
+  const { hash } = await post<{ hash: Hex }>("/api/account/withdraw", {
+    step: "submit",
+    account: session.address,
+    ...quote,
+    signature,
+  });
+  const receipt = await waitForReceipt(hash).catch(() => {
+    throw new Error(`Submitted, but confirmation is taking a while. Check ${txUrl(hash)}`);
+  });
+  const [event] = parseEventLogs({ abi: entryPoint07Abi, eventName: "UserOperationEvent", logs: receipt.logs });
+  if (!event?.args.success) throw new Error("The transfer was rejected on-chain. Nothing was sent.");
+  return hash;
 }

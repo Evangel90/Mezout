@@ -1,15 +1,16 @@
 // Acts as a customer: creates an invoice through the API, signs it like a wallet would, and pays via the relayer.
 // Usage (Mac terminal, inside Mezout/apps/web):
-//   APP_URL=http://localhost:3000 ROUTER=0x... PAYER_PRIVATE_KEY=0x... MERCHANT=0x... AMOUNT=25 [METHOD=BORROW FROM_BALANCE=0] node scripts/pay-invoice.mjs
+//   APP_URL=http://localhost:3000 ROUTER=0x... PAYER_PRIVATE_KEY=0x... API_KEY=mzk_test_... AMOUNT=25 [METHOD=BORROW FROM_BALANCE=0] node scripts/pay-invoice.mjs
 // METHOD=MEZO or METHOD=BTC swaps on Tigris with a 1% slippage cap (SLIPPAGE_BPS=100).
-// To pay an invoice created with POST /v1/invoices, pass TOKEN=<the part of checkout_url after /pay/> instead of MERCHANT and AMOUNT.
+// API_KEY is the merchant's key from the dashboard; the invoice pays that merchant. To pay an existing invoice or
+// dashboard link instead, pass TOKEN=<the part of the checkout URL after /pay/> instead of API_KEY and AMOUNT.
 import { createPublicClient, http, parseAbi, parseSignature } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
 const {
   APP_URL = "http://localhost:3000",
   PAYER_PRIVATE_KEY,
-  MERCHANT,
+  API_KEY,
   AMOUNT = "25",
   ROUTER,
   RPC_URL = "https://rpc.test.mezo.org",
@@ -18,7 +19,7 @@ const {
   SLIPPAGE_BPS = "100",
   TOKEN,
 } = process.env;
-if (!PAYER_PRIVATE_KEY || !ROUTER || !(MERCHANT || TOKEN)) throw new Error("Set PAYER_PRIVATE_KEY, ROUTER and MERCHANT or TOKEN");
+if (!PAYER_PRIVATE_KEY || !ROUTER || !(API_KEY || TOKEN)) throw new Error("Set PAYER_PRIVATE_KEY, ROUTER and API_KEY or TOKEN");
 
 const MUSD = "0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503";
 const BOS = "0xD757e3646AF370b15f32EB557F0F8380Df7D639e";
@@ -39,14 +40,16 @@ const router = parseAbi([
 ]);
 const bos = parseAbi(["function getNonce(address) view returns (uint256)"]);
 
-const post = async (path, body) => {
-  const res = await fetch(new URL(path, APP_URL), { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+const post = async (path, body, headers = {}) => {
+  const res = await fetch(new URL(path, APP_URL), { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body) });
   const json = await res.json();
   if (!res.ok) throw new Error(`${path}: ${json.error}`);
   return json;
 };
 
-const { token } = TOKEN ? { token: TOKEN } : await post("/api/invoices", { merchant: MERCHANT, amount: AMOUNT });
+const token = TOKEN
+  ? TOKEN
+  : (await post("/v1/invoices", { amount: AMOUNT }, { authorization: `Bearer ${API_KEY}` })).checkout_url.split("/pay/")[1];
 const w = JSON.parse(Buffer.from(token, "base64url").toString());
 const invoice = { merchant: w.m, amount: BigInt(w.a), fee: BigInt(w.f), orderId: w.o, expiry: BigInt(w.e) };
 console.log("invoice", invoice.orderId, `${Number(invoice.amount) / 1e18} MUSD`);

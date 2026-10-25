@@ -187,8 +187,14 @@ function CheckoutInner({
 
   async function finish(hash: Hex) {
     setStatus({ kind: "sent", hash });
-    await client!.waitForTransactionReceipt({ hash });
+    const receipt = await client!.waitForTransactionReceipt({ hash });
     await refetchPaid();
+    // Tell Mezout to index the payment now, so the merchant's webhook fires in seconds.
+    fetch("/api/sync", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ block: receipt.blockNumber.toString() }),
+    }).catch(() => {});
   }
 
   async function payWithMusd() {

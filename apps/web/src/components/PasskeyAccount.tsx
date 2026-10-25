@@ -1,10 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { createPublicClient, erc20Abi, formatUnits, http, isAddress, parseEventLogs, type Hex } from "viem";
-import { entryPoint07Abi } from "viem/account-abstraction";
+import { createPublicClient, erc20Abi, formatUnits, getAddress, http, isAddress, type Hex } from "viem";
 import { mezoTestnet, mezoTestnetAddresses } from "@mezout/sdk";
-import { passkeySign, type PasskeySession } from "@/lib/passkey";
+import { passkeySendMusd, type PasskeySession } from "@/lib/passkey";
 
 const client = createPublicClient({ chain: mezoTestnet, transport: http() });
 const explorerTx = (hash: Hex) => `https://explorer.test.mezo.org/tx/${hash}`;
@@ -31,31 +30,15 @@ export function PasskeyAccount({ session, onSignOut }: { session: PasskeySession
     return () => clearInterval(id);
   }, [refresh]);
 
-  async function post(body: unknown) {
-    const res = await fetch("/api/account/withdraw", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error ?? "Withdrawal failed");
-    return json;
-  }
-
   async function withdraw(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
     setDone(null);
     try {
-      const { quote, userOpHash } = await post({ step: "quote", account: session.address, to, amount });
-      const signature = await passkeySign(session, userOpHash);
-      const { hash } = await post({ step: "submit", account: session.address, ...quote, signature });
-      const receipt = await client.waitForTransactionReceipt({ hash, timeout: 90_000 }).catch(() => {
-        throw new Error(`Submitted, but confirmation is taking a while. Check ${explorerTx(hash)}`);
-      });
-      const [event] = parseEventLogs({ abi: entryPoint07Abi, eventName: "UserOperationEvent", logs: receipt.logs });
-      if (!event?.args.success) throw new Error("The withdrawal was rejected on-chain. Nothing was sent.");
+      const hash = await passkeySendMusd(session, getAddress(to), amount, (h) =>
+        client.waitForTransactionReceipt({ hash: h, timeout: 90_000 }),
+      );
       setDone(hash);
       setAmount("");
       refresh();

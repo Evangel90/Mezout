@@ -1,11 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import type { Address, Hex } from "viem";
-import { keyRequestMessage } from "@mezout/sdk";
+import { api, errorText } from "@/lib/api";
 
-/** `signMessage` comes from the merchant's wallet, or from their passkey for Mezout passkey accounts. */
-export function ApiKeyPanel({ address, signMessage }: { address: Address; signMessage: (message: string) => Promise<Hex> }) {
+/** Creates an API key for the signed-in merchant. The dashboard session already proves who they are. */
+export function ApiKeyPanel() {
   const [key, setKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -14,18 +13,9 @@ export function ApiKeyPanel({ address, signMessage }: { address: Address; signMe
     setBusy(true);
     setError(null);
     try {
-      const issuedAt = new Date().toISOString();
-      const signature = await signMessage(keyRequestMessage(address, issuedAt));
-      const res = await fetch("/api/keys", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ address, issuedAt, signature }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Could not create the key");
-      setKey(json.key);
+      setKey((await api<{ key: string }>("/api/keys", { body: {} })).key);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not create the key");
+      setError(errorText(err, "Could not create the key"));
     } finally {
       setBusy(false);
     }
@@ -36,9 +26,9 @@ export function ApiKeyPanel({ address, signMessage }: { address: Address; signMe
       <div className="space-y-1">
         <h2 className="text-lg font-semibold">API key</h2>
         <p className="text-sm text-stone-600">
-          For your store or backend: create invoices with <span className="font-mono">POST /v1/invoices</span> and check
-          them with <span className="font-mono">GET /v1/invoices/:id</span>. Invoices pay the address above. You confirm
-          with your wallet or passkey to prove you own it; this costs no gas.
+          For your store or backend: create invoices with <span className="font-mono">POST /v1/invoices</span>, check
+          them with <span className="font-mono">GET /v1/invoices/:id</span> and request refunds with{" "}
+          <span className="font-mono">POST /v1/refunds</span>. Invoices pay your payout address.
         </p>
       </div>
       {key ? (
@@ -58,7 +48,7 @@ export function ApiKeyPanel({ address, signMessage }: { address: Address; signMe
           disabled={busy}
           className="rounded-lg bg-stone-900 px-4 py-2 text-white hover:bg-stone-700 disabled:opacity-50"
         >
-          {busy ? "Waiting for signature…" : "Create API key"}
+          {busy ? "Creating…" : "Create API key"}
         </button>
       )}
       {error && <p className="text-sm text-red-700">{error}</p>}

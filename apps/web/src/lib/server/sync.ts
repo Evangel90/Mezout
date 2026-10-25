@@ -1,4 +1,5 @@
 import "server-only";
+import { waitUntil } from "@vercel/functions";
 import { getAddress, type Address } from "viem";
 import { mezoTestnetAddresses } from "@mezout/sdk";
 import { publicClient } from "./clients";
@@ -17,11 +18,16 @@ export async function syncNow(maxChunks: number) {
   return syncPayments(getDb(), publicClient(), { routers: indexedRouters(), origin: serverEnv.appUrl(), maxChunks });
 }
 
-/** Indexes when the last sync is older than maxAgeMs. Used before answering a status read for an unpaid invoice. */
+/**
+ * Indexes when the last sync is older than maxAgeMs, so reads (an invoice's status, the order list) are current
+ * without waiting for the scheduled run. Webhooks for anything new go out after the response.
+ */
 export async function syncIfStale(maxAgeMs: number) {
   const cursor = await readCursor(getDb());
   if (cursor && Date.now() - cursor.updatedAt.getTime() < maxAgeMs) return null;
-  return syncNow(1);
+  const synced = await syncNow(1);
+  if (synced?.recorded) waitUntil(deliverWebhooks(10).catch((err) => console.error("webhook delivery failed", err)));
+  return synced;
 }
 
 export async function deliverWebhooks(limit = 25) {
