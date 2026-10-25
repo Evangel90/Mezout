@@ -274,10 +274,10 @@ M0 and M1 must be done by Sunday 26 Oct for the Wave 1 submission. M2–M6 fill 
 
 ### M3 — Merchant platform (4 Nov)
 
-- [ ] Postgres schema, API routes and API keys
-- [ ] Indexer with backfill; invoices move to `paid` from chain events only
-- [ ] Signed webhooks with retries and a delivery log
-- [ ] Refunds, order list and CSV export in the dashboard
+- [x] Postgres schema, API routes and API keys
+- [x] Indexer with backfill; invoices move to `paid` from chain events only
+- [x] Signed webhooks with retries and a delivery log
+- [x] Refunds, order list and CSV export in the dashboard
 
 ### M4 — WooCommerce plugin (8 Nov)
 

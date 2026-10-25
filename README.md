@@ -2,7 +2,7 @@
 
 Merchant checkout on Mezo: customers pay with MUSD, by borrowing against their BTC, with MEZO, or with BTC, and the merchant always receives the exact invoiced amount in MUSD. Mezout never holds funds. Built for the Mezo Buildathon (Access & Distribution track), Mezo testnet only.
 
-Status: Milestone 2 built: customers can pay with MEZO or BTC, swapped to exact MUSD on Tigris, live on testnet and in production at usemezout.vercel.app (router v2). Already built in M1: the router (MUSD and borrow paths), hosted checkout, relayer, payment-link dashboard, a minimal merchant API (API keys, create and retrieve invoices) and walletless merchant accounts (passkey smart accounts, ERC-4337) are built and tested; deployed to Mezo testnet with live reference payments. See `docs/BRIEF.md` for the plan, `docs/M0-findings.md` for what has been verified and `docs/API.md` for the API.
+Status: Milestone 3 built. Merchants get a platform: an on-chain indexer that marks invoices paid only from the router's `Paid` events, signed webhooks with retries and a delivery log, refunds, an order list with CSV export, and dashboard sign-in. M2 added payments in MEZO or BTC, swapped to exact MUSD on Tigris, live in production at usemezout.vercel.app (router v2). Built in M1: the router (MUSD and borrow paths), hosted checkout, relayer, payment-link dashboard, a minimal merchant API (API keys, create and retrieve invoices) and walletless merchant accounts (passkey smart accounts, ERC-4337) are built and tested; deployed to Mezo testnet with live reference payments. See `docs/BRIEF.md` for the plan, `docs/M0-findings.md` for what has been verified and `docs/API.md` for the API.
 
 ## Testnet deployment
 
@@ -60,6 +60,8 @@ For BTC and MEZO, the router reads the Tigris pool's reserves when the payment l
 
 Bitcoin wallets in Passport use smart accounts, which cannot sign permits, so they approve and call the router directly and pay their own gas.
 
+Mezout's indexer reads `Paid` events from both routers, one block behind the head, into Postgres. That is the only way an invoice becomes paid; the checkout's own report is never trusted. Each paid invoice queues an `invoice.paid` webhook.
+
 Payment links name the router they were signed for. Links from before 25 Oct carry none and are paid through router v1 (MUSD and borrow only).
 
 ## Merchants without a wallet
@@ -69,6 +71,16 @@ On `/dashboard` a merchant can choose **Create account with passkey** instead of
 To withdraw, the merchant enters an address and amount and confirms with the passkey. The server builds the user operation, the passkey signs its hash, and the relayer checks the signature, tops up the account's EntryPoint deposit and submits it through EntryPoint v0.7. The first withdrawal deploys the account. The relayer only submits single MUSD transfers out of registered accounts. Mezout never sees the passkey's private key and cannot move the funds.
 
 A passkey is bound to this site's domain, `usemezout.vercel.app`; the first domain, `mezout-snowy.vercel.app`, permanently redirects there (`apps/web/src/middleware.ts`). Moving the app to another domain, or losing every device that holds the passkey, means losing access to the account; adding a recovery key is planned before any mainnet use.
+
+## Orders, refunds and webhooks
+
+Merchants sign in to `/dashboard` by signing a message (or with their passkey); the server sets a 12-hour HttpOnly session cookie. Signed in, the dashboard shows:
+
+- **Orders**: every invoice and payment link with its status, payment method and customer, a CSV export, and **Refund**. A refund sends MUSD from the payout address straight back to the customer. Mezout verifies the transaction on-chain before marking it completed, and refunds can never add up to more than the payment.
+- **Webhooks**: up to 3 endpoints, each with its own signing secret, a test event, and a log of every delivery attempt. Failed deliveries retry with backoff for 24 hours.
+- **API keys**, created from the session.
+
+Webhook events, signatures and the refund API are in `docs/API.md`.
 
 ## Layout
 
@@ -146,6 +158,17 @@ Tigris had no MUSD/MEZO pool, so Mezout creates one with test tokens. The first 
 MUSD_AMOUNT=250 MEZO_AMOUNT=1000 ./script/seed-mezo-pool.sh
 ```
 
+## Run the indexer
+
+The indexer runs from `/api/cron`, protected by `CRON_SECRET`. In production, `.github/workflows/indexer.yml` calls it every 5 minutes (Vercel's Hobby plan only allows daily crons). The checkout also asks for a sync when a payment lands, and reading an unpaid invoice syncs if the index is stale, so invoices usually show paid within seconds. The first run backfills from router v1's deploy block.
+
+To run it once by hand, with the web app running, in your Mac terminal, inside the `Mezout` folder:
+
+```
+set -a; source .env.local; set +a
+curl -s -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron
+```
+
 ## Deploy the web app (Vercel)
 
 In your Mac terminal, inside the `Mezout` folder itself, not `Mezout/apps/web` (the Vercel project link lives at the repo root; from `apps/web` the CLI creates a new, empty project):
@@ -153,6 +176,16 @@ In your Mac terminal, inside the `Mezout` folder itself, not `Mezout/apps/web` (
 ```
 pnpm dlx vercel deploy --prod --yes
 ```
+
+Production needs `WEBHOOK_SIGNING_SECRET` and `CRON_SECRET` set in Vercel, and the same `CRON_SECRET` as a GitHub Actions secret for the indexer workflow. In your Mac terminal, inside the `Mezout` folder (each command asks for the value):
+
+```
+pnpm dlx vercel env add WEBHOOK_SIGNING_SECRET production
+pnpm dlx vercel env add CRON_SECRET production
+gh secret set CRON_SECRET
+```
+
+Each webhook endpoint's secret is derived from `WEBHOOK_SIGNING_SECRET`, so changing it changes every endpoint's secret.
 
 ## Apply migrations to production
 
@@ -169,10 +202,10 @@ This uses `DATABASE_URL_UNPOOLED` (Neon's direct URL) from `.env.local` instead 
 With the web app running, in your Mac terminal, inside the `Mezout/apps/web` folder (the payer needs test MUSD):
 
 ```
-APP_URL=http://localhost:3000 ROUTER=<router address> PAYER_PRIVATE_KEY=<test key> MERCHANT=<payout address> AMOUNT=25 node scripts/pay-invoice.mjs
+APP_URL=http://localhost:3000 ROUTER=<router address> PAYER_PRIVATE_KEY=<test key> API_KEY=<merchant's mzk_test_ key> AMOUNT=25 node scripts/pay-invoice.mjs
 ```
 
-To pay an invoice created with `POST /v1/invoices`, pass `TOKEN=<the part of checkout_url after /pay/>` instead of `MERCHANT` and `AMOUNT`. Add `METHOD=BTC` or `METHOD=MEZO` to swap instead (the payer needs that token; the slippage cap is 1%, set with `SLIPPAGE_BPS`).
+The script creates the invoice with `POST /v1/invoices`, so it pays the merchant who owns the key. To pay an existing invoice or dashboard link, pass `TOKEN=<the part of the checkout URL after /pay/>` instead of `API_KEY` and `AMOUNT`. Add `METHOD=BTC` or `METHOD=MEZO` to swap instead (the payer needs that token; the slippage cap is 1%, set with `SLIPPAGE_BPS`).
 
 ## Run the web app
 

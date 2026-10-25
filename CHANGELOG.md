@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- M3: indexer (`apps/web/src/lib/server/indexer.ts`) reads `Paid` events from both routers in chunks of up to 10,000 blocks, one block behind the head, with backfill from v1's deploy block. Invoices become paid only from indexed events. Runs from `/api/cron` (every 5 minutes through `.github/workflows/indexer.yml`), after each checkout payment (`/api/sync`), and when an unpaid invoice is read while the index is stale. New status `refunded`; invoices gain `amount_refunded` and `payment`. Migration `0003`.
+- M3: signed webhooks: `invoice.paid`, `invoice.expired`, `refund.completed` and `ping`, HMAC-SHA256 `Mezout-Signature` header, retries with backoff for 24 hours, a delivery log with Retry now, up to 3 endpoints per merchant (`/v1/webhook_endpoints`). Deliveries go only to public https addresses, checked after DNS resolution and without following redirects.
+- M3: refunds: `POST /v1/refunds` requests one; the dashboard sends MUSD from the payout address to the customer and Mezout verifies the transfer on-chain before marking it completed.
+- M3: dashboard sign-in (signed message or passkey, 12-hour HttpOnly session); orders list with CSV export and refunds; webhooks panel; API keys minted from the session; `GET /v1/invoices` lists invoices.
+- M3: `scripts/pay-invoice.mjs` creates invoices with `API_KEY` instead of `MERCHANT`; `/api/invoices` (dashboard links) needs a session.
+
 - M2: `payWithMEZO` and `payWithBTC`: exact-output swaps on Tigris volatile pools. The router computes the least input from the pool's reserves at execution and pulls only that from the payer into the pool, so nothing needs refunding; the payer's `SwapPayment` signature binds the token, a slippage cap and a deadline. Both are gasless through BTC and MEZO permits. Router v2 deployed and verified on Sourcify; v1 still pays older links.
 - M2: checkout offers Pay with BTC and Pay with MEZO with live quotes, and shows only options the connected wallet can use; Bitcoin-wallet smart accounts approve and pay directly.
 - M2: payment links and invoices record their router (migration `0002`); the relayer only calls the current router or v1.
