@@ -3,6 +3,7 @@ import path from "node:path";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Marked, type Tokens } from "marked";
+import { CopyButtons } from "@/components/docs/CopyButtons";
 
 export const metadata: Metadata = {
   title: "API reference",
@@ -10,6 +11,10 @@ export const metadata: Metadata = {
 };
 
 const REPO_DOC = "https://github.com/Evangel90/Mezout/blob/main/docs/API.md";
+
+const LANGUAGE_LABEL: Record<string, string> = { bash: "Terminal", json: "JSON", js: "JavaScript", php: "PHP", python: "Python" };
+
+const escapeHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 /** GitHub's heading anchors, so links like /docs#webhooks match the same doc on GitHub. */
 const slug = (text: string) =>
@@ -38,6 +43,11 @@ function loadApiDoc() {
         if (depth <= 3) toc.push({ id, text, depth });
         return `<h${depth} id="${id}"><a href="#${id}">${this.parser.parseInline(tokens)}</a></h${depth}>\n`;
       },
+      // Each code block gets a label and a copy button; CopyButtons wires up the buttons in the browser.
+      code({ text, lang }: Tokens.Code) {
+        const label = LANGUAGE_LABEL[lang ?? ""] ?? "";
+        return `<div class="code-block"><div class="code-block-bar"><span>${label}</span><button type="button" data-copy>Copy</button></div><pre><code>${escapeHtml(text)}</code></pre></div>\n`;
+      },
     },
   });
   const html = marked.parse(markdown, { async: false });
@@ -65,20 +75,44 @@ export default function DocsPage() {
         </div>
       </header>
 
-      <nav aria-label="On this page" className="rounded-xl border border-stone-200 bg-white p-5">
-        <p className="mb-3 text-xs font-medium uppercase tracking-wide text-stone-500">On this page</p>
-        <ul className="grid gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
-          {toc.map((h) => (
-            <li key={h.id} className={h.depth === 3 ? "pl-4" : ""}>
-              <a href={`#${h.id}`} className="text-stone-700 hover:text-stone-900 hover:underline">
-                {h.text}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </nav>
+      <div className="lg:grid lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-12">
+        <aside className="hidden lg:block">
+          <nav aria-label="On this page" className="sticky top-6 max-h-[calc(100vh-3rem)] overflow-y-auto pb-6 text-sm">
+            <p className="mb-3 text-xs font-medium uppercase tracking-wide text-stone-500">On this page</p>
+            <ul className="space-y-1">
+              {toc.map((h) => (
+                <li key={h.id} className={h.depth === 3 ? "pl-3" : "pt-2 first:pt-0"}>
+                  <a
+                    href={`#${h.id}`}
+                    className={h.depth === 3 ? "text-stone-500 hover:text-stone-900" : "font-medium text-stone-800 hover:text-stone-950"}
+                  >
+                    {h.text}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </aside>
 
-      <article className="api-doc" dangerouslySetInnerHTML={{ __html: html }} />
+        <div className="min-w-0 space-y-8">
+          <details className="rounded-xl border border-stone-200 bg-white p-4 lg:hidden">
+            <summary className="cursor-pointer text-sm font-medium">On this page</summary>
+            <ul className="mt-3 space-y-1.5 text-sm">
+              {toc
+                .filter((h) => h.depth === 2)
+                .map((h) => (
+                  <li key={h.id}>
+                    <a href={`#${h.id}`} className="text-stone-700 hover:text-stone-900 hover:underline">
+                      {h.text}
+                    </a>
+                  </li>
+                ))}
+            </ul>
+          </details>
+          <article id="api-doc" className="api-doc" dangerouslySetInnerHTML={{ __html: html }} />
+          <CopyButtons containerId="api-doc" />
+        </div>
+      </div>
     </div>
   );
 }

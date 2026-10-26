@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- API reference rewritten (`docs/API.md`, `/docs`): overview of a payment end to end, quickstart, authentication and key rotation, request conventions, every error code with what to do, rate limits, idempotency, pagination, object and endpoint reference, invoice status rules, a webhooks guide (receive your first webhook, handling, at-least-once delivery, timing, retries, ordering, no backfill, snapshots) and signature verification in Node, PHP and Python. Dashboard-only routes are no longer documented as public API. `/docs` has a sticky contents sidebar, labelled code blocks with Copy buttons, and a collapsible index on phones.
+- `Idempotency-Key` on `POST /v1/invoices` and `POST /v1/refunds`: the first response is kept 24 hours and replayed with `Idempotent-Replayed: true`; a reused key with a different request returns `422`, one still running `409`.
+- API keys are listed by prefix on the Developers tab and can be revoked (`GET /api/keys`, `DELETE /api/keys/:id`).
+- Refund requests can be canceled: `POST /v1/refunds/:id/cancel`, and **Decline request** on the Payments tab. New status `canceled` and field `canceled_at` (migration `0005`).
+- Invoices take `success_url`; after paying, the checkout shows a "Return to (business)" button. Payments gain `fee` and `net` (what reached the payout address).
+- Rate limits are shared by every server instance (a Postgres table, migration `0005`) and `429` answers carry `Retry-After`.
+- Webhook endpoint hosts are resolved when the endpoint is added, so typos and private hosts are refused straight away; each delivery is still checked.
+- Invoices report `expired` one second after `expires_at`, matching the router, which accepts payment during that second; `invoice.expired` likewise waits until chain time has passed it.
+- `examples/webhook-receiver`: a dependency-free Node receiver that verifies signatures, ignores duplicates and handles each event type.
+- Webhooks panel explains in plain terms what a webhook is for; the delivery log shows each response.
+- Site: logo and favicon, active navigation, a footer with the testnet notice and links, page titles, 404 and error pages; the checkout hides the expiry once paid.
+
 - Business names: merchants set the name customers see at checkout (migration `0004`). A passkey account takes it from sign-up; wallet merchants are asked on the Overview tab; both can change it on the Account tab. The dashboard is titled with it.
 - Checkout pass: the header shows the business name with the payout address beneath it, the order reference, and "Link expires in 23 hours"; payment options read "≈ 0.0000064 BTC · no network fee" with the signed maximum on a second line; the paid state names who received the payment.
 

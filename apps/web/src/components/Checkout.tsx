@@ -385,9 +385,11 @@ function CheckoutInner({
           <p className="text-4xl font-semibold tracking-tight">{fmt(invoice.amount)} MUSD</p>
           {reference && <p className="mt-1 text-sm text-stone-600">{reference}</p>}
         </div>
-        <p className="text-xs text-stone-500" title={new Date(Number(invoice.expiry) * 1000).toLocaleString()}>
-          {expired ? "Expired" : `Link expires in ${timeLeft(invoice.expiry)}`}
-        </p>
+        {!paid && (
+          <p className="text-xs text-stone-500" title={new Date(Number(invoice.expiry) * 1000).toLocaleString()}>
+            {expired ? "Expired" : `Link expires in ${timeLeft(invoice.expiry)}`}
+          </p>
+        )}
       </div>
 
       {paid ? (

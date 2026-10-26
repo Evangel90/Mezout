@@ -190,6 +190,11 @@ function EndpointRow({ endpoint, onDeleted }: { endpoint: Endpoint; onDeleted: (
                   {a.error ?? `HTTP ${a.status_code}`} · try {a.attempt} · {a.duration_ms} ms
                 </span>
                 <span className="text-stone-500">{new Date(a.at).toLocaleString()}</span>
+                {a.response && (
+                  <span className="w-full truncate font-mono text-stone-500" title={a.response}>
+                    Response: {a.response}
+                  </span>
+                )}
                 {a.delivery_status === "pending" && a.next_attempt_at && a.error && (
                   <span className="w-full text-stone-500">Next try {new Date(a.next_attempt_at).toLocaleString()}</span>
                 )}
