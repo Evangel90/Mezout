@@ -5,7 +5,7 @@ import { mezoTestnetAddresses, mezoutAccountFactoryAbi } from "@mezout/sdk";
 import { publicClient } from "@/lib/server/clients";
 import { getDb } from "@/lib/server/db/client";
 import { PasskeyError, registerPasskey } from "@/lib/server/passkeys";
-import { clientIp, rateLimited } from "@/lib/server/rateLimit";
+import { clientIp, rateLimited, tooManyRequests } from "@/lib/server/rateLimit";
 
 const body = z.object({
   credentialId: z.string().min(1).max(1024),
@@ -15,9 +15,8 @@ const body = z.object({
 // Registers a new passkey and returns its MezoutAccount address. No proof of possession is needed: the address is
 // derived from the public key, so only the holder of the matching private key can ever move funds out of it.
 export async function POST(req: Request) {
-  if (rateLimited(`passkeys:${clientIp(req)}`, 10, 60_000)) {
-    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
-  }
+  const wait = await rateLimited(`passkeys:${clientIp(req)}`, 10, 60_000);
+  if (wait) return tooManyRequests(wait);
   const parsed = body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
 

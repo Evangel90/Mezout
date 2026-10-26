@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq, isNull, lte, sql } from "drizzle-orm";
+import { and, eq, isNull, lt, sql } from "drizzle-orm";
 import { getAbiItem, getAddress, type Address, type PublicClient } from "viem";
 import { mezoutRouterAbi } from "@mezout/sdk";
 import type { Db } from "./db/client";
@@ -116,7 +116,7 @@ export async function recordExpiries(db: Db, origin: string, limit = 100): Promi
     .from(invoices)
     .innerJoin(merchants, eq(invoices.merchantId, merchants.id))
     .leftJoin(payments, and(eq(payments.orderId, invoices.orderId), sql`lower(${payments.router}) = lower(${invoices.router})`))
-    .where(and(isNull(invoices.expiredEventAt), lte(invoices.expiresAt, cursor.blockTime), isNull(payments.id)))
+    .where(and(isNull(invoices.expiredEventAt), lt(invoices.expiresAt, cursor.blockTime), isNull(payments.id)))
     .limit(limit);
   let count = 0;
   for (const { invoice, merchant } of due) {

@@ -1,5 +1,6 @@
 import "server-only";
 import { lookup } from "node:dns";
+import { lookup as lookupAsync } from "node:dns/promises";
 import { BlockList, isIP } from "node:net";
 import { Agent, fetch } from "undici";
 import type { Sender } from "./webhooks";
@@ -64,6 +65,22 @@ export function checkEndpointUrl(raw: string, allowPrivate: boolean): string {
     throw new WebhookUrlError("url must be reachable on the public internet");
   }
   return url.toString();
+}
+
+export type Resolver = (hostname: string) => Promise<string[]>;
+const resolveAll: Resolver = async (hostname) => (await lookupAsync(hostname, { all: true })).map((a) => a.address);
+
+/**
+ * Checks, when an endpoint is added, that its host resolves and only to public addresses, so a typo or an internal
+ * host is refused straight away. Each delivery checks the address it connects to again.
+ */
+export async function checkEndpointHost(url: string, allowPrivate: boolean, resolve: Resolver = resolveAll): Promise<void> {
+  if (allowPrivate) return;
+  const host = new URL(url).hostname.replace(/^\[|\]$/g, "");
+  if (isIP(host)) return;
+  const addresses = await resolve(host).catch(() => []);
+  if (addresses.length === 0) throw new WebhookUrlError(`${host} does not resolve. Check the URL.`);
+  if (addresses.some(isPrivateAddress)) throw new WebhookUrlError("url must be reachable on the public internet");
 }
 
 type LookupCallback = (err: NodeJS.ErrnoException | null, address: string | { address: string; family: number }[], family?: number) => void;

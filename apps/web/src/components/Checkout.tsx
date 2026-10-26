@@ -56,9 +56,10 @@ function timeLeft(expiry: bigint, now = Date.now()) {
 
 type Status = { kind: "idle" } | { kind: "working"; step: string } | { kind: "sent"; hash: Hex } | { kind: "error"; message: string };
 
-type Display = { businessName: string | null; reference: string | null };
+// successUrl: where the merchant asked to send the customer after paying (validated as http(s) when the invoice was made).
+type Display = { businessName: string | null; reference: string | null; successUrl: string | null };
 
-export function Checkout({ token, businessName, reference }: { token: string } & Display) {
+export function Checkout({ token, businessName, reference, successUrl }: { token: string } & Display) {
   const signed = useMemo(() => {
     try {
       return decodeSignedInvoice(token);
@@ -76,6 +77,7 @@ export function Checkout({ token, businessName, reference }: { token: string } &
       router={linkRouter(signed)}
       businessName={businessName}
       reference={reference}
+      successUrl={successUrl}
     />
   );
 }
@@ -89,6 +91,7 @@ function CheckoutInner({
   router,
   businessName,
   reference,
+  successUrl,
 }: {
   token: string;
   invoice: SignedInvoice["invoice"];
@@ -391,13 +394,21 @@ function CheckoutInner({
         <div className="rounded-xl border border-green-200 bg-green-50 p-6 text-green-900">
           <p className="font-medium">Payment complete</p>
           <p className="text-sm">
-            {businessName ?? shortAddr(invoice.merchant)} received {fmt(invoice.amount)} MUSD. You can close this page.
+            {businessName ?? shortAddr(invoice.merchant)} received {fmt(invoice.amount)} MUSD.
+            {successUrl ? "" : " You can close this page."}
           </p>
-          {status.kind === "sent" && (
-            <a href={txUrl(status.hash)} target="_blank" rel="noreferrer" className="text-sm underline">
-              View transaction
-            </a>
-          )}
+          <div className="mt-3 flex flex-wrap items-center gap-4">
+            {successUrl && (
+              <a href={successUrl} className="rounded-lg bg-green-800 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
+                Return to {businessName ?? "the store"}
+              </a>
+            )}
+            {status.kind === "sent" && (
+              <a href={txUrl(status.hash)} target="_blank" rel="noreferrer" className="text-sm underline">
+                View transaction
+              </a>
+            )}
+          </div>
         </div>
       ) : expired ? (
         <p className="text-stone-600">This link has expired. Ask {businessName ?? "the merchant"} for a new one.</p>

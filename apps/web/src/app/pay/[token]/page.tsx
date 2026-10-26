@@ -14,17 +14,17 @@ const details = cache(async (token: string) => {
     const { invoice } = decodeSignedInvoice(token);
     return await checkoutDetails(getDb(), token, invoice.merchant);
   } catch {
-    return { businessName: null, reference: null };
+    return { businessName: null, reference: null, successUrl: null };
   }
 });
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { businessName } = await details(decodeURIComponent(params.token));
-  return { title: businessName ? `Pay ${businessName} · Mezout` : "Pay with Mezout" };
+  return { title: businessName ? `Pay ${businessName}` : "Pay", robots: { index: false } };
 }
 
 export default async function PayPage({ params }: Params) {
   const token = decodeURIComponent(params.token);
-  const { businessName, reference } = await details(token);
-  return <Checkout token={token} businessName={businessName} reference={reference} />;
+  const { businessName, reference, successUrl } = await details(token);
+  return <Checkout token={token} businessName={businessName} reference={reference} successUrl={successUrl} />;
 }

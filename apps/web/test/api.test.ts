@@ -3,8 +3,8 @@ import { verifyMessage, type Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { decodeSignedInvoice, encodeSignedInvoice, keyRequestMessage } from "@mezout/sdk";
 import type { Db } from "@/lib/server/db/client";
-import { authenticate, issueApiKey, MAX_ACTIVE_KEYS, REQUEST_TTL_MS } from "@/lib/server/apiKeys";
-import { createInvoice, findInvoice, invoiceJson, invoiceStatus, type PaymentRow } from "@/lib/server/invoices";
+import { authenticate, issueApiKey, listApiKeys, MAX_ACTIVE_KEYS, REQUEST_TTL_MS, revokeApiKey } from "@/lib/server/apiKeys";
+import { createInvoice, findInvoice, invoiceJson, invoiceStatus, paymentJson, type PaymentRow } from "@/lib/server/invoices";
 import { testDb } from "./db";
 
 const verify = (args: { address: Hex; message: string; signature: Hex }) => verifyMessage(args);
@@ -67,6 +67,21 @@ describe("API keys", () => {
     await expect(issueApiKey(db, extra, verify, now)).rejects.toThrow(/at most/);
   });
 
+  it("lists active keys by prefix and revokes them", async () => {
+    const { key, prefix, merchant } = await issueApiKey(db, await signedRequest(), verify, now);
+    const [listed] = await listApiKeys(db, merchant);
+    expect(listed).toMatchObject({ object: "api_key", prefix });
+    expect(JSON.stringify(await listApiKeys(db, merchant))).not.toContain(key);
+
+    const other = (await issueApiKey(db, await signedRequest(privateKeyToAccount(generatePrivateKey())), verify, now)).merchant;
+    expect(await revokeApiKey(db, other, listed.id)).toBe(false);
+    expect(await revokeApiKey(db, merchant, "not-a-uuid")).toBe(false);
+    expect(await revokeApiKey(db, merchant, listed.id)).toBe(true);
+    expect(await revokeApiKey(db, merchant, listed.id)).toBe(false);
+    expect(await authenticate(db, `Bearer ${key}`)).toBeNull();
+    expect(await listApiKeys(db, merchant)).toEqual([]);
+  });
+
   it("rejects missing, malformed and unknown keys", async () => {
     expect(await authenticate(db, null)).toBeNull();
     expect(await authenticate(db, "Basic abc")).toBeNull();
@@ -119,6 +134,39 @@ describe("invoices", () => {
     expect(json.checkout_url).toBe(`https://mezout.test/pay/${row.token}`);
   });
 
+  it("stores the success URL and returns it", async () => {
+    const { merchant } = await issueApiKey(db, await signedRequest(), verify, now);
+    const row = await createInvoice(
+      db,
+      merchant,
+      { amount: "1", expiresIn: 3600, successUrl: "https://shop.example/thanks?order=1001" },
+      fakeSign,
+      now,
+    );
+    expect(invoiceJson({ row, payment: null, refunded: 0n }, merchant, "https://mezout.test", now).success_url).toBe(
+      "https://shop.example/thanks?order=1001",
+    );
+  });
+
+  it("shows the fee and what the merchant received on a payment", () => {
+    const json = paymentJson({
+      id: "pay_1",
+      orderId: "0x01",
+      payer: "0x02",
+      method: "MUSD",
+      amount: "25000000000000000000",
+      fee: "250000000000000000",
+      assetIn: "0x03",
+      amountIn: "25000000000000000000",
+      borrowed: "0",
+      router: "0x04",
+      txHash: "0x05",
+      blockNumber: 1,
+      paidAt: new Date(now),
+    } as PaymentRow);
+    expect(json).toMatchObject({ amount: "25", fee: "0.25", net: "24.75" });
+  });
+
   it("hides another merchant's invoice", async () => {
     const a = (await issueApiKey(db, await signedRequest(), verify, now)).merchant;
     const b = (await issueApiKey(db, await signedRequest(privateKeyToAccount(generatePrivateKey())), verify, now))
@@ -133,8 +181,11 @@ describe("invoices", () => {
     const row = await createInvoice(db, merchant, { amount: "1", expiresIn: 3600 }, fakeSign, now);
     const payment = { amount: "1000000000000000000" } as PaymentRow;
     expect(invoiceStatus({ row, payment: null, refunded: 0n }, now)).toBe("pending");
-    expect(invoiceStatus({ row, payment: null, refunded: 0n }, now + 3600_000)).toBe("expired");
-    expect(invoiceStatus({ row, payment, refunded: 0n }, now + 3600_000)).toBe("paid");
+    // The router accepts payment during the expiry second itself, so the invoice expires only after it.
+    const expiry = row.expiresAt.getTime();
+    expect(invoiceStatus({ row, payment: null, refunded: 0n }, expiry + 999)).toBe("pending");
+    expect(invoiceStatus({ row, payment: null, refunded: 0n }, expiry + 1000)).toBe("expired");
+    expect(invoiceStatus({ row, payment, refunded: 0n }, expiry + 1000)).toBe("paid");
     expect(invoiceStatus({ row, payment, refunded: 1n }, now)).toBe("paid");
     expect(invoiceStatus({ row, payment, refunded: 10n ** 18n }, now)).toBe("refunded");
   });

@@ -11,7 +11,18 @@ import {
   MIN_EXPIRES_IN,
 } from "@/lib/server/invoices";
 import { signInvoiceToken } from "@/lib/server/signInvoice";
-import { apiError, requireMerchant } from "@/lib/server/v1";
+import { withIdempotency } from "@/lib/server/idempotency";
+import { apiError, parseJson, requireMerchant } from "@/lib/server/v1";
+
+function isReturnUrl(v: string): boolean {
+  try {
+    const url = new URL(v);
+    if (url.username || url.password) return false;
+    return url.protocol === "https:" || (url.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname));
+  } catch {
+    return false;
+  }
+}
 
 const body = z.object({
   amount: z
@@ -20,6 +31,11 @@ const body = z.object({
     .refine((v) => parseUnits(v, 18) > 0n, "amount must be positive"),
   currency: z.literal("MUSD").default("MUSD"),
   reference: z.string().min(1).max(200).optional(),
+  success_url: z
+    .string()
+    .max(2000)
+    .refine(isReturnUrl, "success_url must be an https URL (http is accepted only for localhost)")
+    .optional(),
   expires_in: z.number().int().min(MIN_EXPIRES_IN).max(MAX_EXPIRES_IN).default(DEFAULT_EXPIRES_IN),
 });
 
@@ -27,14 +43,18 @@ export async function POST(req: Request) {
   const merchant = await requireMerchant(req);
   if (merchant instanceof NextResponse) return merchant;
 
-  const parsed = body.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) {
-    const issue = parsed.error.issues[0];
-    return apiError(400, issue ? `${issue.path.join(".") || "body"}: ${issue.message}` : "Invalid request");
-  }
-  const { amount, reference, expires_in } = parsed.data;
-  const row = await createInvoice(getDb(), merchant, { amount, reference, expiresIn: expires_in }, signInvoiceToken);
-  return NextResponse.json(invoiceJson({ row, payment: null, refunded: 0n }, merchant, req.url), { status: 201 });
+  const raw = await req.text();
+  const db = getDb();
+  return withIdempotency(db, req, merchant, raw, async () => {
+    const parsed = body.safeParse(parseJson(raw));
+    if (!parsed.success) {
+      const issue = parsed.error.issues[0];
+      return apiError(400, issue ? `${issue.path.join(".") || "body"}: ${issue.message}` : "Invalid request");
+    }
+    const { amount, reference, success_url, expires_in } = parsed.data;
+    const row = await createInvoice(db, merchant, { amount, reference, successUrl: success_url, expiresIn: expires_in }, signInvoiceToken);
+    return NextResponse.json(invoiceJson({ row, payment: null, refunded: 0n }, merchant, req.url), { status: 201 });
+  });
 }
 
 const listQuery = z.object({

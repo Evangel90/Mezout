@@ -52,6 +52,7 @@ export function refundJson(r: RefundRow, invoiceId: string | null) {
     tx_hash: r.txHash,
     created_at: r.createdAt.toISOString(),
     completed_at: r.completedAt?.toISOString() ?? null,
+    canceled_at: r.canceledAt?.toISOString() ?? null,
   };
 }
 
@@ -98,6 +99,19 @@ export async function findRefund(db: Db, merchant: Merchant, id: string) {
   if (!row) return null;
   const [payment] = await db.select().from(payments).where(eq(payments.id, row.paymentId));
   return { refund: row, invoice: payment ? await invoiceForPayment(db, payment) : null };
+}
+
+/** Cancels a pending refund request, which frees its amount for other refunds. Sent or canceled refunds cannot be. */
+export async function cancelRefund(db: Db, merchant: Merchant, id: string): Promise<RefundRow> {
+  const [row] = await db
+    .update(refunds)
+    .set({ status: "canceled", canceledAt: new Date() })
+    .where(and(eq(refunds.id, id), eq(refunds.merchantId, merchant.id), eq(refunds.status, "pending")))
+    .returning();
+  if (row) return row;
+  const found = await findRefund(db, merchant, id);
+  if (!found) throw new RefundError("No such refund", 404);
+  throw new RefundError(`This refund is ${found.refund.status} and can no longer be canceled`, 409);
 }
 
 /**

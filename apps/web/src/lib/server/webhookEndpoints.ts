@@ -3,7 +3,7 @@ import { and, desc, eq, isNull } from "drizzle-orm";
 import type { Merchant } from "./apiKeys";
 import type { Db } from "./db/client";
 import { webhookAttempts, webhookDeliveries, webhookEndpoints, webhookEvents } from "./db/schema";
-import { checkEndpointUrl } from "./webhookSender";
+import { checkEndpointHost, checkEndpointUrl, type Resolver } from "./webhookSender";
 import { endpointSecret, MAX_ENDPOINTS, newId } from "./webhooks";
 
 type EndpointRow = typeof webhookEndpoints.$inferSelect;
@@ -26,10 +26,12 @@ export async function createEndpoint(
   rawUrl: string,
   platformSecret: string,
   allowPrivate: boolean,
+  resolve?: Resolver,
 ): Promise<{ endpoint: EndpointRow; secret: string }> {
   let url: string;
   try {
     url = checkEndpointUrl(rawUrl, allowPrivate);
+    await checkEndpointHost(url, allowPrivate, resolve);
   } catch (err) {
     throw new EndpointError(err instanceof Error ? err.message : "Invalid url");
   }

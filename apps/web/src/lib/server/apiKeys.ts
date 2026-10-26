@@ -81,6 +81,27 @@ export async function mintApiKey(db: Db, merchant: Merchant, requestHash: string
   return { key, prefix };
 }
 
+/** A merchant's active keys, oldest first. Only the prefix of each key is kept, so this never shows a full key. */
+export async function listApiKeys(db: Db, merchant: Merchant) {
+  const rows = await db
+    .select({ id: apiKeys.id, prefix: apiKeys.prefix, createdAt: apiKeys.createdAt })
+    .from(apiKeys)
+    .where(and(eq(apiKeys.merchantId, merchant.id), isNull(apiKeys.revokedAt)))
+    .orderBy(apiKeys.createdAt);
+  return rows.map((r) => ({ id: r.id, object: "api_key", prefix: r.prefix, created_at: r.createdAt.toISOString() }));
+}
+
+/** Revokes one of the merchant's keys. Requests with it fail with 401 from then on. */
+export async function revokeApiKey(db: Db, merchant: Merchant, id: string): Promise<boolean> {
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return false;
+  const rows = await db
+    .update(apiKeys)
+    .set({ revokedAt: new Date() })
+    .where(and(eq(apiKeys.id, id), eq(apiKeys.merchantId, merchant.id), isNull(apiKeys.revokedAt)))
+    .returning({ id: apiKeys.id });
+  return rows.length > 0;
+}
+
 /** Resolves `Authorization: Bearer mzk_test_…` to its merchant, or null. */
 export async function authenticate(db: Db, authorization: string | null): Promise<Merchant | null> {
   const match = authorization?.match(/^Bearer\s+(\S+)$/i);

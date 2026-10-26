@@ -42,6 +42,7 @@ describe("business name", () => {
       expect(await checkoutDetails(db, invoice.token, m.payoutAddress as `0x${string}`)).toEqual({
         businessName: "Satoshi's Coffee",
         reference: "Order 1001",
+        successUrl: null,
       });
       // Lowercase addresses from a link still find the merchant.
       expect((await checkoutDetails(db, invoice.token, m.payoutAddress.toLowerCase() as `0x${string}`)).businessName).toBe(
@@ -56,6 +57,7 @@ describe("business name", () => {
       expect(await checkoutDetails(db, invoice.token, b.payoutAddress as `0x${string}`)).toEqual({
         businessName: null,
         reference: null,
+        successUrl: null,
       });
     });
 
@@ -63,6 +65,7 @@ describe("business name", () => {
       expect(await checkoutDetails(db, "tok", "0x000000000000000000000000000000000000dEaD")).toEqual({
         businessName: null,
         reference: null,
+        successUrl: null,
       });
     });
   });

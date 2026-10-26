@@ -8,7 +8,7 @@ import type { Db } from "@/lib/server/db/client";
 import { refunds, webhookEvents } from "@/lib/server/db/schema";
 import { INDEXER_START_BLOCK, syncPayments } from "@/lib/server/indexer";
 import { findInvoiceView, invoiceStatus } from "@/lib/server/invoices";
-import { completeRefund, requestRefund, type ReceiptReader } from "@/lib/server/refunds";
+import { cancelRefund, completeRefund, refundJson, requestRefund, type ReceiptReader } from "@/lib/server/refunds";
 import { FakeChain, ROUTER_V1, ROUTER_V2 } from "./chain";
 import { testDb } from "./db";
 import { makeInvoice, makeMerchant, ORIGIN } from "./fixtures";
@@ -100,6 +100,21 @@ describe("refunds", () => {
     const object = (event.data as { object: Record<string, unknown> }).object;
     expect(object).toMatchObject({ id: refund.id, status: "completed", amount: "10", tx_hash: tx });
     expect(object.invoice).toMatchObject({ id: invoiceId, status: "refunded", amount_refunded: "10" });
+  });
+
+  it("cancels a pending request, which frees its amount, but never a sent refund", async () => {
+    const { refund } = await requestRefund(db, merchant, { invoiceId });
+    const canceled = await cancelRefund(db, merchant, refund.id);
+    expect(refundJson(canceled, invoiceId)).toMatchObject({ status: "canceled", completed_at: null });
+    expect(canceled.canceledAt).toBeInstanceOf(Date);
+    await expect(cancelRefund(db, merchant, refund.id)).rejects.toThrow(/is canceled/);
+    // The whole amount can be requested again.
+    const again = await requestRefund(db, merchant, { invoiceId });
+    expect(again.refund.amount).toBe(musd("10").toString());
+
+    await complete(receipts.add([{ from: merchantAddr(), to: payer, value: musd("10") }]), again.refund.id);
+    await expect(cancelRefund(db, merchant, again.refund.id)).rejects.toThrow(/is completed/);
+    await expect(cancelRefund(db, await makeMerchant(db), again.refund.id)).rejects.toThrow(/No such refund/);
   });
 
   it("records a refund sent without a request, for the amount transferred", async () => {

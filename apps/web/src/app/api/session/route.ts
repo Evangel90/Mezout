@@ -4,7 +4,7 @@ import { isAddress, isHex, type Address, type Hex } from "viem";
 import { KeyRequestError } from "@/lib/server/apiKeys";
 import { getDb } from "@/lib/server/db/client";
 import { ownershipVerifier } from "@/lib/server/ownership";
-import { clientIp, rateLimited } from "@/lib/server/rateLimit";
+import { clientIp, rateLimited, tooManyRequests } from "@/lib/server/rateLimit";
 import {
   createSession,
   endSession,
@@ -45,9 +45,8 @@ export async function GET(req: Request) {
 /** Signs in with a signed signInMessage and sets the session cookie. */
 export async function POST(req: Request) {
   if (!sameOrigin(req)) return NextResponse.json({ error: "Cross-site request" }, { status: 403 });
-  if (rateLimited(`session:${clientIp(req)}`, 10, 60_000)) {
-    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
-  }
+  const wait = await rateLimited(`session:${clientIp(req)}`, 10, 60_000);
+  if (wait) return tooManyRequests(wait);
   const parsed = body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
 

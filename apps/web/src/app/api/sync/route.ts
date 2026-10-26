@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { waitUntil } from "@vercel/functions";
 import { z } from "zod";
 import { publicClient } from "@/lib/server/clients";
-import { clientIp, rateLimited } from "@/lib/server/rateLimit";
+import { clientIp, rateLimited, tooManyRequests } from "@/lib/server/rateLimit";
 import { deliverWebhooks, syncNow } from "@/lib/server/sync";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +14,8 @@ const body = z.object({ block: z.string().regex(/^\d+$/).transform(BigInt).optio
 // its webhook goes out in seconds rather than at the next scheduled run. The indexer waits one block, so this first
 // waits (briefly) for the block after the payment. It only reads public chain data, so it needs no auth.
 export async function POST(req: Request) {
-  if (rateLimited(`sync:${clientIp(req)}`, 6, 60_000)) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  const wait = await rateLimited(`sync:${clientIp(req)}`, 6, 60_000);
+  if (wait) return tooManyRequests(wait);
   const parsed = body.safeParse(await req.json().catch(() => ({})));
   const block = parsed.success ? parsed.data.block : undefined;
   if (block !== undefined) {

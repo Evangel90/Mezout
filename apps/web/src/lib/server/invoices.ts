@@ -21,7 +21,7 @@ export type InvoiceView = { row: InvoiceRow; payment: PaymentRow | null; refunde
 export async function createInvoice(
   db: Db,
   merchant: Merchant,
-  input: { amount: string; reference?: string; expiresIn: number },
+  input: { amount: string; reference?: string; successUrl?: string; expiresIn: number },
   sign: InvoiceSigner,
   now = Date.now(),
 ): Promise<InvoiceRow> {
@@ -43,6 +43,7 @@ export async function createInvoice(
       amount: invoice.amount.toString(),
       fee: invoice.fee.toString(),
       reference: input.reference ?? null,
+      successUrl: input.successUrl ?? null,
       token,
       router: getAddress(linkRouter(decodeSignedInvoice(token))),
       expiresAt,
@@ -120,7 +121,8 @@ export async function listInvoices(
 
 export function invoiceStatus(view: Omit<InvoiceView, "row"> & { row: Pick<InvoiceRow, "expiresAt"> }, now = Date.now()): InvoiceStatus {
   if (view.payment) return view.refunded >= BigInt(view.payment.amount) ? "refunded" : "paid";
-  return view.row.expiresAt.getTime() <= now ? "expired" : "pending";
+  // The router accepts payment up to and including the expiry second, so an invoice expires only after it.
+  return now >= view.row.expiresAt.getTime() + 1000 ? "expired" : "pending";
 }
 
 export const METHODS = ["MUSD", "BORROW", "MEZO", "BTC"] as const;
@@ -134,6 +136,8 @@ export function paymentJson(p: PaymentRow) {
     payer: p.payer,
     method: p.method,
     amount: formatUnits(BigInt(p.amount), 18),
+    fee: formatUnits(BigInt(p.fee), 18),
+    net: formatUnits(BigInt(p.amount) - BigInt(p.fee), 18),
     asset_in: p.assetIn,
     amount_in: formatUnits(BigInt(p.amountIn), 18),
     borrowed: formatUnits(BigInt(p.borrowed), 18),
@@ -160,6 +164,7 @@ export function invoiceJson(view: InvoiceView, merchant: Merchant, origin: strin
     amount_refunded: formatUnits(refunded, 18),
     payment: payment ? paymentJson(payment) : null,
     checkout_url: new URL(`/pay/${row.token}`, origin).toString(),
+    success_url: row.successUrl,
     expires_at: row.expiresAt.toISOString(),
     created_at: row.createdAt.toISOString(),
   };

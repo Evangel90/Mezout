@@ -6,6 +6,7 @@ import { publicClient } from "./clients";
 import { getDb } from "./db/client";
 import { serverEnv } from "./env";
 import { readCursor, recordExpiries, syncPayments } from "./indexer";
+import { pruneRateLimits } from "./rateLimit";
 import { allowPrivateWebhooks, webhookSender } from "./webhookSender";
 import { dispatchDue } from "./webhooks";
 
@@ -39,5 +40,6 @@ export async function indexerTick() {
   const synced = await syncNow(10);
   const expired = await recordExpiries(getDb(), serverEnv.appUrl());
   const webhooks = await deliverWebhooks(50);
+  await pruneRateLimits(getDb()).catch((err) => console.error("rate limit pruning failed", err));
   return { synced, expired, webhooks };
 }

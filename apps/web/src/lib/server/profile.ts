@@ -35,12 +35,12 @@ export async function checkoutDetails(
   db: Db,
   token: string,
   merchantAddress: Address,
-): Promise<{ businessName: string | null; reference: string | null }> {
+): Promise<{ businessName: string | null; reference: string | null; successUrl: string | null }> {
   const [merchant] = await db.select().from(merchants).where(eq(merchants.payoutAddress, getAddress(merchantAddress)));
-  if (!merchant) return { businessName: null, reference: null };
+  if (!merchant) return { businessName: null, reference: null, successUrl: null };
   const [invoice] = await db
-    .select({ reference: invoices.reference })
+    .select({ reference: invoices.reference, successUrl: invoices.successUrl })
     .from(invoices)
     .where(and(eq(invoices.token, token), eq(invoices.merchantId, merchant.id)));
-  return { businessName: merchant.businessName, reference: invoice?.reference ?? null };
+  return { businessName: merchant.businessName, reference: invoice?.reference ?? null, successUrl: invoice?.successUrl ?? null };
 }

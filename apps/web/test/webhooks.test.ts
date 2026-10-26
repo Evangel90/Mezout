@@ -5,7 +5,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import type { Db } from "@/lib/server/db/client";
 import { webhookAttempts, webhookDeliveries, webhookEndpoints } from "@/lib/server/db/schema";
-import { checkEndpointUrl, isPrivateAddress, webhookSender } from "@/lib/server/webhookSender";
+import { checkEndpointHost, checkEndpointUrl, isPrivateAddress, webhookSender } from "@/lib/server/webhookSender";
 import {
   dispatchDue,
   endpointSecret,
@@ -150,6 +150,19 @@ describe("webhook endpoint URLs", () => {
 
   it("allows local stores in development", () => {
     expect(checkEndpointUrl("http://localhost:8080/?wc-api=mezout", true)).toBe("http://localhost:8080/?wc-api=mezout");
+  });
+
+  it("checks, when an endpoint is added, that its host resolves to public addresses only", async () => {
+    const resolver = (map: Record<string, string[]>) => async (host: string) => {
+      if (!map[host]) throw new Error("ENOTFOUND");
+      return map[host];
+    };
+    const dns = resolver({ "shop.example": ["93.184.216.34"], "inside.example": ["93.184.216.34", "10.0.0.5"] });
+    await expect(checkEndpointHost("https://shop.example/hook", false, dns)).resolves.toBeUndefined();
+    await expect(checkEndpointHost("https://inside.example/hook", false, dns)).rejects.toThrow(/public internet/);
+    await expect(checkEndpointHost("https://typo.example/hook", false, dns)).rejects.toThrow(/does not resolve/);
+    // Development skips the lookup so local stores work.
+    await expect(checkEndpointHost("https://typo.example/hook", true, dns)).resolves.toBeUndefined();
   });
 
   it("classifies private addresses, including IPv4-mapped IPv6", () => {

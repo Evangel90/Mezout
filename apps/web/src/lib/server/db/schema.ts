@@ -1,4 +1,4 @@
-import { bigint, index, integer, jsonb, numeric, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
+import { bigint, index, integer, jsonb, numeric, pgTable, primaryKey, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 
 export const merchants = pgTable("merchants", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -37,6 +37,8 @@ export const invoices = pgTable(
     fee: numeric("fee", { precision: 78, scale: 0 }).notNull(),
     currency: text("currency").notNull().default("MUSD"),
     reference: text("reference"),
+    // Where the checkout sends the customer after paying (the merchant's order page). Optional.
+    successUrl: text("success_url"),
     token: text("token").notNull(),
     // The MezoutRouter the invoice was signed for, which records its payment. Rows from before routers were
     // tracked were all signed for the first router.
@@ -87,7 +89,8 @@ export const chainCursors = pgTable("chain_cursors", {
 });
 
 // A refund is MUSD sent from the payout address back to the payer; Mezout never holds funds. A pending refund is a
-// request (from the API) waiting for the merchant to send it; it completes once the transfer is verified on-chain.
+// request (from the API) waiting for the merchant to send it; it completes once the transfer is verified on-chain,
+// or is canceled.
 export const refunds = pgTable(
   "refunds",
   {
@@ -104,6 +107,7 @@ export const refunds = pgTable(
     txHash: text("tx_hash").unique(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     completedAt: timestamp("completed_at", { withTimezone: true }),
+    canceledAt: timestamp("canceled_at", { withTimezone: true }),
   },
   (t) => [index("refunds_payment_idx").on(t.paymentId), index("refunds_merchant_idx").on(t.merchantId)],
 );
@@ -213,4 +217,29 @@ export const passkeys = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("passkeys_credential_idx").on(t.credentialId)],
+);
+
+// Shared fixed-window rate limits, so every server instance counts the same requests.
+export const rateLimits = pgTable("rate_limits", {
+  key: text("key").primaryKey(),
+  windowStart: timestamp("window_start", { withTimezone: true }).notNull(),
+  count: integer("count").notNull(),
+});
+
+// Idempotency-Key replays for POST /v1 requests: the first response is stored and returned again for 24 hours.
+export const idempotencyKeys = pgTable(
+  "idempotency_keys",
+  {
+    merchantId: uuid("merchant_id")
+      .notNull()
+      .references(() => merchants.id),
+    key: text("key").notNull(),
+    // Method and path plus the SHA-256 of the body, so a reused key with a different request is refused.
+    requestHash: text("request_hash").notNull(),
+    // null while the first request is still running.
+    status: integer("status"),
+    body: jsonb("body"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.merchantId, t.key] })],
 );

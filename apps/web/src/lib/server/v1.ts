@@ -2,10 +2,19 @@ import "server-only";
 import { NextResponse } from "next/server";
 import { authenticate, type Merchant } from "./apiKeys";
 import { getDb } from "./db/client";
-import { rateLimited } from "./rateLimit";
+import { rateLimited, tooManyRequests } from "./rateLimit";
 import { readCookie, sameOrigin, SESSION_COOKIE, sessionMerchant } from "./sessions";
 
 export const apiError = (status: number, message: string) => NextResponse.json({ error: message }, { status });
+
+/** Parses a raw JSON body; anything unparseable becomes null, which the route's schema then rejects. */
+export function parseJson(raw: string): unknown {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Authenticates a /v1 request with an API key, or with the dashboard's session cookie, and applies the per-merchant
@@ -26,7 +35,8 @@ export async function requireMerchant(req: Request): Promise<Merchant | NextResp
     res.headers.set("WWW-Authenticate", "Bearer");
     return res;
   }
-  if (rateLimited(`v1:${merchant.id}`, 120, 60_000)) return apiError(429, "Too many requests");
+  const wait = await rateLimited(`v1:${merchant.id}`, 120, 60_000);
+  if (wait) return tooManyRequests(wait);
   return merchant;
 }
 
@@ -35,6 +45,7 @@ export async function requireSession(req: Request): Promise<Merchant | NextRespo
   const merchant = await sessionMerchant(getDb(), readCookie(req, SESSION_COOKIE));
   if (!merchant) return apiError(401, "Sign in to the dashboard first");
   if (!sameOrigin(req)) return apiError(403, "Cross-site request");
-  if (rateLimited(`dash:${merchant.id}`, 120, 60_000)) return apiError(429, "Too many requests");
+  const wait = await rateLimited(`dash:${merchant.id}`, 120, 60_000);
+  if (wait) return tooManyRequests(wait);
   return merchant;
 }

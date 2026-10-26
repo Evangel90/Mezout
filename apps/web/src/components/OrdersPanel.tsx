@@ -127,6 +127,22 @@ function OrderRow({
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  /** Declines a refund requested through the API, without sending anything. */
+  async function cancelRequest() {
+    if (!o.pendingRefund) return;
+    setError(null);
+    setBusy("Canceling the request");
+    try {
+      await api(`/api/dashboard/refunds/${o.pendingRefund.id}/cancel`, { body: {} });
+      setOpen(false);
+      onChange();
+    } catch (err) {
+      setError(errorText(err, "Could not cancel the request"));
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function refund(e: React.FormEvent) {
     e.preventDefault();
     if (!o.paymentId || !o.payer) return;
@@ -226,8 +242,18 @@ function OrderRow({
           >
             {busy ?? "Send refund"}
           </button>
+          {o.pendingRefund && (
+            <button
+              type="button"
+              disabled={!!busy}
+              onClick={cancelRequest}
+              className="rounded border border-stone-300 px-3 py-1 text-sm hover:bg-stone-100 disabled:opacity-50"
+            >
+              Decline request
+            </button>
+          )}
           <button type="button" disabled={!!busy} onClick={() => setOpen(false)} className="text-sm text-stone-600 underline">
-            Cancel
+            Close
           </button>
           {error && <p className="w-full text-sm text-red-700">{error}</p>}
         </form>

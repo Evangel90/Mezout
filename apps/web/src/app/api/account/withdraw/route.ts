@@ -5,7 +5,7 @@ import { entryPoint07Abi, entryPoint07Address, toPackedUserOperation } from "vie
 import { publicClient, relayerClient } from "@/lib/server/clients";
 import { getDb } from "@/lib/server/db/client";
 import { passkeyByAddress, relyingParty, verifyPasskeyAssertion } from "@/lib/server/passkeys";
-import { clientIp, rateLimited } from "@/lib/server/rateLimit";
+import { clientIp, rateLimited, tooManyRequests } from "@/lib/server/rateLimit";
 import {
   buildWithdrawalOp,
   checkFee,
@@ -51,9 +51,8 @@ export async function POST(req: Request) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid request" }, { status: 400 });
   const input = parsed.data;
   const accountAddress = getAddress(input.account);
-  if (rateLimited(`withdraw-ip:${clientIp(req)}`, 20, 60_000) || rateLimited(`withdraw:${accountAddress}`, 10, 60_000)) {
-    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
-  }
+  const wait = (await rateLimited(`withdraw-ip:${clientIp(req)}`, 20, 60_000)) || (await rateLimited(`withdraw:${accountAddress}`, 10, 60_000));
+  if (wait) return tooManyRequests(wait);
 
   const account = await passkeyByAddress(getDb(), accountAddress);
   if (!account) return NextResponse.json({ error: "Not a Mezout passkey account" }, { status: 404 });

@@ -4,7 +4,7 @@ import { BaseError, ContractFunctionRevertedError, getAddress, isAddress, isAddr
 import { decodeSignedInvoice, getBorrowHints, linkRouter, mezoTestnetAddresses, mezoutRouterAbi } from "@mezout/sdk";
 import { publicClient, relayerClient } from "@/lib/server/clients";
 import { serverEnv } from "@/lib/server/env";
-import { clientIp, rateLimited } from "@/lib/server/rateLimit";
+import { clientIp, rateLimited, tooManyRequests } from "@/lib/server/rateLimit";
 
 const hex = z.string().refine((v) => isHex(v), "invalid hex") as unknown as z.ZodType<Hex>;
 const uint = z.string().regex(/^\d+$/).transform(BigInt);
@@ -51,9 +51,8 @@ export async function POST(req: Request) {
   }
   const input = parsed.data;
   const payer = getAddress(input.payer);
-  if (rateLimited(`relay-ip:${clientIp(req)}`, 10, 60_000) || rateLimited(`relay-payer:${payer}`, 5, 60_000)) {
-    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
-  }
+  const wait = (await rateLimited(`relay-ip:${clientIp(req)}`, 10, 60_000)) || (await rateLimited(`relay-payer:${payer}`, 5, 60_000));
+  if (wait) return tooManyRequests(wait);
 
   let signed;
   try {

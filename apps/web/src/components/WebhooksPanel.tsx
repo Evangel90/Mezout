@@ -19,7 +19,7 @@ type Attempt = {
   delivery_id: string;
 };
 
-const DOCS = "/docs#verifying-signatures";
+const DOCS = "/docs#webhooks";
 
 /** Webhook endpoints, their signing secrets, test events and the delivery log. */
 export function WebhooksPanel() {
@@ -57,15 +57,16 @@ export function WebhooksPanel() {
   }
 
   return (
-    <div className="space-y-4 rounded-xl border border-stone-200 bg-white p-6">
-      <div className="space-y-1">
+    <section className="space-y-4 rounded-xl border border-stone-200 bg-white p-6">
+      <div className="max-w-2xl space-y-1">
         <h2 className="text-lg font-semibold">Webhooks</h2>
         <p className="text-sm text-stone-600">
-          Mezout POSTs <span className="font-mono">invoice.paid</span>, <span className="font-mono">invoice.expired</span>{" "}
-          and <span className="font-mono">refund.completed</span> to your server, signed with the endpoint&apos;s secret.
-          Failed deliveries are retried for 24 hours.{" "}
+          A webhook tells your store&apos;s server the moment something happens, such as a customer paying an invoice, so
+          it can mark the order paid and fulfil it without anyone watching this dashboard. Add the URL your server
+          listens on. Mezout sends each event as a signed POST and retries for 24 hours until your server answers 2xx.
+{" "}
           <Link href={DOCS} className="underline">
-            How to verify them
+            Webhooks guide
           </Link>
         </p>
       </div>
@@ -99,7 +100,7 @@ export function WebhooksPanel() {
         </form>
       )}
       {error && <p className="text-sm text-red-700">{error}</p>}
-    </div>
+    </section>
   );
 }
 
