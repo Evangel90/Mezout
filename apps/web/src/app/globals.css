@@ -2,8 +2,52 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Anchor jumps land below the sticky header. */
+html {
+  scroll-padding-top: 4.5rem;
+}
+
 body {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Landing page: sections ease in as they scroll into view, where the browser supports scroll-driven animation. */
+  @supports (animation-timeline: view()) {
+    .reveal {
+      animation: reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 35%;
+    }
+  }
+
+  .tab-progress {
+    animation: tab-progress linear forwards;
+  }
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes tab-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
 }
 
 /* The API reference at /docs, rendered from docs/API.md. */
@@ -11,13 +55,13 @@ body {
   @apply space-y-4 leading-relaxed text-stone-700;
 }
 .api-doc h2 {
-  @apply scroll-mt-6 border-t border-stone-200 pt-10 text-2xl font-semibold tracking-tight text-stone-900;
+  @apply scroll-mt-20 border-t border-stone-200 pt-10 text-2xl font-semibold tracking-tight text-stone-900;
 }
 .api-doc h2:first-child {
   @apply border-t-0 pt-0;
 }
 .api-doc h3 {
-  @apply scroll-mt-6 pt-4 text-lg font-semibold text-stone-900;
+  @apply scroll-mt-20 pt-4 text-lg font-semibold text-stone-900;
 }
 .api-doc h2 a,
 .api-doc h3 a {

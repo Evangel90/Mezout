@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { MerchantArea } from "@/components/dashboard/merchant-area";
+import { Container } from "@/components/site/Container";
 import { ClientProviders } from "../client-providers";
 
 export const metadata: Metadata = { title: "Dashboard" };
@@ -9,7 +10,9 @@ export const metadata: Metadata = { title: "Dashboard" };
 export default function DashboardLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <ClientProviders>
-      <MerchantArea>{children}</MerchantArea>
+      <Container>
+        <MerchantArea>{children}</MerchantArea>
+      </Container>
     </ClientProviders>
   );
 }

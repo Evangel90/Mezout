@@ -77,7 +77,7 @@ export default function DocsPage() {
 
       <div className="lg:grid lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-12">
         <aside className="hidden lg:block">
-          <nav aria-label="On this page" className="sticky top-6 max-h-[calc(100vh-3rem)] overflow-y-auto pb-6 text-sm">
+          <nav aria-label="On this page" className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto pb-6 text-sm">
             <p className="mb-3 text-xs font-medium uppercase tracking-wide text-stone-500">On this page</p>
             <ul className="space-y-1">
               {toc.map((h) => (

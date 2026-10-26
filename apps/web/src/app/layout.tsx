@@ -27,21 +27,30 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body
         className={`${geistSans.variable} ${geistMono.variable} flex min-h-screen flex-col bg-stone-50 text-stone-900 antialiased`}
       >
-        <header className="border-b border-stone-200 bg-white">
-          <nav className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
+        <header className="sticky top-0 z-40 border-b border-stone-200/80 bg-white/80 backdrop-blur-md">
+          <nav className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-2.5">
             <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
               <LogoMark className="h-6 w-6 text-stone-900" />
               Mezout
             </Link>
-            <div className="flex items-center gap-4 text-sm">
-              <SiteNav />
-              <span className="rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-800">Testnet</span>
+            <SiteNav />
+            <div className="flex items-center gap-3 text-sm">
+              <Link href="/docs" className="text-stone-600 hover:text-stone-900 md:hidden">
+                Docs
+              </Link>
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800">Testnet</span>
+              <Link
+                href="/dashboard"
+                className="hidden rounded-full bg-stone-900 px-4 py-1.5 font-medium text-white hover:bg-stone-700 sm:inline-block"
+              >
+                Get started
+              </Link>
             </div>
           </nav>
         </header>
-        <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-10">{children}</main>
+        <main className="flex-1">{children}</main>
         <footer className="border-t border-stone-200 bg-white">
-          <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-8 text-sm text-stone-600 sm:flex-row sm:items-start sm:justify-between">
+          <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 text-sm text-stone-600 sm:flex-row sm:items-start sm:justify-between">
             <div className="max-w-sm space-y-1">
               <p className="flex items-center gap-2 font-medium text-stone-900">
                 <LogoMark className="h-5 w-5 text-stone-900" /> Mezout
