@@ -53,7 +53,7 @@ export function BusinessNameForm({ variant }: { variant: "prompt" | "settings" }
           }}
           required={prompt}
           maxLength={64}
-          placeholder="Satoshi's Coffee"
+          placeholder="Satoshi's Coffee Store"
           aria-label="Business name"
           className="min-w-0 flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2"
         />

@@ -81,7 +81,7 @@ A passkey is bound to this site's domain, `usemezout.vercel.app`; the first doma
 - **Developers**: API keys (listed by prefix, revocable), and up to 3 webhook endpoints, each with its own signing secret, a test event, and a log of every delivery attempt with the response. Failed deliveries retry with backoff for 24 hours.
 - **Account**: the business name, the payout address, gasless withdrawals for passkey accounts, and sign out.
 
-The business name is what customers see at checkout ("Pay Satoshi's Coffee"), with the payout address shown beneath it, and it titles the dashboard. A passkey account takes it from sign-up; a wallet merchant is asked for it after signing in. Names are self-declared and not verified; the signed invoice, not the name, decides who is paid.
+The business name is what customers see at checkout ("Pay Satoshi's Coffee Store"), with the payout address shown beneath it, and it titles the dashboard. A passkey account takes it from sign-up; a wallet merchant is asked for it after signing in. Names are self-declared and not verified; the signed invoice, not the name, decides who is paid.
 
 A webhook is how a store's server learns it has been paid: when the indexer records a payment, Mezout POSTs a signed `invoice.paid` event to the store's endpoint, and the store marks the order paid and fulfils it. `examples/webhook-receiver/server.mjs` is a dependency-free receiver that verifies signatures and ignores duplicates; the WooCommerce plugin does the same inside WordPress.
 

@@ -212,7 +212,7 @@ export default function Home() {
             width={560}
             height={600}
             priority
-            alt="A Mezout receipt for Satoshi’s Coffee: 25.00 MUSD, stamped paid. The payment method changes between BTC, MEZO, MUSD and borrowing against BTC, while the merchant always receives 25.00 MUSD."
+            alt="A Mezout receipt for Satoshi’s Coffee Store: 25.00 MUSD, stamped paid. The payment method changes between BTC, MEZO, MUSD and borrowing against BTC, while the merchant always receives 25.00 MUSD."
           />
         </div>
       </Band>

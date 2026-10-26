@@ -179,7 +179,7 @@ function PasskeyCard({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 maxLength={64}
-                placeholder="Satoshi's Coffee"
+                placeholder="Satoshi's Coffee Store"
                 className="w-full rounded-lg border border-stone-300 px-3 py-2"
               />
               <span className="block text-xs text-stone-500">Customers see it when they pay. You can change it later.</span>
