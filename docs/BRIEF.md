@@ -296,6 +296,20 @@ M0 and M1 must be done by Sunday 26 Oct for the Wave 1 submission. M2–M6 fill 
 - [ ] Demo video under 3 minutes covering all four paths and both plugins
 - [ ] **Gate:** owner submits Wave 2; demo day is 23 Nov
 
+## Future plans
+
+**Agent payments:** AI agents pay Mezout invoices and take payments through Mezout. Not scheduled: work starts only after M5 and M6 are done, and only with the owner's go-ahead.
+
+It builds on what exists. Agents can already create and pay invoices through the API, and the router guarantees the merchant the exact amount. `Idempotency-Key` and signed webhooks make retries safe. Mezo gas is cheap enough for per-request payments, and borrowing against BTC lets an agent spend without the owner selling BTC.
+
+| Order | Feature | What it is | Size | Condition |
+| --- | --- | --- | --- | --- |
+| 1 | Mezout MCP server | Tools `create_invoice`, `get_invoice`, `pay_invoice` and `refund` over the existing API, so MCP-capable agents can take and make payments | A few days | Uses only the existing API |
+| 2 | Pay per request (HTTP 402) | A merchant's API answers `402 Payment Required` with a Mezout payment request; the agent pays through the router and retries with proof. `/v1/verify` lets the server check the payment; middleware for Express and Next.js | About a week | Match the current agent-payment standard (x402, AP2 or their successor) before building |
+| 3 | Agent wallets with spending limits | The owner approves an agent's wallet with a passkey and sets limits per payment, per day and by merchant; optional funding by borrowing against BTC | Large | A separate contract with its own review; the router's trust model and the 160% floor stay unchanged |
+
+Target: items 1 and 2 as a demo-day showcase (23 Nov) if M5 and M6 finish early; item 3 after the buildathon.
+
 ## Agent working rules
 
 The agent builds on testnet only, proves protocol behaviour with tests instead of assuming it, and asks before anything irreversible.
