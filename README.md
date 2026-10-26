@@ -490,6 +490,7 @@ pnpm --filter @mezout/web dev
 
 - **Shopify app**, alongside the WooCommerce gateway
 - **Embedded checkout**: a drop-in `mezout.js` script and React component that open the checkout in a modal inside the merchant's own site, with fulfilment still driven by the signed webhook
+- **Agent payments**: AI agents that pay and get paid through Mezout. First a Mezout MCP server (create, check, pay and refund invoices from any MCP-capable agent), then pay-per-request APIs over HTTP 402, where an agent pays an exact MUSD price and retries with proof; later, agent wallets with spending limits the owner approves with a passkey, optionally funded by borrowing against BTC
 - **Mainnet readiness**: a passkey recovery key, an external security review, and deployment on Mezo mainnet
 - **Deeper MEZO liquidity**: the current MUSD/MEZO pool is a small test pool
 - **Gasless payments for Bitcoin-wallet accounts**, which pay their own gas today

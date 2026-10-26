@@ -63,6 +63,8 @@ Solidity 0.8.28 with Foundry and OpenZeppelin 5.6 (no upgradeability, no admin k
 2. Merchant platform: signed webhooks, payment history, refunds, CSV export (M3).
 3. WooCommerce gateway (M4) and Shopify app (M5).
 
+After that: **agent payments**. A Mezout MCP server lets AI agents create, pay and refund invoices; pay-per-request APIs over HTTP 402 let an agent pay an exact MUSD price per call; later, agent wallets with owner-approved spending limits, optionally funded by borrowing against BTC.
+
 ---
 
 # Demo script (about 2 minutes 30 seconds)

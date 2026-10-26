@@ -61,6 +61,7 @@ The contracts have no upgradeability and no admin keys. The full API reference i
 
 - **Shopify app (M5).** It will sit alongside the WooCommerce gateway.
 - **Embedded checkout.** A drop-in `mezout.js` script, plus a React component, will open the checkout in a modal or popup inside the merchant's own app or site instead of redirecting away. It will tell the page when the payment completes, while fulfilment still comes from the signed webhook.
+- **Agent payments.** AI agents will pay and get paid through Mezout. First comes a Mezout MCP server, so any MCP-capable agent can create, check, pay and refund invoices. Next is pay-per-request for APIs over HTTP 402: the agent pays an exact MUSD price and retries with proof. Later, agent wallets get spending limits that the owner approves with a passkey, optionally funded by borrowing against BTC. The exact-amount router, idempotent API and signed webhooks already do most of the work.
 - **Mainnet readiness.** That means a passkey recovery key, since a lost device currently means a lost account, a security review, and a deployment on Mezo mainnet.
 - **Deeper liquidity for MEZO payments.** The current MUSD/MEZO pool is a small test pool that we seeded ourselves.
 - **A gasless path for Bitcoin-wallet smart accounts.** Today those accounts pay their own gas.
