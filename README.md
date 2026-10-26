@@ -36,6 +36,7 @@ Built for the Mezo Buildathon, Access & Distribution track. Live on Mezo testnet
 - [Repository layout](#repository-layout)
 - [Run it yourself](#run-it-yourself)
 - [What's next](#whats-next)
+- [License](#license)
 
 ## The problem
 
@@ -494,3 +495,7 @@ pnpm --filter @mezout/web dev
 - **Gasless payments for Bitcoin-wallet accounts**, which pay their own gas today
 - **Turning on the fee**: the signed invoice already carries a fee field, set to 0 during the buildathon, so no contract change is needed
 - **More merchant tools**: payouts to exchanges, more ecommerce platforms, and in-person QR checkout
+
+## License
+
+[MIT](LICENSE), except the WooCommerce plugin in [`plugins/woocommerce/mezout-woocommerce`](plugins/woocommerce/mezout-woocommerce), which is GPL-2.0-or-later like WordPress itself.
