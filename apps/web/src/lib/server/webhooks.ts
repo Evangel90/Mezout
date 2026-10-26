@@ -4,7 +4,7 @@ import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import type { Db } from "./db/client";
 import { webhookAttempts, webhookDeliveries, webhookEndpoints, webhookEvents } from "./db/schema";
 
-export type EventType = "invoice.paid" | "invoice.expired" | "refund.completed" | "ping";
+export type EventType = "invoice.paid" | "invoice.expired" | "refund.completed" | "refund.canceled" | "ping";
 export const MAX_ENDPOINTS = 3;
 export const RETRY_WINDOW_MS = 24 * 60 * 60 * 1000;
 const MAX_RETRY_DELAY_MS = 6 * 60 * 60 * 1000;

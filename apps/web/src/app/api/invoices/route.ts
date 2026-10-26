@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { parseUnits } from "viem";
 import { getDb } from "@/lib/server/db/client";
+import { serverEnv } from "@/lib/server/env";
 import { createInvoice, MAX_EXPIRES_IN, MIN_EXPIRES_IN } from "@/lib/server/invoices";
 import { signInvoiceToken } from "@/lib/server/signInvoice";
 import { apiError, requireSession } from "@/lib/server/v1";
@@ -31,6 +32,6 @@ export async function POST(req: Request) {
     orderId: row.orderId,
     expiry: String(row.expiresAt.getTime() / 1000),
     token: row.token,
-    url: new URL(`/pay/${row.token}`, req.url).toString(),
+    url: new URL(`/pay/${row.token}`, serverEnv.appUrl()).toString(),
   });
 }

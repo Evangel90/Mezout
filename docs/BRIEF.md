@@ -281,9 +281,9 @@ M0 and M1 must be done by Sunday 26 Oct for the Wave 1 submission. M2–M6 fill 
 
 ### M4 — WooCommerce plugin (8 Nov)
 
-- [ ] Gateway works on both the classic and block checkouts of a local WordPress + WooCommerce store
-- [ ] Order is marked paid only by a verified webhook; refunds work from the WooCommerce admin
-- [ ] Plugin zip and install guide
+- [x] Gateway works on both the classic and block checkouts of a local WordPress + WooCommerce store
+- [x] Order is marked paid only by a verified webhook; refunds work from the WooCommerce admin
+- [x] Plugin zip and install guide
 
 ### M5 — Shopify app (12 Nov)
 

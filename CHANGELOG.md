@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- M4: WooCommerce gateway, `plugins/woocommerce/mezout-woocommerce` (PHP 8.1+, WooCommerce 8.5+, tested on WordPress 7.1 and WooCommerce 11.2). Classic and block checkouts; HPOS compatible. Checkout creates an invoice (idempotent per order) and returns the customer through `success_url`; only a signed `invoice.paid` with a matching amount marks the order paid; `invoice.expired` cancels unpaid orders; refunds from the order screen become Mezout refund requests, `refund.completed` notes the transfer, `refund.canceled` removes a declined refund, and refunds sent straight from the dashboard are recorded. Saving the settings checks the key and registers the webhook endpoint automatically. Adds MUSD as a store currency. Local WordPress through `@wordpress/env`; `pnpm zip` builds the installable zip; PHP unit tests for signatures and amounts.
+- New webhook event `refund.canceled`, sent when a pending refund is canceled or declined.
+- `checkout_url` is built from the app's canonical URL rather than the request's host.
+- Dashboard MUSD transfers from a wallet set an 80,000 gas limit: Mezo testnet sometimes estimates below its own EIP-7623 minimum.
+
 - API reference rewritten (`docs/API.md`, `/docs`): overview of a payment end to end, quickstart, authentication and key rotation, request conventions, every error code with what to do, rate limits, idempotency, pagination, object and endpoint reference, invoice status rules, a webhooks guide (receive your first webhook, handling, at-least-once delivery, timing, retries, ordering, no backfill, snapshots) and signature verification in Node, PHP and Python. Dashboard-only routes are no longer documented as public API. `/docs` has a sticky contents sidebar, labelled code blocks with Copy buttons, and a collapsible index on phones.
 - `Idempotency-Key` on `POST /v1/invoices` and `POST /v1/refunds`: the first response is kept 24 hours and replayed with `Idempotent-Replayed: true`; a reused key with a different request returns `422`, one still running `409`.
 - API keys are listed by prefix on the Developers tab and can be revoked (`GET /api/keys`, `DELETE /api/keys/:id`).

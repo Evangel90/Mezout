@@ -101,14 +101,26 @@ export async function findRefund(db: Db, merchant: Merchant, id: string) {
   return { refund: row, invoice: payment ? await invoiceForPayment(db, payment) : null };
 }
 
-/** Cancels a pending refund request, which frees its amount for other refunds. Sent or canceled refunds cannot be. */
-export async function cancelRefund(db: Db, merchant: Merchant, id: string): Promise<RefundRow> {
+/**
+ * Cancels a pending refund request, which frees its amount for other refunds, and emits refund.canceled so a store
+ * that requested it can undo its own record. Sent or canceled refunds cannot be canceled.
+ */
+export async function cancelRefund(db: Db, merchant: Merchant, id: string, origin: string): Promise<RefundRow> {
   const [row] = await db
     .update(refunds)
     .set({ status: "canceled", canceledAt: new Date() })
     .where(and(eq(refunds.id, id), eq(refunds.merchantId, merchant.id), eq(refunds.status, "pending")))
     .returning();
-  if (row) return row;
+  if (row) {
+    const [payment] = await db.select().from(payments).where(eq(payments.id, row.paymentId));
+    const invoice = payment ? await invoiceForPayment(db, payment) : null;
+    const view = invoice ? (await viewInvoices(db, [invoice]))[0] : null;
+    await recordEvent(db, merchant.id, "refund.canceled", `refund.canceled:${row.id}`, {
+      ...refundJson(row, invoice?.id ?? null),
+      invoice: view ? invoiceJson(view, merchant, origin) : null,
+    });
+    return row;
+  }
   const found = await findRefund(db, merchant, id);
   if (!found) throw new RefundError("No such refund", 404);
   throw new RefundError(`This refund is ${found.refund.status} and can no longer be canceled`, 409);

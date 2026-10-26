@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { parseUnits } from "viem";
 import { getDb } from "@/lib/server/db/client";
+import { serverEnv } from "@/lib/server/env";
 import {
   createInvoice,
   DEFAULT_EXPIRES_IN,
@@ -53,7 +54,7 @@ export async function POST(req: Request) {
     }
     const { amount, reference, success_url, expires_in } = parsed.data;
     const row = await createInvoice(db, merchant, { amount, reference, successUrl: success_url, expiresIn: expires_in }, signInvoiceToken);
-    return NextResponse.json(invoiceJson({ row, payment: null, refunded: 0n }, merchant, req.url), { status: 201 });
+    return NextResponse.json(invoiceJson({ row, payment: null, refunded: 0n }, merchant, serverEnv.appUrl()), { status: 201 });
   });
 }
 
@@ -74,7 +75,7 @@ export async function GET(req: Request) {
   return NextResponse.json(
     {
       object: "list",
-      data: views.slice(0, limit).map((v) => invoiceJson(v, merchant, req.url)),
+      data: views.slice(0, limit).map((v) => invoiceJson(v, merchant, serverEnv.appUrl())),
       has_more: views.length > limit,
     },
     { headers: { "cache-control": "no-store" } },

@@ -104,17 +104,19 @@ describe("refunds", () => {
 
   it("cancels a pending request, which frees its amount, but never a sent refund", async () => {
     const { refund } = await requestRefund(db, merchant, { invoiceId });
-    const canceled = await cancelRefund(db, merchant, refund.id);
+    const canceled = await cancelRefund(db, merchant, refund.id, ORIGIN);
     expect(refundJson(canceled, invoiceId)).toMatchObject({ status: "canceled", completed_at: null });
     expect(canceled.canceledAt).toBeInstanceOf(Date);
-    await expect(cancelRefund(db, merchant, refund.id)).rejects.toThrow(/is canceled/);
+    const [event] = await db.select().from(webhookEvents).where(eq(webhookEvents.type, "refund.canceled"));
+    expect((event.data as { object: Record<string, unknown> }).object).toMatchObject({ id: refund.id, status: "canceled", invoice: { id: invoiceId } });
+    await expect(cancelRefund(db, merchant, refund.id, ORIGIN)).rejects.toThrow(/is canceled/);
     // The whole amount can be requested again.
     const again = await requestRefund(db, merchant, { invoiceId });
     expect(again.refund.amount).toBe(musd("10").toString());
 
     await complete(receipts.add([{ from: merchantAddr(), to: payer, value: musd("10") }]), again.refund.id);
-    await expect(cancelRefund(db, merchant, again.refund.id)).rejects.toThrow(/is completed/);
-    await expect(cancelRefund(db, await makeMerchant(db), again.refund.id)).rejects.toThrow(/No such refund/);
+    await expect(cancelRefund(db, merchant, again.refund.id, ORIGIN)).rejects.toThrow(/is completed/);
+    await expect(cancelRefund(db, await makeMerchant(db), again.refund.id, ORIGIN)).rejects.toThrow(/No such refund/);
   });
 
   it("records a refund sent without a request, for the amount transferred", async () => {

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/server/db/client";
+import { serverEnv } from "@/lib/server/env";
 import { findInvoiceView, invoiceJson } from "@/lib/server/invoices";
 import { syncIfStale } from "@/lib/server/sync";
 import { apiError, requireMerchant } from "@/lib/server/v1";
@@ -18,5 +19,5 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     const synced = await syncIfStale(5_000).catch(() => null);
     if (synced?.recorded) view = (await findInvoiceView(db, merchant, params.id)) ?? view;
   }
-  return NextResponse.json(invoiceJson(view, merchant, req.url), { headers: { "cache-control": "no-store" } });
+  return NextResponse.json(invoiceJson(view, merchant, serverEnv.appUrl()), { headers: { "cache-control": "no-store" } });
 }

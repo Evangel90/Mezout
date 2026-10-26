@@ -2,7 +2,7 @@
 
 Merchant checkout on Mezo: customers pay with MUSD, by borrowing against their BTC, with MEZO, or with BTC, and the merchant always receives the exact invoiced amount in MUSD. Mezout never holds funds. Built for the Mezo Buildathon (Access & Distribution track), Mezo testnet only.
 
-Status: Milestone 3 built. Merchants get a platform: an on-chain indexer that marks invoices paid only from the router's `Paid` events, signed webhooks with retries and a delivery log, refunds, an order list with CSV export, and dashboard sign-in. M2 added payments in MEZO or BTC, swapped to exact MUSD on Tigris, live in production at usemezout.vercel.app (router v2). Built in M1: the router (MUSD and borrow paths), hosted checkout, relayer, payment-link dashboard, a minimal merchant API (API keys, create and retrieve invoices) and walletless merchant accounts (passkey smart accounts, ERC-4337) are built and tested; deployed to Mezo testnet with live reference payments. See `docs/BRIEF.md` for the plan, `docs/M0-findings.md` for what has been verified and `docs/API.md` for the API.
+Status: Milestone 4 built: a WooCommerce gateway (`plugins/woocommerce`) for the classic and block checkouts, with webhook-confirmed orders, link expiry and refunds. Milestone 3 gave merchants a platform: an on-chain indexer that marks invoices paid only from the router's `Paid` events, signed webhooks with retries and a delivery log, refunds, an order list with CSV export, and dashboard sign-in. M2 added payments in MEZO or BTC, swapped to exact MUSD on Tigris, live in production at usemezout.vercel.app (router v2). Built in M1: the router (MUSD and borrow paths), hosted checkout, relayer, payment-link dashboard, a minimal merchant API (API keys, create and retrieve invoices) and walletless merchant accounts (passkey smart accounts, ERC-4337) are built and tested; deployed to Mezo testnet with live reference payments. See `docs/BRIEF.md` for the plan, `docs/M0-findings.md` for what has been verified and `docs/API.md` for the API.
 
 ## Testnet deployment
 
@@ -83,7 +83,7 @@ A passkey is bound to this site's domain, `usemezout.vercel.app`; the first doma
 
 The business name is what customers see at checkout ("Pay Satoshi's Coffee"), with the payout address shown beneath it, and it titles the dashboard. A passkey account takes it from sign-up; a wallet merchant is asked for it after signing in. Names are self-declared and not verified; the signed invoice, not the name, decides who is paid.
 
-A webhook is how a store's server learns it has been paid: when the indexer records a payment, Mezout POSTs a signed `invoice.paid` event to the store's endpoint, and the store marks the order paid and fulfils it. `examples/webhook-receiver/server.mjs` is a dependency-free receiver that verifies signatures and ignores duplicates; the WooCommerce plugin (M4) will do the same inside WordPress.
+A webhook is how a store's server learns it has been paid: when the indexer records a payment, Mezout POSTs a signed `invoice.paid` event to the store's endpoint, and the store marks the order paid and fulfils it. `examples/webhook-receiver/server.mjs` is a dependency-free receiver that verifies signatures and ignores duplicates; the WooCommerce plugin does the same inside WordPress.
 
 The API reference is `docs/API.md`: a quickstart, authentication, errors, rate limits, idempotency, every object and endpoint, and a webhooks guide with verification code for Node, PHP and Python. The site publishes it at `/docs`, rendered from that file at build time, so edit the file, not the page.
 
@@ -93,7 +93,7 @@ The API reference is `docs/API.md`: a quickstart, authentication, errors, rate l
 contracts/            Foundry project: router, interfaces, tests
 apps/web/             Next.js 14: hosted checkout, dashboard, API
 packages/sdk/         Typed data, chain config, shared types
-plugins/woocommerce/  WooCommerce gateway (Milestone 4)
+plugins/woocommerce/  WooCommerce gateway (PHP) and its local WordPress setup
 plugins/shopify/      Shopify app (Milestone 5)
 docs/                 Brief, findings and API reference
 examples/             Webhook receiver

@@ -129,7 +129,9 @@ export function MerchantGate({ children }: { children: ReactNode }) {
         hash = result.hash as Hex;
       } else {
         if (chainId !== mezoTestnet.id) await switchChainAsync({ chainId: mezoTestnet.id });
-        hash = await sendTransactionAsync({ to: mezoTestnetAddresses.musd, data, chainId: mezoTestnet.id });
+        // Mezo testnet's gas estimate for a transfer is sometimes below its own minimum (EIP-7623's calldata floor),
+        // which the node then rejects. An MUSD transfer uses about 35,000 gas; unused gas is not charged.
+        hash = await sendTransactionAsync({ to: mezoTestnetAddresses.musd, data, chainId: mezoTestnet.id, gas: 80_000n });
       }
       const receipt = await client.waitForTransactionReceipt({ hash, timeout: 90_000 });
       if (receipt.status !== "success") throw new Error("The transfer failed on-chain. Nothing was sent.");

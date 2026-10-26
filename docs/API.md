@@ -267,7 +267,7 @@ There are two ways to refund:
 - **From the dashboard.** On the **Payments** tab, click **Refund** on an order and confirm the transfer. The refund completes as soon as the transfer is checked.
 - **Request from your server, send from the dashboard.** Your store calls `POST /v1/refunds`, for example when a customer cancels. The refund is `pending` until you open the order on the **Payments** tab and click **Send requested refund**, or **Decline request** to cancel it.
 
-When a refund completes, Mezout sends `refund.completed`.
+When a refund completes, Mezout sends `refund.completed`. When a request is canceled or declined, it sends `refund.canceled`, so a store that recorded the refund can undo it.
 
 ### The refund object
 
@@ -315,7 +315,7 @@ Returns `201` with a `pending` refund. Pending and completed refunds together ca
 
 `POST /v1/refunds/:id/cancel`
 
-Cancels a `pending` refund and frees its amount. Returns the refund with status `canceled`. A refund that is already `completed` or `canceled` returns `409`.
+Cancels a `pending` refund and frees its amount. Returns the refund with status `canceled`, and sends `refund.canceled`. A refund that is already `completed` or `canceled` returns `409`.
 
 ## Webhooks
 
@@ -350,6 +350,7 @@ The repository includes a small receiver, [`examples/webhook-receiver/server.mjs
 | `invoice.paid` | An invoice's payment is on-chain. | The invoice, with `payment`. |
 | `invoice.expired` | An invoice was not paid before `expires_at` (in Mezo's chain time). | The invoice. |
 | `refund.completed` | A refund's transfer is checked on-chain. | The refund, with `invoice` as the full invoice object. |
+| `refund.canceled` | A pending refund is canceled, by the API or **Decline request** on the dashboard. | The refund, with `invoice` as the full invoice object. |
 | `ping` | You click **Send test event** on the dashboard. | `{"object": "ping", …}` |
 
 Each event is sent to every endpoint you had when it happened. New event types may be added, so ignore types you don't handle.

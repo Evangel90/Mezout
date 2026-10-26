@@ -1,0 +1,16 @@
+{
+  "name": "mezout-woocommerce-dev",
+  "private": true,
+  "description": "Local WordPress + WooCommerce for developing the Mezout gateway",
+  "scripts": {
+    "env": "wp-env",
+    "start": "wp-env start",
+    "stop": "wp-env stop",
+    "wp": "wp-env run cli wp",
+    "test": "wp-env run cli --env-cwd=wp-content/plugins/mezout-woocommerce php tests/run.php",
+    "zip": "node scripts/zip.mjs"
+  },
+  "devDependencies": {
+    "@wordpress/env": "11.17.0"
+  }
+}
