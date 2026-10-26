@@ -304,7 +304,7 @@ sequenceDiagram
     participant E as EntryPoint v0.7
     participant A as MezoutAccount
 
-    rect rgb(245, 245, 244)
+    rect rgba(128, 128, 128, 0.12)
     Note over M,F: Sign up, no wallet and no transaction
     M->>B: Create account with passkey
     B-->>D: P-256 public key
@@ -312,7 +312,7 @@ sequenceDiagram
     F-->>D: Account address, ready to receive MUSD now
     end
 
-    rect rgb(245, 245, 244)
+    rect rgba(128, 128, 128, 0.12)
     Note over M,A: Withdraw, gasless
     M->>D: Withdraw 20 MUSD to an address
     D->>D: Build user operation, pin nonce and fee
