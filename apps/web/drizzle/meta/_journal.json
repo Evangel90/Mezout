@@ -29,6 +29,13 @@
       "when": 1792963310448,
       "tag": "0003_early_chat",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792972956007,
+      "tag": "0004_famous_randall",
+      "breakpoints": true
     }
   ]
 }

@@ -13,7 +13,8 @@ type Props = {
   walletAddress: Address | null;
   busy: string | null;
   error: string | null;
-  onPasskeySession: (session: PasskeySession) => Promise<void>;
+  /** newName: the business name a new passkey account was created with. */
+  onPasskeySession: (session: PasskeySession, newName?: string) => Promise<void>;
   onForgetPasskey: () => void;
   onWalletSignIn: () => Promise<void>;
   onWalletDisconnect: () => void;
@@ -117,7 +118,7 @@ function PasskeyCard({
   const [waiting, setWaiting] = useState<string | null>(null);
   const status = waiting ?? busy;
 
-  async function run(label: string, get: () => Promise<PasskeySession>) {
+  async function run(label: string, get: () => Promise<PasskeySession>, newName?: string) {
     onStart();
     onError(null);
     setWaiting(label);
@@ -131,7 +132,7 @@ function PasskeyCard({
     } finally {
       setWaiting(null);
     }
-    await onPasskeySession(session);
+    await onPasskeySession(session, newName);
   }
 
   return (
@@ -168,7 +169,7 @@ function PasskeyCard({
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              run("Creating your passkey…", () => createPasskeyAccount(name.trim() || "Mezout merchant"));
+              run("Creating your passkey…", () => createPasskeyAccount(name.trim() || "Mezout merchant"), name);
             }}
             className="space-y-3"
           >
@@ -181,7 +182,7 @@ function PasskeyCard({
                 placeholder="Satoshi's Coffee"
                 className="w-full rounded-lg border border-stone-300 px-3 py-2"
               />
-              <span className="block text-xs text-stone-500">Shown in your device&apos;s passkey list.</span>
+              <span className="block text-xs text-stone-500">Customers see it when they pay. You can change it later.</span>
             </label>
             <button disabled={!!status} className={primary}>
               {status ?? "Create account with passkey"}

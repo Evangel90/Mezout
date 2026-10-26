@@ -3,6 +3,8 @@ import { bigint, index, integer, jsonb, numeric, pgTable, text, timestamp, uniqu
 export const merchants = pgTable("merchants", {
   id: uuid("id").primaryKey().defaultRandom(),
   payoutAddress: text("payout_address").notNull().unique(),
+  // Shown to customers at checkout. Set by the merchant from the dashboard; self-declared, not verified.
+  businessName: text("business_name"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -44,7 +46,7 @@ export const invoices = pgTable(
     // Set when the invoice.expired event is recorded, so each expiry is announced once.
     expiredEventAt: timestamp("expired_event_at", { withTimezone: true }),
   },
-  (t) => [index("invoices_merchant_idx").on(t.merchantId)],
+  (t) => [index("invoices_merchant_idx").on(t.merchantId), index("invoices_token_idx").on(t.token)],
 );
 
 // One row per Paid event, written only by the indexer. An invoice is paid when a payment exists for its router and

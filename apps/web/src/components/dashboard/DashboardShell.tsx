@@ -17,13 +17,16 @@ const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 /** The signed-in dashboard: who is signed in, and one tab per job. */
 export function DashboardShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const { address, method } = useMerchant();
+  const { address, method, businessName } = useMerchant();
   const [copied, setCopied] = useState(false);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+        <div className="min-w-0">
+          <p className="text-sm text-stone-500">Dashboard</p>
+          <h1 className="truncate text-2xl font-semibold tracking-tight">{businessName ?? "Your business"}</h1>
+        </div>
         <button
           onClick={() => {
             navigator.clipboard.writeText(address);

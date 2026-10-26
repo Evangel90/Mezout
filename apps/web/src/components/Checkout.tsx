@@ -47,10 +47,18 @@ const fmtToken = (v: bigint) => Number(formatUnits(v, 18)).toLocaleString(undefi
 const withSlippage = (v: bigint) => (v * (10_000n + SLIPPAGE_BPS)) / 10_000n;
 const pct = (v: bigint) => `${Number(formatUnits(v * 100n, 18)).toFixed(0)}%`;
 const shortAddr = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
+/** "23 hours", "12 minutes", "3 days": how long until a unix-seconds expiry. */
+function timeLeft(expiry: bigint, now = Date.now()) {
+  const minutes = Math.max(1, Math.round((Number(expiry) * 1000 - now) / 60_000));
+  const [n, unit] = minutes < 60 ? [minutes, "minute"] : minutes < 48 * 60 ? [Math.round(minutes / 60), "hour"] : [Math.round(minutes / 1440), "day"];
+  return `${n} ${unit}${n === 1 ? "" : "s"}`;
+}
 
 type Status = { kind: "idle" } | { kind: "working"; step: string } | { kind: "sent"; hash: Hex } | { kind: "error"; message: string };
 
-export function Checkout({ token }: { token: string }) {
+type Display = { businessName: string | null; reference: string | null };
+
+export function Checkout({ token, businessName, reference }: { token: string } & Display) {
   const signed = useMemo(() => {
     try {
       return decodeSignedInvoice(token);
@@ -61,7 +69,14 @@ export function Checkout({ token }: { token: string }) {
 
   if (!signed) return <p className="text-red-700">This payment link is not valid.</p>;
   return (
-    <CheckoutInner token={token} invoice={signed.invoice} invoiceSig={signed.signature} router={linkRouter(signed)} />
+    <CheckoutInner
+      token={token}
+      invoice={signed.invoice}
+      invoiceSig={signed.signature}
+      router={linkRouter(signed)}
+      businessName={businessName}
+      reference={reference}
+    />
   );
 }
 
@@ -72,12 +87,14 @@ function CheckoutInner({
   invoice,
   invoiceSig,
   router,
+  businessName,
+  reference,
 }: {
   token: string;
   invoice: SignedInvoice["invoice"];
   invoiceSig: SignedInvoice["signature"];
   router: Address;
-}) {
+} & Display) {
   // Links signed for the first router can only be paid with MUSD or by borrowing.
   const supportsSwaps = isAddressEqual(router, currentRouter);
   const { address } = useAccount();
@@ -355,17 +372,27 @@ function CheckoutInner({
 
   return (
     <div className="mx-auto max-w-md space-y-6">
-      <div className="rounded-xl border border-stone-200 bg-white p-6">
-        <p className="text-sm text-stone-500">Pay {shortAddr(invoice.merchant)}</p>
-        <p className="mt-1 text-4xl font-semibold tracking-tight">{fmt(invoice.amount)} MUSD</p>
-        <p className="mt-2 text-xs text-stone-500">
-          {expired ? "Expired" : `Expires ${new Date(Number(invoice.expiry) * 1000).toLocaleString()}`}
+      <div className="space-y-4 rounded-xl border border-stone-200 bg-white p-6">
+        <div className="min-w-0">
+          <p className="text-sm text-stone-500">Pay</p>
+          <p className="truncate text-lg font-semibold">{businessName ?? shortAddr(invoice.merchant)}</p>
+          {businessName && <p className="font-mono text-xs text-stone-500">{shortAddr(invoice.merchant)}</p>}
+        </div>
+        <div>
+          <p className="text-4xl font-semibold tracking-tight">{fmt(invoice.amount)} MUSD</p>
+          {reference && <p className="mt-1 text-sm text-stone-600">{reference}</p>}
+        </div>
+        <p className="text-xs text-stone-500" title={new Date(Number(invoice.expiry) * 1000).toLocaleString()}>
+          {expired ? "Expired" : `Link expires in ${timeLeft(invoice.expiry)}`}
         </p>
       </div>
 
       {paid ? (
         <div className="rounded-xl border border-green-200 bg-green-50 p-6 text-green-900">
-          <p className="font-medium">Paid</p>
+          <p className="font-medium">Payment complete</p>
+          <p className="text-sm">
+            {businessName ?? shortAddr(invoice.merchant)} received {fmt(invoice.amount)} MUSD. You can close this page.
+          </p>
           {status.kind === "sent" && (
             <a href={txUrl(status.hash)} target="_blank" rel="noreferrer" className="text-sm underline">
               View transaction
@@ -373,7 +400,7 @@ function CheckoutInner({
           )}
         </div>
       ) : expired ? (
-        <p className="text-stone-600">This link has expired. Ask the merchant for a new one.</p>
+        <p className="text-stone-600">This link has expired. Ask {businessName ?? "the merchant"} for a new one.</p>
       ) : !address ? (
         <div className="space-y-3">
           <p className="text-stone-600">Connect a Bitcoin wallet (Xverse, Unisat, OKX) or an EVM wallet to pay.</p>
@@ -394,7 +421,7 @@ function CheckoutInner({
             >
               <span className="block font-medium">Pay with MUSD</span>
               <span className="block text-xs text-stone-300">
-                {isSmartAccount ? "Two transactions from your wallet; you pay the network fee" : "Two signatures, no network fee"}
+                {fmt(invoice.amount)} MUSD · {isSmartAccount ? "you pay the network fee" : "no network fee"}
               </span>
             </button>
           )}
@@ -408,8 +435,10 @@ function CheckoutInner({
             >
               <span className="block font-medium">Pay with {method}</span>
               <span className="block text-xs text-stone-500">
-                About {fmtToken(swapQuotes.data![method]!)} {method} (at most {fmtToken(withSlippage(swapQuotes.data![method]!))}),
-                swapped on Tigris. {isSmartAccount ? "Two transactions; you pay the network fee" : "Two signatures, no network fee"}
+                ≈ {fmtToken(swapQuotes.data![method]!)} {method} · {isSmartAccount ? "you pay the network fee" : "no network fee"}
+              </span>
+              <span className="block text-xs text-stone-400">
+                Never more than {fmtToken(withSlippage(swapQuotes.data![method]!))} {method}. Swapped to MUSD as you pay.
               </span>
             </button>
           ))}
@@ -441,8 +470,8 @@ function CheckoutInner({
           ) : (
             !hasOption && (
               <p className="text-sm text-stone-600">
-                This wallet has no way to pay {fmt(invoice.amount)} MUSD yet. Pay with MUSD, with BTC or MEZO swapped
-                on Tigris, or by borrowing against a Mezo BTC loan.
+                This wallet has no way to pay {fmt(invoice.amount)} MUSD yet. You can pay with MUSD, BTC or MEZO, or by
+                borrowing against a Mezo BTC loan.
                 {!supportsSwaps && " This link was made before BTC and MEZO payments, so only MUSD and borrowing work."}
               </p>
             )

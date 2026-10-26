@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Business names: merchants set the name customers see at checkout (migration `0004`). A passkey account takes it from sign-up; wallet merchants are asked on the Overview tab; both can change it on the Account tab. The dashboard is titled with it.
+- Checkout pass: the header shows the business name with the payout address beneath it, the order reference, and "Link expires in 23 hours"; payment options read "≈ 0.0000064 BTC · no network fee" with the signed maximum on a second line; the paid state names who received the payment.
+
 - API reference on the website at `/docs`, rendered from `docs/API.md` at build time with an "On this page" index and GitHub-matching anchors; linked from the header, the landing page and the Developers tab.
 
 - Dashboard redesign: sign-in is one clear choice between a passkey account and a Mezo wallet, each a separate merchant account; creating or choosing a passkey signs in straight away, and a remembered passkey signs back in with one tap. Signed in, the dashboard has Overview, Payments, Developers and Account tabs, with an account chip showing which method is in use. Payment links show a full-size QR code with Copy and Open buttons. Landing page updated for BTC and MEZO payments, webhooks and router v2.

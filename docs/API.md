@@ -213,7 +213,7 @@ Issued at: <issuedAt, ISO 8601 UTC with milliseconds>
 Network: Mezo testnet (31611)
 ```
 
-It sets an HttpOnly session cookie that lasts 12 hours. `signInMessage` in `@mezout/sdk` builds the text. Signed in, the dashboard creates keys with `POST /api/keys` and an empty body.
+It sets an HttpOnly session cookie that lasts 12 hours and returns `{"merchant", "business_name"}`. The dashboard sets the business name customers see at checkout with `PUT /api/dashboard/profile` and `{"business_name": "…"}` (at most 64 characters; an empty string clears it). `signInMessage` in `@mezout/sdk` builds the text. Signed in, the dashboard creates keys with `POST /api/keys` and an empty body.
 
 Without a session, `POST /api/keys` takes `{"address", "issuedAt", "signature"}`, where `signature` signs this exact text (EIP-191 `personal_sign`):
 

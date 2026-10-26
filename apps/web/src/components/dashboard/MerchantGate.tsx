@@ -11,6 +11,8 @@ import { api, errorText } from "@/lib/api";
 import { MerchantContext, type Merchant } from "@/lib/merchant";
 import { loadSession, passkeySendMusd, passkeySign, saveSession, type PasskeySession } from "@/lib/passkey";
 
+type Session = { merchant: Address; business_name: string | null };
+
 /**
  * Signs the merchant in, with either a passkey account or a wallet (never both), and provides the signed-in merchant
  * to the dashboard pages. Signing in is a signed message that the server turns into an HttpOnly session cookie.
@@ -31,10 +33,23 @@ export function MerchantGate({ children }: { children: ReactNode }) {
 
   // The server session's merchant. undefined while checking.
   const [signedIn, setSignedIn] = useState<Address | null | undefined>(undefined);
+  const [businessName, setBusinessNameState] = useState<string | null>(null);
   useEffect(() => {
-    api<{ merchant: Address }>("/api/session")
-      .then((r) => setSignedIn(r.merchant))
+    api<Session>("/api/session")
+      .then((r) => {
+        setSignedIn(r.merchant);
+        setBusinessNameState(r.business_name);
+      })
       .catch(() => setSignedIn(null));
+  }, []);
+
+  const setBusinessName = useCallback(async (name: string) => {
+    const r = await api<{ business_name: string | null }>("/api/dashboard/profile", {
+      method: "PUT",
+      body: { business_name: name },
+    });
+    setBusinessNameState(r.business_name);
+    return r.business_name;
   }, []);
 
   const method =
@@ -50,18 +65,24 @@ export function MerchantGate({ children }: { children: ReactNode }) {
   async function startSession(address: Address, sign: (message: string) => Promise<Hex>) {
     const issuedAt = new Date().toISOString();
     const signature = await sign(signInMessage(address, issuedAt));
-    const r = await api<{ merchant: Address }>("/api/session", { body: { address, issuedAt, signature } });
+    const r = await api<Session>("/api/session", { body: { address, issuedAt, signature } });
     setSignedIn(r.merchant);
+    setBusinessNameState(r.business_name);
+    return r;
   }
 
-  /** A passkey account was created or chosen: sign in with it right away, and drop any connected wallet. */
-  async function signInWithPasskeySession(session: PasskeySession) {
+  /**
+   * A passkey account was created or chosen: sign in with it right away, and drop any connected wallet. A new account
+   * brings the business name it was created with, which becomes its checkout name unless one is already set.
+   */
+  async function signInWithPasskeySession(session: PasskeySession, newName?: string) {
     saveSession(session);
     setPasskey(session);
     setError(null);
     setBusy("Confirm with your passkey to sign in");
     try {
-      await startSession(session.address, (message) => passkeySign(session, hashMessage(message)));
+      const r = await startSession(session.address, (message) => passkeySign(session, hashMessage(message)));
+      if (newName?.trim() && !r.business_name) await setBusinessName(newName).catch(() => {});
       if (walletAddress) await disconnectAsync().catch(() => {});
     } catch (err) {
       setError(errorText(err, "Could not sign in. Please try again."));
@@ -118,8 +139,11 @@ export function MerchantGate({ children }: { children: ReactNode }) {
   );
 
   const merchant = useMemo<Merchant | null>(
-    () => (method && signedIn ? { address: signedIn, method, passkey: method === "passkey" ? passkey : null, sendMusd, signOut } : null),
-    [method, signedIn, passkey, sendMusd, signOut],
+    () =>
+      method && signedIn
+        ? { address: signedIn, method, passkey: method === "passkey" ? passkey : null, businessName, setBusinessName, sendMusd, signOut }
+        : null,
+    [method, signedIn, passkey, businessName, setBusinessName, sendMusd, signOut],
   );
 
   if (signedIn === undefined) return <p className="text-sm text-stone-500">Loading…</p>;

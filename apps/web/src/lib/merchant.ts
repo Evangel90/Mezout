@@ -12,6 +12,10 @@ export type Merchant = {
   address: Address;
   method: SignInMethod;
   passkey: PasskeySession | null;
+  /** Shown to customers at checkout; null until the merchant sets it. */
+  businessName: string | null;
+  /** Saves the business name (an empty string clears it) and returns it as stored. */
+  setBusinessName: (name: string) => Promise<string | null>;
   /** Sends MUSD from the payout address (for refunds), through whichever account the merchant uses. */
   sendMusd: (to: Address, amount: bigint) => Promise<Hex>;
   signOut: () => Promise<void>;

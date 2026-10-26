@@ -36,7 +36,10 @@ const cookie = (value: string, maxAgeSeconds: number) =>
 export async function GET(req: Request) {
   const merchant = await sessionMerchant(getDb(), readCookie(req, SESSION_COOKIE));
   if (!merchant) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
-  return NextResponse.json({ merchant: merchant.payoutAddress }, { headers: { "cache-control": "no-store" } });
+  return NextResponse.json(
+    { merchant: merchant.payoutAddress, business_name: merchant.businessName },
+    { headers: { "cache-control": "no-store" } },
+  );
 }
 
 /** Signs in with a signed signInMessage and sets the session cookie. */
@@ -52,7 +55,7 @@ export async function POST(req: Request) {
   try {
     const verify = await ownershipVerifier(db, req, parsed.data.address);
     const { token, merchant } = await createSession(db, parsed.data, verify);
-    const res = NextResponse.json({ merchant: merchant.payoutAddress }, { status: 201 });
+    const res = NextResponse.json({ merchant: merchant.payoutAddress, business_name: merchant.businessName }, { status: 201 });
     res.headers.set("set-cookie", cookie(token, SESSION_TTL_MS / 1000));
     return res;
   } catch (err) {

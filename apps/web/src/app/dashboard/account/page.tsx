@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { BusinessNameForm } from "@/components/dashboard/BusinessNameForm";
 import { WithdrawCard } from "@/components/dashboard/WithdrawCard";
 import { useMerchant } from "@/lib/merchant";
 
@@ -13,6 +14,8 @@ export default function AccountPage() {
 
   return (
     <div className="space-y-6">
+      <BusinessNameForm variant="settings" />
+
       <section className="space-y-4 rounded-xl border border-stone-200 bg-white p-6">
         <div className="space-y-1">
           <h2 className="text-lg font-semibold">Payout account</h2>
