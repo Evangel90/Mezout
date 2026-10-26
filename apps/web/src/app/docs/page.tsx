@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Marked, type Tokens } from "marked";
 
 export const metadata: Metadata = {
-  title: "API reference · Mezout",
+  title: "API reference",
   description: "Create invoices, follow payments and refunds, and receive signed webhooks from Mezout on Mezo testnet.",
 };
 

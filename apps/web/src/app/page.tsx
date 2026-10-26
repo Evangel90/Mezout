@@ -92,7 +92,7 @@ export default function Home() {
         </pre>
       </section>
 
-      <section className="space-y-3 border-t border-stone-200 pt-8 text-sm">
+      <section id="contracts" className="scroll-mt-6 space-y-3 border-t border-stone-200 pt-8 text-sm">
         <h2 className="font-semibold">Open and verifiable</h2>
         <p className="text-stone-600">
           Running on Mezo testnet with test funds only. Contract source is verified on Sourcify (exact match).
