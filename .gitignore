@@ -21,3 +21,7 @@ contracts/broadcast/*/31611/dry-run/
 .claude/skills/
 skills-lock.json
 .claude/settings.local.json
+
+# Local screenshots and demo recordings
+docs/screenshots/
+docs/demo/
