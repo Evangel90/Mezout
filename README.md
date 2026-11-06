@@ -270,15 +270,13 @@ sequenceDiagram
 
     K->>B: Read trove, price, Recovery Mode, borrowing capacity
     K->>C: Offer borrow only if the loan stays at or above 160%
-    C->>K: Sign Payment, plus WithdrawMUSD naming the router as recipient
-    opt Customer uses part of their MUSD balance first
-        C->>K: Sign MUSD permit for that part
-    end
+    C->>K: Sign Payment and an MUSD permit for the invoice
+    C->>K: Sign WithdrawMUSD naming the customer as recipient
     K->>R: POST /api/relay
     R->>R: Find sorted-trove hints
     R->>M: payWithBorrow
-    M->>B: withdrawMUSDWithSignature, borrowed MUSD to router
-    M->>M: Check borrowed amount arrived exactly
+    M->>B: withdrawMUSDWithSignature, borrowed MUSD to customer
+    M->>M: Pull the invoice from customer under permit
     M->>W: Exact MUSD
     M->>B: getCurrentICR(customer)
     alt below 160%

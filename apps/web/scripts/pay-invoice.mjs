@@ -88,8 +88,6 @@ const signPermit = async (value, token = { address: MUSD, name: "Mezo USD" }) =>
   const { r, s, v, yParity } = parseSignature(sig);
   return { deadline: deadline.toString(), v: Number(v ?? BigInt(yParity + 27)), r, s };
 };
-const zero = `0x${"00".repeat(32)}`;
-
 const before = await client.readContract({ address: MUSD, abi: musd, functionName: "balanceOf", args: [invoice.merchant] });
 let body;
 if (METHOD === "BORROW") {
@@ -108,7 +106,7 @@ if (METHOD === "BORROW") {
       ],
     },
     primaryType: "WithdrawMUSD",
-    message: { amount: borrowed, borrower: payer.address, recipient: ROUTER, nonce, deadline },
+    message: { amount: borrowed, borrower: payer.address, recipient: payer.address, nonce, deadline },
   });
   body = {
     method: "BORROW",
@@ -116,7 +114,7 @@ if (METHOD === "BORROW") {
     payer: payer.address,
     payerSig,
     fromBalance: fromBalance.toString(),
-    permit: fromBalance > 0n ? await signPermit(fromBalance) : { deadline: "0", v: 0, r: zero, s: zero },
+    permit: await signPermit(invoice.amount),
     borrow: { deadline: deadline.toString(), signature },
   };
 } else if (SWAP_TOKENS[METHOD]) {
