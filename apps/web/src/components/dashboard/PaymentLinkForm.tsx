@@ -4,13 +4,13 @@ import { useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { api, errorText } from "@/lib/api";
 
-type Created = { url: string; orderId: string; expiry: string };
+type Created = { url: string; orderId: string; expiry: string; amount: string; fee: string; net: string };
 
 /** Creates a payment link for the signed-in merchant and shows it as a link and QR code. */
 export function PaymentLinkForm() {
   const [amount, setAmount] = useState("");
   const [reference, setReference] = useState("");
-  const [created, setCreated] = useState<(Created & { amount: string; reference: string }) | null>(null);
+  const [created, setCreated] = useState<(Created & { reference: string }) | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -21,7 +21,7 @@ export function PaymentLinkForm() {
     setError(null);
     try {
       const link = await api<Created>("/api/invoices", { body: { amount, reference: reference || undefined } });
-      setCreated({ ...link, amount, reference });
+      setCreated({ ...link, reference });
       setAmount("");
       setReference("");
     } catch (err) {
@@ -40,6 +40,9 @@ export function PaymentLinkForm() {
             <p className="text-sm text-stone-600">
               {created.amount} MUSD{created.reference && ` · ${created.reference}`} · expires{" "}
               {new Date(Number(created.expiry) * 1000).toLocaleString()}
+            </p>
+            <p className="mt-1 text-xs text-stone-500">
+              Customer pays {created.amount} MUSD · platform fee {created.fee} MUSD · you receive {created.net} MUSD
             </p>
           </div>
           <button onClick={() => setCreated(null)} className="shrink-0 rounded border border-stone-300 px-3 py-1 text-sm hover:bg-stone-100">
@@ -84,7 +87,7 @@ export function PaymentLinkForm() {
     <form onSubmit={create} className="space-y-4 rounded-xl border border-stone-200 bg-white p-6">
       <div>
         <h2 className="text-lg font-semibold">Create a payment link</h2>
-        <p className="text-sm text-stone-600">Customers can pay it with MUSD, BTC or MEZO, or by borrowing against BTC. You receive the exact amount in MUSD.</p>
+        <p className="text-sm text-stone-600">Customers pay the listed amount with MUSD, BTC, MEZO, or by borrowing against BTC. The platform fee is deducted from your MUSD settlement.</p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block space-y-1">
@@ -111,7 +114,7 @@ export function PaymentLinkForm() {
         </label>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs text-stone-500">Links expire after 24 hours. Platform fee: 0% during the buildathon.</p>
+        <p className="text-xs text-stone-500">Links expire after 24 hours. The signed fee is shown before you share the link; customers never pay more than the listed amount.</p>
         <button disabled={busy} className="rounded-lg bg-stone-900 px-4 py-2 text-white hover:bg-stone-700 disabled:opacity-50">
           {busy ? "Creating…" : "Create link"}
         </button>

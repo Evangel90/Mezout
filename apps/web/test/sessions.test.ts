@@ -97,6 +97,8 @@ describe("order list", () => {
       orderId: "0x01",
       reference: '=HYPERLINK("x"), "quoted"',
       amount: "1.5",
+      fee: "0.015",
+      net: "1.485",
       status: "paid",
       refunded: "0",
       method: "MUSD",
@@ -108,7 +110,7 @@ describe("order list", () => {
       pendingRefund: null,
     };
     const [header, line] = ordersCsv([order]).trim().split("\r\n");
-    expect(header).toBe("created_at,invoice_id,reference,order_id,status,amount_musd,refunded_musd,method,payer,paid_at,tx_hash");
-    expect(line).toBe(`2026-10-25T00:00:00.000Z,inv_1,"'=HYPERLINK(""x""), ""quoted""",0x01,paid,1.5,0,MUSD,0xabc,2026-10-26T00:00:00.000Z,0xdef`);
+    expect(header).toBe("created_at,invoice_id,reference,order_id,status,amount_musd,platform_fee_musd,merchant_net_musd,refunded_musd,method,payer,paid_at,tx_hash");
+    expect(line).toBe(`2026-10-25T00:00:00.000Z,inv_1,"'=HYPERLINK(""x""), ""quoted""",0x01,paid,1.5,0.015,1.485,0,MUSD,0xabc,2026-10-26T00:00:00.000Z,0xdef`);
   });
 });

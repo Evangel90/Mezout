@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { parseUnits } from "viem";
+import { formatUnits, parseUnits } from "viem";
 import { getDb } from "@/lib/server/db/client";
 import { serverEnv } from "@/lib/server/env";
 import { createInvoice, MAX_EXPIRES_IN, MIN_EXPIRES_IN } from "@/lib/server/invoices";
@@ -33,5 +33,8 @@ export async function POST(req: Request) {
     expiry: String(row.expiresAt.getTime() / 1000),
     token: row.token,
     url: new URL(`/pay/${row.token}`, serverEnv.appUrl()).toString(),
+    amount: formatUnits(BigInt(row.amount), 18),
+    fee: formatUnits(BigInt(row.fee), 18),
+    net: formatUnits(BigInt(row.amount) - BigInt(row.fee), 18),
   });
 }

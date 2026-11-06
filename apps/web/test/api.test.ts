@@ -112,7 +112,7 @@ describe("invoices", () => {
     const { invoice } = decodeSignedInvoice(row.token);
     expect(invoice.merchant).toBe(merchantAccount.address);
     expect(invoice.amount).toBe(25_500_000_000_000_000_000n);
-    expect(invoice.fee).toBe(0n);
+    expect(invoice.fee).toBe(255_000_000_000_000_000n);
     expect(invoice.orderId).toBe(row.orderId);
     expect(invoice.expiry).toBe(BigInt(now / 1000 + 3600));
     // fakeSign names no router, so the row records the first router, as for links made before routers were tracked.
@@ -122,7 +122,8 @@ describe("invoices", () => {
     expect(json).toMatchObject({
       object: "invoice",
       amount: "25.5",
-      fee: "0",
+      fee: "0.255",
+      net: "25.245",
       currency: "MUSD",
       reference: "order-42",
       status: "pending",

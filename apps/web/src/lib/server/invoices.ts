@@ -7,6 +7,7 @@ import type { Db } from "./db/client";
 import { invoices, payments, refunds } from "./db/schema";
 import type { Merchant } from "./apiKeys";
 import { randomOrderId, type InvoiceSigner } from "./signInvoice";
+import { merchantFee } from "./fees";
 
 export const MIN_EXPIRES_IN = 5 * 60;
 export const MAX_EXPIRES_IN = 30 * 24 * 60 * 60;
@@ -29,7 +30,7 @@ export async function createInvoice(
   const invoice: Invoice = {
     merchant: getAddress(merchant.payoutAddress),
     amount: parseUnits(input.amount, 18),
-    fee: 0n,
+    fee: merchantFee(parseUnits(input.amount, 18)),
     orderId: randomOrderId(),
     expiry: BigInt(expiresAt.getTime() / 1000),
   };
@@ -158,6 +159,7 @@ export function invoiceJson(view: InvoiceView, merchant: Merchant, origin: strin
     merchant: merchant.payoutAddress,
     amount: formatUnits(BigInt(row.amount), 18),
     fee: formatUnits(BigInt(row.fee), 18),
+    net: formatUnits(BigInt(row.amount) - BigInt(row.fee), 18),
     currency: row.currency,
     reference: row.reference,
     status: invoiceStatus(view, now),

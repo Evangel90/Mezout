@@ -433,6 +433,7 @@ function CheckoutInner({
         </div>
         <div>
           <p className="text-4xl font-semibold tracking-tight">{fmt(invoice.amount)} MUSD</p>
+          {invoice.fee > 0n && <p className="mt-1 text-xs text-stone-500">You pay this exact amount; the merchant's platform fee is deducted from their settlement.</p>}
           {reference && <p className="mt-1 text-sm text-stone-600">{reference}</p>}
         </div>
         {!paid && (
@@ -446,7 +447,7 @@ function CheckoutInner({
         <div className="rounded-xl border border-green-200 bg-green-50 p-6 text-green-900">
           <p className="font-medium">Payment complete</p>
           <p className="text-sm">
-            {businessName ?? shortAddr(invoice.merchant)} received {fmt(invoice.amount)} MUSD.
+            You paid {fmt(invoice.amount)} MUSD. {businessName ?? shortAddr(invoice.merchant)} received {fmt(invoice.amount - invoice.fee)} MUSD.
             {successUrl ? "" : " You can close this page."}
           </p>
           {borrowedToPay && <BorrowerFollowUp snapshot={followUp.data} loading={followUp.isLoading} error={followUp.isError} />}

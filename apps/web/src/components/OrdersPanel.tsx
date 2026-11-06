@@ -12,6 +12,8 @@ type Order = {
   orderId: string;
   reference: string | null;
   amount: string;
+  fee: string;
+  net: string;
   status: "pending" | "paid" | "expired" | "refunded";
   refunded: string;
   method: string | null;
@@ -186,6 +188,9 @@ function OrderRow({
                 refund requested
               </span>
             )}
+          </p>
+          <p className="text-xs text-stone-500">
+            Gross {o.amount} MUSD · platform fee {o.fee} MUSD · net settlement {o.net} MUSD
           </p>
           <p className="truncate text-sm text-stone-600">
             {o.reference ?? (o.invoiceId ? "Payment link" : "Payment link (before order tracking)")}

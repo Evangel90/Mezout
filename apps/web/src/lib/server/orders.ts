@@ -12,6 +12,8 @@ export type Order = {
   orderId: string;
   reference: string | null;
   amount: string;
+  fee: string;
+  net: string;
   status: InvoiceStatus;
   refunded: string;
   method: string | null;
@@ -57,6 +59,8 @@ export async function listOrders(db: Db, merchant: Merchant, limit = 500): Promi
       orderId: v.row.orderId,
       reference: v.row.reference,
       amount: musd(v.row.amount),
+      fee: musd(v.payment?.fee ?? v.row.fee),
+      net: musd(BigInt(v.payment?.amount ?? v.row.amount) - BigInt(v.payment?.fee ?? v.row.fee)),
       status: invoiceStatus(v),
       refunded: musd(v.refunded),
       method: v.payment?.method ?? null,
@@ -74,6 +78,8 @@ export async function listOrders(db: Db, merchant: Merchant, limit = 500): Promi
         orderId: p.orderId,
         reference: null,
         amount: musd(p.amount),
+        fee: musd(p.fee),
+        net: musd(BigInt(p.amount) - BigInt(p.fee)),
         status: (refunded >= BigInt(p.amount) ? "refunded" : "paid") as InvoiceStatus,
         refunded: musd(refunded),
         method: p.method,
@@ -104,6 +110,8 @@ export function ordersCsv(orders: Order[]): string {
     "order_id",
     "status",
     "amount_musd",
+    "platform_fee_musd",
+    "merchant_net_musd",
     "refunded_musd",
     "method",
     "payer",
@@ -111,7 +119,7 @@ export function ordersCsv(orders: Order[]): string {
     "tx_hash",
   ];
   const lines = orders.map((o) =>
-    [o.createdAt, o.invoiceId, o.reference, o.orderId, o.status, o.amount, o.refunded, o.method, o.payer, o.paidAt, o.txHash]
+    [o.createdAt, o.invoiceId, o.reference, o.orderId, o.status, o.amount, o.fee, o.net, o.refunded, o.method, o.payer, o.paidAt, o.txHash]
       .map(csvCell)
       .join(","),
   );
