@@ -293,6 +293,12 @@ M0 and M1 must be done by Sunday 26 Oct for the Wave 1 submission. M2–M6 fill 
 ### M6 — Wave 2 submission (15 Nov)
 
 - [ ] Self security review of the router, with findings fixed or documented
+- [ ] Explicitly investigate borrow-signature front-running/griefing; add an attacker-first regression test, bind authorization to the router/caller where supported, or document and test a safe recovery path
+- [ ] Exercise borrow-to-pay end to end against router v2, including payer intent, resulting trove debt/ICR, and the front-running case
+- [ ] Add post-checkout borrower safety follow-up: show current debt/ICR and a clear repay/top-up route; define monitoring/alerting and document limits. Do not automate top-ups without explicit borrower authorization
+- [ ] Run a merchant pilot with outside payers; record completed payments, repeat merchants, methods, and failures as evidence for the submission
+- [ ] Measure relayer gas by payment path and model a merchant fee that covers the observed cost; enable it on testnet after review. The payer pays the invoice total, the fee is deducted from merchant settlement, and invoice/checkout/receipt/dashboard/API views clearly show the gross amount, fee and merchant net
+- [ ] Prepare a pitch deck and complete the Wave 2 track and team fields
 - [ ] Demo video under 3 minutes covering all four paths and both plugins
 - [ ] **Gate:** owner submits Wave 2; demo day is 23 Nov
 

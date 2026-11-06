@@ -332,14 +332,22 @@ sequenceDiagram
 
 ### 4. Security and reliability (M6)
 
-- **Router self-review**: signature domains and replay, permit front-running, swap math and rounding, the borrow floor and Recovery Mode, reentrancy, token callbacks and gas griefing through the relayer. Every finding fixed or documented, with new tests for each.
-- **More fork tests**: Recovery Mode, a trove at exactly 160%, pool reserves moving between quote and execution, expired permits.
+- **Router self-review**: signature domains and replay, permit front-running, swap math and rounding, the borrow floor and Recovery Mode, reentrancy, token callbacks and gas griefing through the relayer. Explicitly investigate whether a borrow authorization can be front-run to consume its nonce or redirect MUSD; add an attacker-first regression test, bind authorization to the router/caller where supported, or document and test a safe recovery path. Every finding fixed or documented, with new tests for each.
+- **Router v2 borrow proof**: pay an invoice end to end through v2 using borrow-to-pay; verify payer intent, merchant payout, resulting trove debt/ICR, and the front-running case on a fork/testnet.
+- **Borrower follow-up**: after checkout, provide a borrower view of current debt and ICR with a repay/top-up route, and define monitoring/alerts for deteriorating positions. Any automated top-up requires explicit borrower authorization and separate failure handling.
+- **More fork tests**: Recovery Mode, a trove at exactly 160%, pool reserves moving between quote and execution, expired permits, and the borrow-authorization front-running scenario.
 - **Reliable scheduling**: GitHub Actions' 5-minute schedule actually runs hours apart, which delays `invoice.expired` and webhook retries. An external scheduler will call the authenticated `/api/cron` every few minutes.
 - **Monitoring**: relayer balance alerts, failed-delivery alerts, and a public status at `/api/health`.
 
-### 5. Demo (M6)
+### 5. Merchant evidence and fees (M6)
 
-A demo video under 3 minutes covering all four payment paths, passkey sign-up and withdrawal, the dashboard and both plugins, for demo day on 23 Nov.
+- Run a small pilot with real merchants and outside payers; record completed invoices, repeat merchants, payment methods, and failures for the submission.
+- Measure relayer gas per payment path and model a merchant fee against observed costs. Enable it on testnet after review: the payer pays the invoice total, the fee is deducted from merchant settlement, and invoice creation, checkout, receipts, dashboard, and API consistently show the gross amount, fee, and merchant net. No mainnet fee or real-fund activity is part of Wave 2.
+
+### 6. Demo and submission materials (M6)
+
+- A demo video under 3 minutes covering all four payment paths, passkey sign-up and withdrawal, the dashboard and both plugins, for demo day on 23 Nov.
+- A pitch deck with the product flow, security model and v2 borrow proof, pilot evidence, fee/unit-economics model, and roadmap; complete the Wave 2 track and team fields.
 
 ## Wave 3 plan
 
@@ -374,7 +382,7 @@ flowchart LR
 
 ### 4. Business model
 
-Turn on the merchant fee. Signed invoices already carry a `fee` field (0 during the buildathon), and every payment already reports `fee` and `net` in the API and dashboard, so no contract change is needed.
+Wave 2 measures relayer cost and pilots a disclosed testnet fee as described above. Mainnet fee rollout remains part of Wave 3 readiness: choose the rate from pilot economics, communicate it to merchants, and verify invoice, checkout, API, and dashboard reporting before activation.
 
 ### 5. More merchant tools
 
