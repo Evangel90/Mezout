@@ -11,6 +11,10 @@ import {
 const DECIMAL = 10n ** 18n;
 const NICR_PRECISION = 10n ** 20n;
 export const MIN_BORROW_ICR = 16n * 10n ** 17n;
+/** Ratios below this level get an explicit post-payment warning. */
+export const TROVE_WARNING_ICR = 18n * 10n ** 17n;
+/** Ratios below this level are shown as worth watching after checkout. */
+export const TROVE_WATCH_ICR = 20n * 10n ** 17n;
 
 export type TroveQuote = {
   active: boolean;
@@ -25,6 +29,50 @@ export type TroveQuote = {
   /** True when borrowing `amount` keeps the trove at or above 160% and under its capacity. */
   canBorrow: boolean;
 };
+
+/** A read-only view of a borrower's position after a payment has settled. */
+export type TroveSnapshot = {
+  active: boolean;
+  recoveryMode: boolean;
+  price: bigint;
+  coll: bigint;
+  debt: bigint;
+  icr: bigint;
+};
+
+export type TroveRisk = "healthy" | "watch" | "warning" | "critical" | "unavailable";
+
+/**
+ * A deliberately conservative UI classification. It does not change Mezo's
+ * liquidation rules: the router's on-chain 160% floor remains authoritative.
+ */
+export function troveRisk(snapshot: Pick<TroveSnapshot, "active" | "icr">): TroveRisk {
+  if (!snapshot.active) return "unavailable";
+  if (snapshot.icr < MIN_BORROW_ICR) return "critical";
+  if (snapshot.icr < TROVE_WARNING_ICR) return "warning";
+  if (snapshot.icr < TROVE_WATCH_ICR) return "watch";
+  return "healthy";
+}
+
+/** Reads the current trove state without projecting another borrow. */
+export async function getTroveSnapshot(client: PublicClient, borrower: Address): Promise<TroveSnapshot> {
+  const [status, price, dc] = await Promise.all([
+    client.readContract({ address: A.troveManager, abi: troveManagerAbi, functionName: "getTroveStatus", args: [borrower] }),
+    client.readContract({ address: A.priceFeed, abi: priceFeedAbi, functionName: "fetchPrice" }),
+    client.readContract({ address: A.troveManager, abi: troveManagerAbi, functionName: "getEntireDebtAndColl", args: [borrower] }),
+  ]);
+  const recoveryMode = await client.readContract({
+    address: A.troveManager,
+    abi: troveManagerAbi,
+    functionName: "checkRecoveryMode",
+    args: [price],
+  });
+  const [c, principal, interest, pendingColl, pendingPrincipal, pendingInterest] = dc;
+  const coll = c + pendingColl;
+  const debt = principal + interest + pendingPrincipal + pendingInterest;
+  const active = status === 1;
+  return { active, recoveryMode, price, coll, debt, icr: debt === 0n ? 0n : (coll * price) / debt };
+}
 
 /** Mirrors the checks MUSD and MezoutRouter make for a debt increase of `amount`. */
 export async function quoteBorrow(client: PublicClient, borrower: Address, amount: bigint): Promise<TroveQuote> {

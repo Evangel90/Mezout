@@ -11,6 +11,7 @@ import {
   borrowerOperationsSignaturesDomain,
   btcDomain,
   decodeSignedInvoice,
+  getTroveSnapshot,
   linkRouter,
   mezoDomain,
   mezoTestnetAddresses,
@@ -22,6 +23,7 @@ import {
   quoteBorrow,
   routerDomain,
   swapPaymentTypes,
+  troveRisk,
   withdrawMusdTypes,
 } from "@mezout/sdk";
 import { routerAddress as currentRouter, txUrl } from "@/lib/config";
@@ -115,6 +117,7 @@ function CheckoutInner({
   const { sendTransaction } = useSendTransaction();
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [useBalanceFirst, setUseBalanceFirst] = useState(true);
+  const [borrowedToPay, setBorrowedToPay] = useState(false);
   const paidMessageSent = useRef(false);
 
   const { data: code } = useBytecode({ address });
@@ -211,6 +214,14 @@ function CheckoutInner({
 
   const canPayMusd = balance >= invoice.amount;
   const canBorrow = !isSmartAccount && !!quote.data?.canBorrow;
+  // This starts only after the borrow payment has been confirmed. It is advisory
+  // monitoring, never an authorization to move collateral or repay debt.
+  const followUp = useQuery({
+    queryKey: ["trove-follow-up", address],
+    queryFn: () => getTroveSnapshot(client!, address as Address),
+    enabled: borrowedToPay && !!paid && !!address && !!client,
+    refetchInterval: 60_000,
+  });
 
   async function splitPermit(owner: Address, value: bigint) {
     const nonce = await client!.readContract({ address: mezoTestnetAddresses.musd, abi: musdAbi, functionName: "nonces", args: [owner] });
@@ -317,17 +328,17 @@ function CheckoutInner({
         message: { amount: borrowed, borrower: address, recipient: address, nonce, deadline },
       });
       setStatus({ kind: "working", step: "Sending" });
-      await finish(
-        await relay({
-          method: "BORROW",
-          token,
-          payer: address,
-          payerSig,
-          fromBalance: fromBalance.toString(),
-          permit,
-          borrow: { deadline: deadline.toString(), signature },
-        }),
-      );
+      const hash = await relay({
+        method: "BORROW",
+        token,
+        payer: address,
+        payerSig,
+        fromBalance: fromBalance.toString(),
+        permit,
+        borrow: { deadline: deadline.toString(), signature },
+      });
+      setBorrowedToPay(true);
+      await finish(hash);
     } catch (err) {
       setStatus({ kind: "error", message: errorMessage(err) });
     }
@@ -438,6 +449,7 @@ function CheckoutInner({
             {businessName ?? shortAddr(invoice.merchant)} received {fmt(invoice.amount)} MUSD.
             {successUrl ? "" : " You can close this page."}
           </p>
+          {borrowedToPay && <BorrowerFollowUp snapshot={followUp.data} loading={followUp.isLoading} error={followUp.isError} />}
           <div className="mt-3 flex flex-wrap items-center gap-4">
             {successUrl && (
               <a href={successUrl} className="rounded-lg bg-green-800 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
@@ -574,6 +586,63 @@ function BorrowDetails({ quote, loading }: { quote?: Awaited<ReturnType<typeof q
         <dd className="col-span-2 text-red-700">This would take your loan below the 160% safety floor or its borrowing limit.</dd>
       )}
     </dl>
+  );
+}
+
+function BorrowerFollowUp({
+  snapshot,
+  loading,
+  error,
+}: {
+  snapshot?: Awaited<ReturnType<typeof getTroveSnapshot>>;
+  loading: boolean;
+  error: boolean;
+}) {
+  if (loading) return <p className="mt-3 text-sm">Refreshing your loan position…</p>;
+  if (error || !snapshot) return <p className="mt-3 text-sm">Your payment is complete. Refresh this page to check your current loan position.</p>;
+  if (!snapshot.active) return <p className="mt-3 text-sm">Your payment is complete. No active Mezo loan was found for this wallet.</p>;
+
+  const risk = troveRisk(snapshot);
+  const tone =
+    risk === "critical"
+      ? "border-red-300 bg-red-50 text-red-950"
+      : risk === "warning"
+        ? "border-amber-300 bg-amber-50 text-amber-950"
+        : risk === "watch"
+          ? "border-yellow-300 bg-yellow-50 text-yellow-950"
+          : "border-green-300 bg-green-50 text-green-950";
+  const message =
+    risk === "critical"
+      ? "Below Mezout's 160% checkout safety floor. Add collateral or repay promptly."
+      : risk === "warning"
+        ? "Within 20 percentage points of Mezout's 160% checkout safety floor. Consider adding BTC collateral or repaying MUSD."
+        : risk === "watch"
+          ? "Your position is above the safety floor but worth watching if BTC falls."
+          : "Your position has a 200% or greater collateral ratio.";
+
+  return (
+    <section className={`mt-4 rounded-lg border p-4 ${tone}`} aria-live="polite">
+      <p className="font-medium">Loan check after payment</p>
+      <dl className="mt-2 grid grid-cols-2 gap-y-1 text-sm">
+        <dt>Current debt</dt>
+        <dd className="text-right">{fmt(snapshot.debt)} MUSD</dd>
+        <dt>Collateral ratio</dt>
+        <dd className="text-right">{pct(snapshot.icr)}</dd>
+        <dt>BTC price</dt>
+        <dd className="text-right">${fmt(snapshot.price)}</dd>
+      </dl>
+      <p className="mt-3 text-sm">{message}</p>
+      {snapshot.recoveryMode && <p className="mt-2 text-sm font-medium">Mezo is in Recovery Mode. Borrowing is paused; use Mezo directly to manage your position.</p>}
+      <a
+        href="https://testnet.mezo.org/borrow"
+        target="_blank"
+        rel="noreferrer"
+        className="mt-3 inline-block text-sm font-medium underline"
+      >
+        Open Mezo to repay MUSD or add BTC collateral
+      </a>
+      <p className="mt-2 text-xs opacity-80">This check refreshes while this page is open. Mezout never repays debt or moves your BTC automatically.</p>
+    </section>
   );
 }
 
