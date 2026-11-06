@@ -5,6 +5,8 @@ export const merchants = pgTable("merchants", {
   payoutAddress: text("payout_address").notNull().unique(),
   // Shown to customers at checkout. Set by the merchant from the dashboard; self-declared, not verified.
   businessName: text("business_name"),
+  // Origins allowed to frame this merchant's checkout. Stored as normalized URL origins (scheme + host + port).
+  embedOrigins: jsonb("embed_origins").$type<string[]>().notNull().default([]),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

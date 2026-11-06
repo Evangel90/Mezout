@@ -43,6 +43,13 @@
       "when": 1792975724037,
       "tag": "0005_yielding_pet_avengers",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793971710491,
+      "tag": "0006_wide_marvex",
+      "breakpoints": true
     }
   ]
 }

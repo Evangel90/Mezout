@@ -1,0 +1,1 @@
+ALTER TABLE "merchants" ADD COLUMN "embed_origins" jsonb DEFAULT '[]'::jsonb NOT NULL;

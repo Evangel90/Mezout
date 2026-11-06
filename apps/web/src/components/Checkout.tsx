@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useQuery } from "@tanstack/react-query";
 import { useSendTransaction } from "@mezo-org/passport";
@@ -57,9 +57,15 @@ function timeLeft(expiry: bigint, now = Date.now()) {
 type Status = { kind: "idle" } | { kind: "working"; step: string } | { kind: "sent"; hash: Hex } | { kind: "error"; message: string };
 
 // successUrl: where the merchant asked to send the customer after paying (validated as http(s) when the invoice was made).
-type Display = { businessName: string | null; reference: string | null; successUrl: string | null };
+type Display = {
+  businessName: string | null;
+  reference: string | null;
+  successUrl: string | null;
+  embedded: boolean;
+  embedOrigins: string[];
+};
 
-export function Checkout({ token, businessName, reference, successUrl }: { token: string } & Display) {
+export function Checkout({ token, businessName, reference, successUrl, embedded, embedOrigins }: { token: string } & Display) {
   const signed = useMemo(() => {
     try {
       return decodeSignedInvoice(token);
@@ -78,6 +84,8 @@ export function Checkout({ token, businessName, reference, successUrl }: { token
       businessName={businessName}
       reference={reference}
       successUrl={successUrl}
+      embedded={embedded}
+      embedOrigins={embedOrigins}
     />
   );
 }
@@ -92,6 +100,8 @@ function CheckoutInner({
   businessName,
   reference,
   successUrl,
+  embedded,
+  embedOrigins,
 }: {
   token: string;
   invoice: SignedInvoice["invoice"];
@@ -106,6 +116,7 @@ function CheckoutInner({
   const { sendTransaction } = useSendTransaction();
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [useBalanceFirst, setUseBalanceFirst] = useState(true);
+  const paidMessageSent = useRef(false);
 
   const { data: code } = useBytecode({ address });
   const isSmartAccount = !!code && code !== "0x";
@@ -117,6 +128,35 @@ function CheckoutInner({
     args: [invoice.orderId],
     query: { refetchInterval: 4_000 },
   });
+
+  const embedTarget = useMemo(() => {
+    if (!embedded || typeof document === "undefined" || !document.referrer) return null;
+    try {
+      const origin = new URL(document.referrer).origin;
+      return embedOrigins.includes(origin) ? origin : null;
+    } catch {
+      return null;
+    }
+  }, [embedded, embedOrigins]);
+
+  useEffect(() => {
+    if (!paid || paidMessageSent.current || !embedTarget) return;
+    const target = window.parent !== window ? window.parent : window.opener;
+    if (!target) return;
+    target.postMessage(
+      { type: "mezout:paid", orderId: invoice.orderId, txHash: status.kind === "sent" ? status.hash : null },
+      embedTarget,
+    );
+    paidMessageSent.current = true;
+  }, [paid, embedTarget, invoice.orderId, status]);
+
+  function closeEmbeddedCheckout() {
+    if (embedTarget) {
+      const target = window.parent !== window ? window.parent : window.opener;
+      target?.postMessage({ type: "mezout:closed", orderId: invoice.orderId }, embedTarget);
+    }
+    if (window.opener) window.close();
+  }
   const { data: balance = 0n } = useReadContract({
     address: mezoTestnetAddresses.musd,
     abi: musdAbi,
@@ -404,6 +444,11 @@ function CheckoutInner({
               <a href={successUrl} className="rounded-lg bg-green-800 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
                 Return to {businessName ?? "the store"}
               </a>
+            )}
+            {embedded && (
+              <button type="button" onClick={closeEmbeddedCheckout} className="text-sm underline">
+                Close checkout
+              </button>
             )}
             {status.kind === "sent" && (
               <a href={txUrl(status.hash)} target="_blank" rel="noreferrer" className="text-sm underline">
