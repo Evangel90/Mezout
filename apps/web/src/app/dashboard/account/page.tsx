@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { BusinessNameForm } from "@/components/dashboard/BusinessNameForm";
+import { EmbedOriginsForm } from "@/components/dashboard/EmbedOriginsForm";
 import { WithdrawCard } from "@/components/dashboard/WithdrawCard";
 import { useMerchant } from "@/lib/merchant";
 
@@ -15,6 +16,7 @@ export default function AccountPage() {
   return (
     <div className="space-y-6">
       <BusinessNameForm variant="settings" />
+      <EmbedOriginsForm />
 
       <section className="space-y-4 rounded-xl border border-stone-200 bg-white p-6">
         <div className="space-y-1">

@@ -105,6 +105,19 @@ importers:
         specifier: ^3
         version: 3.2.7(@types/debug@4.1.13)(@types/node@20.19.43)(jiti@1.21.7)
 
+  packages/embed-react:
+    dependencies:
+      react:
+        specifier: '>=18'
+        version: 18.3.1
+    devDependencies:
+      '@types/react':
+        specifier: ^18
+        version: 18.3.31
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+
   packages/sdk:
     dependencies:
       viem:

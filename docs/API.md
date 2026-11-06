@@ -219,6 +219,23 @@ After the payment confirms, the page shows **Payment complete**. If you set `suc
 
 > **Don't treat a visit to `success_url` as proof of payment.** Anyone can open a URL. Fulfil the order from the `invoice.paid` webhook, or after checking `GET /v1/invoices/:id`.
 
+### Embedded checkout
+
+Add your store origin under **Dashboard → Account → Embedded checkout sites**, then load the drop-in script and pass it an invoice's `checkout_url`:
+
+```html
+<script src="https://usemezout.vercel.app/mezout.js"></script>
+<button data-mezout-checkout="CHECKOUT_URL">Pay with Mezout</button>
+```
+
+For custom controls, call `Mezout.open({ checkoutUrl, onPaid, onClose })`. The modal offers **Open in new window** as a fallback for wallets that cannot run inside an iframe. React applications can use `@mezout/embed-react`:
+
+```tsx
+<MezoutCheckout checkoutUrl={invoice.checkout_url} open={open} onClose={() => setOpen(false)} onPaid={() => setPaid(true)} />
+```
+
+The checkout sends `mezout:paid` and `mezout:closed` browser messages to the approved parent site. These messages are only for interface updates. A browser message can be forged, so fulfil the order only after the signed `invoice.paid` webhook or a server-side invoice lookup.
+
 ## Payments
 
 ### The payment object

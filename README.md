@@ -96,6 +96,7 @@ The dashboard has:
 - **REST API** with API keys, idempotency keys and rate limits: create, list and retrieve invoices, request and cancel refunds, and manage webhook endpoints. [Full reference](docs/API.md), also published at [`/docs`](https://usemezout.vercel.app/docs).
 - **Signed webhooks** (`invoice.paid`, `invoice.expired`, `refund.completed`, `refund.canceled`), signed with HMAC-SHA256 and retried with backoff for 24 hours. Verification code is provided for Node, PHP and Python, and [`examples/webhook-receiver`](examples/webhook-receiver) is a dependency-free receiver.
 - **WooCommerce plugin** for the classic and block checkouts, with webhook-confirmed orders, link expiry and refunds from the order screen. See [`plugins/woocommerce`](plugins/woocommerce).
+- **Embedded checkout** through the drop-in `mezout.js` modal or the React component, with per-merchant site allowlists and a popup fallback for wallets that cannot run in an iframe.
 
 ## Architecture
 
@@ -152,6 +153,7 @@ flowchart TB
 | `MezoutAccount` and factory | [`contracts/src/account`](contracts/src/account) | ERC-4337 account owned by a passkey. CREATE2 address from the passkey's public key, deployed on first use |
 | SDK | [`packages/sdk`](packages/sdk) | EIP-712 typed data, payment-link encoding, chain config, ABIs, trove and borrow-limit reads |
 | Hosted checkout | [`apps/web/src/components/Checkout.tsx`](apps/web/src/components/Checkout.tsx) | Reads balances, live Tigris quotes and the customer's trove, and shows only options that will succeed |
+| Embedded checkout | [`packages/embed-react`](packages/embed-react) | React modal plus popup fallback; the drop-in script is served from `/mezout.js` |
 | Relayer | [`apps/web/src/app/api/relay/route.ts`](apps/web/src/app/api/relay/route.ts) | Simulates each payment, then submits it and pays the gas. Only calls Mezout's own routers |
 | Indexer | [`apps/web/src/lib/server/indexer.ts`](apps/web/src/lib/server/indexer.ts) | Reads `Paid` events one block behind the head. This is the only way an invoice becomes paid |
 | Webhooks | [`apps/web/src/lib/server/webhooks.ts`](apps/web/src/lib/server/webhooks.ts) | Signed events with retries and a delivery log, protected against requests to private networks |
