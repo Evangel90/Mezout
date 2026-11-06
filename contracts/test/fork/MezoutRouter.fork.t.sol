@@ -25,6 +25,7 @@ contract MezoutRouterForkTest is Test {
     IBorrowerOperationsSignatures internal bos =
         IBorrowerOperationsSignatures(MezoTestnet.BORROWER_OPERATIONS_SIGNATURES);
     ITroveManager internal troveManager = ITroveManager(MezoTestnet.TROVE_MANAGER);
+    address internal constant DEPLOYED_ROUTER_V2 = 0xe132f9a1c8dbc31015C3Cf4eE8706c9031bFa431;
     MezoutRouter internal router;
 
     uint256 internal signerPk = 0xA11CE;
@@ -107,10 +108,17 @@ contract MezoutRouterForkTest is Test {
     }
 
     function _borrowAuth(uint256 amount) internal view returns (MezoutRouter.BorrowAuth memory a) {
+        return _borrowAuthFor(amount, payer);
+    }
+
+    function _borrowAuthFor(uint256 amount, address recipient)
+        internal
+        view
+        returns (MezoutRouter.BorrowAuth memory a)
+    {
         a.deadline = block.timestamp + 1 hours;
-        bytes32 structHash = keccak256(
-            abi.encode(WITHDRAW_MUSD_TYPEHASH, amount, payer, address(router), bos.getNonce(payer), a.deadline)
-        );
+        bytes32 structHash =
+            keccak256(abi.encode(WITHDRAW_MUSD_TYPEHASH, amount, payer, recipient, bos.getNonce(payer), a.deadline));
         a.signature = _sign(payerPk, keccak256(abi.encodePacked("\x19\x01", _domain(address(bos)), structHash)));
     }
 
@@ -137,7 +145,7 @@ contract MezoutRouterForkTest is Test {
         bytes memory paySig = _sign(payerPk, router.hashPayment(inv, payer));
         bytes memory invSig = _sign(signerPk, router.hashInvoice(inv));
         MezoutRouter.BorrowAuth memory b = _borrowAuth(800e18);
-        MezoutRouter.PermitSig memory p = _permit(200e18);
+        MezoutRouter.PermitSig memory p = _permit(inv.amount);
 
         vm.prank(relayer);
         router.payWithBorrow(inv, invSig, payer, paySig, 200e18, p, b);
@@ -150,17 +158,53 @@ contract MezoutRouterForkTest is Test {
         emit log_named_decimal_uint("ICR after %", icr * 100, 18);
     }
 
+    function test_fork_deployedV2_borrowSignatureCanBeFrontRunAndStranded() public {
+        uint256 amount = 100e18;
+        MezoutRouter.BorrowAuth memory b = _borrowAuthFor(amount, DEPLOYED_ROUTER_V2);
+        uint256 before = musd.balanceOf(DEPLOYED_ROUTER_V2);
+
+        vm.prank(makeAddr("attacker"));
+        bos.withdrawMUSDWithSignature(
+            amount, b.upperHint, b.lowerHint, payer, DEPLOYED_ROUTER_V2, b.signature, b.deadline
+        );
+
+        assertEq(musd.balanceOf(DEPLOYED_ROUTER_V2) - before, amount);
+        assertEq(bos.getNonce(payer), 1);
+    }
+
+    function test_fork_frontRunBorrowStillCompletesOnHardenedRouter() public {
+        MezoutRouter.Invoice memory inv = _invoice(1_000e18, 10e18, "fork-borrow-front-run");
+        bytes memory paySig = _sign(payerPk, router.hashPayment(inv, payer));
+        bytes memory invSig = _sign(signerPk, router.hashInvoice(inv));
+        MezoutRouter.BorrowAuth memory b = _borrowAuth(800e18);
+        MezoutRouter.PermitSig memory p = _permit(inv.amount);
+        uint256 icrBefore = troveManager.getCurrentICR(payer, 80_000e18);
+
+        vm.prank(makeAddr("attacker"));
+        bos.withdrawMUSDWithSignature(800e18, b.upperHint, b.lowerHint, payer, payer, b.signature, b.deadline);
+
+        vm.prank(relayer);
+        router.payWithBorrow(inv, invSig, payer, paySig, 200e18, p, b);
+
+        assertEq(musd.balanceOf(merchant), 990e18);
+        assertEq(musd.balanceOf(feeRecipient), 10e18);
+        assertEq(musd.balanceOf(address(router)), 0);
+        uint256 icrAfter = troveManager.getCurrentICR(payer, 80_000e18);
+        assertLt(icrAfter, icrBefore);
+        assertGe(icrAfter, router.MIN_BORROW_ICR());
+    }
+
     function test_fork_revert_borrowBelowSafetyFloor() public {
         // 8,000 MUSD of collateral; existing debt ~2,202 (2,000 + 200 gas comp + 0.1% fee). Borrowing 3,000 more: ~153%.
         MezoutRouter.Invoice memory inv = _invoice(3_000e18, 0, "fork-floor");
         bytes memory paySig = _sign(payerPk, router.hashPayment(inv, payer));
         bytes memory invSig = _sign(signerPk, router.hashInvoice(inv));
         MezoutRouter.BorrowAuth memory b = _borrowAuth(3_000e18);
-        MezoutRouter.PermitSig memory none;
+        MezoutRouter.PermitSig memory p = _permit(inv.amount);
 
         vm.prank(relayer);
         vm.expectPartialRevert(MezoutRouter.TroveBelowSafetyFloor.selector);
-        router.payWithBorrow(inv, invSig, payer, paySig, 0, none, b);
+        router.payWithBorrow(inv, invSig, payer, paySig, 0, p, b);
     }
 }
 

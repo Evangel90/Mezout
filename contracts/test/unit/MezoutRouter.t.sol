@@ -269,10 +269,10 @@ contract MezoutRouterTest is Test {
     function test_payWithBorrow_fullBorrow() public {
         MezoutRouter.Invoice memory inv = _invoice(2_000e18, 20e18, "order-20");
         bytes memory paySig = _signPayment(payerPk, inv, payer);
-        MezoutRouter.BorrowAuth memory b = _borrowAuth(payerPk, payer, 2_000e18, address(router));
+        MezoutRouter.BorrowAuth memory b = _borrowAuth(payerPk, payer, 2_000e18, payer);
 
         vm.prank(relayer);
-        router.payWithBorrow(inv, _signInvoice(inv), payer, paySig, 0, _noPermit(), b);
+        router.payWithBorrow(inv, _signInvoice(inv), payer, paySig, 0, _permit(payerPk, payer, inv.amount), b);
 
         assertEq(musd.balanceOf(merchant), 1_980e18);
         assertEq(musd.balanceOf(feeRecipient), 20e18);
@@ -284,14 +284,14 @@ contract MezoutRouterTest is Test {
     function test_payWithBorrow_partFromBalance() public {
         MezoutRouter.Invoice memory inv = _invoice(2_000e18, 0, "order-21");
         bytes memory paySig = _signPayment(payerPk, inv, payer);
-        MezoutRouter.BorrowAuth memory b = _borrowAuth(payerPk, payer, 1_500e18, address(router));
+        MezoutRouter.BorrowAuth memory b = _borrowAuth(payerPk, payer, 1_500e18, payer);
 
         vm.expectEmit(address(router));
         emit MezoutRouter.Paid(
             inv.orderId, merchant, payer, 2_000e18, 0, MezoutRouter.Method.BORROW, address(musd), 500e18, 1_500e18
         );
         vm.prank(relayer);
-        router.payWithBorrow(inv, _signInvoice(inv), payer, paySig, 500e18, _permit(payerPk, payer, 500e18), b);
+        router.payWithBorrow(inv, _signInvoice(inv), payer, paySig, 500e18, _permit(payerPk, payer, inv.amount), b);
 
         assertEq(musd.balanceOf(merchant), 2_000e18);
         assertEq(musd.balanceOf(payer), 9_500e18);
@@ -299,43 +299,87 @@ contract MezoutRouterTest is Test {
         _assertRouterEmpty();
     }
 
+    /// Anyone may submit Mezo's borrow authorization. The MUSD now lands with the payer, and checkout recognizes
+    /// the one-step nonce advance and completes from the full-invoice permit instead of leaving funds in the router.
+    function test_frontRunBorrowDoesNotBlockPaymentOrStrandMUSD() public {
+        MezoutRouter.Invoice memory inv = _invoice(2_000e18, 20e18, "order-borrow-front-run");
+        bytes memory paySig = _signPayment(payerPk, inv, payer);
+        MezoutRouter.BorrowAuth memory b = _borrowAuth(payerPk, payer, 1_500e18, payer);
+        MezoutRouter.PermitSig memory p = _permit(payerPk, payer, inv.amount);
+
+        vm.prank(attacker);
+        bos.withdrawMUSDWithSignature(1_500e18, address(0), address(0), payer, payer, b.signature, b.deadline);
+
+        assertEq(bos.getNonce(payer), 1);
+        assertEq(musd.balanceOf(payer), 11_500e18);
+        _assertRouterEmpty();
+
+        vm.prank(relayer);
+        router.payWithBorrow(inv, _signInvoice(inv), payer, paySig, 500e18, p, b);
+
+        assertEq(musd.balanceOf(merchant), 1_980e18);
+        assertEq(musd.balanceOf(feeRecipient), 20e18);
+        assertEq(musd.balanceOf(payer), 9_500e18);
+        assertEq(troveManager.debt(payer), 11_500e18);
+        _assertRouterEmpty();
+    }
+
+    function test_revert_frontRunBorrowDoesNotExtendAuthorizationDeadline() public {
+        MezoutRouter.Invoice memory inv = _invoice(2_000e18, 0, "order-borrow-expired");
+        inv.expiry = uint64(block.timestamp + 2 hours);
+        bytes memory paySig = _signPayment(payerPk, inv, payer);
+        bytes memory invSig = _signInvoice(inv);
+        MezoutRouter.BorrowAuth memory b = _borrowAuth(payerPk, payer, 2_000e18, payer);
+        MezoutRouter.PermitSig memory p = _permit(payerPk, payer, inv.amount);
+
+        vm.prank(attacker);
+        bos.withdrawMUSDWithSignature(2_000e18, address(0), address(0), payer, payer, b.signature, b.deadline);
+        vm.warp(b.deadline + 1);
+
+        vm.prank(relayer);
+        vm.expectRevert(MezoutRouter.BorrowAuthorizationExpired.selector);
+        router.payWithBorrow(inv, invSig, payer, paySig, 0, p, b);
+    }
+
     function test_revert_borrowBelowSafetyFloor() public {
         // 1 BTC at 80,000 with 10,000 debt; borrowing 40,001 leaves 50,001 debt: ~159.99%.
         MezoutRouter.Invoice memory inv = _invoice(40_001e18, 0, "order-22");
         bytes memory paySig = _signPayment(payerPk, inv, payer);
-        MezoutRouter.BorrowAuth memory b = _borrowAuth(payerPk, payer, 40_001e18, address(router));
+        MezoutRouter.BorrowAuth memory b = _borrowAuth(payerPk, payer, 40_001e18, payer);
         bytes memory invSig = _signInvoice(inv);
+        MezoutRouter.PermitSig memory p = _permit(payerPk, payer, inv.amount);
 
         uint256 icrAfter = uint256(1e18) * 80_000e18 / 50_001e18;
         vm.prank(relayer);
         vm.expectRevert(abi.encodeWithSelector(MezoutRouter.TroveBelowSafetyFloor.selector, icrAfter));
-        router.payWithBorrow(inv, invSig, payer, paySig, 0, _noPermit(), b);
+        router.payWithBorrow(inv, invSig, payer, paySig, 0, p, b);
     }
 
     function test_borrowAtExactlySafetyFloorSucceeds() public {
         // 10,000 + 40,000 = 50,000 debt against 80,000 collateral value: exactly 160%.
         MezoutRouter.Invoice memory inv = _invoice(40_000e18, 0, "order-23");
         bytes memory paySig = _signPayment(payerPk, inv, payer);
-        MezoutRouter.BorrowAuth memory b = _borrowAuth(payerPk, payer, 40_000e18, address(router));
+        MezoutRouter.BorrowAuth memory b = _borrowAuth(payerPk, payer, 40_000e18, payer);
         vm.prank(relayer);
-        router.payWithBorrow(inv, _signInvoice(inv), payer, paySig, 0, _noPermit(), b);
+        router.payWithBorrow(inv, _signInvoice(inv), payer, paySig, 0, _permit(payerPk, payer, inv.amount), b);
         assertEq(musd.balanceOf(merchant), 40_000e18);
     }
 
-    /// The borrow signature names the router as recipient; it must not pay an invoice the payer did not choose.
+    /// The borrow signature and full-invoice permit still cannot pay an invoice the payer did not choose.
     function test_revert_stolenBorrowSigCannotPayOtherInvoice() public {
         MezoutRouter.Invoice memory honest = _invoice(1_000e18, 0, "order-24");
         bytes memory paySig = _signPayment(payerPk, honest, payer);
-        MezoutRouter.BorrowAuth memory b = _borrowAuth(payerPk, payer, 1_000e18, address(router));
+        MezoutRouter.BorrowAuth memory b = _borrowAuth(payerPk, payer, 1_000e18, payer);
 
         MezoutRouter.Invoice memory evil = honest;
         evil.merchant = attackerMerchant;
         evil.orderId = "evil-borrow";
         bytes memory evilInvSig = _signInvoice(evil);
+        MezoutRouter.PermitSig memory p = _permit(payerPk, payer, evil.amount);
 
         vm.prank(attacker);
         vm.expectRevert(MezoutRouter.InvalidPayerSignature.selector);
-        router.payWithBorrow(evil, evilInvSig, payer, paySig, 0, _noPermit(), b);
+        router.payWithBorrow(evil, evilInvSig, payer, paySig, 0, p, b);
         assertEq(troveManager.debt(payer), 10_000e18);
     }
 
@@ -344,9 +388,10 @@ contract MezoutRouterTest is Test {
         bytes memory paySig = _signPayment(payerPk, inv, payer);
         MezoutRouter.BorrowAuth memory b = _borrowAuth(payerPk, payer, 1_000e18, attacker);
         bytes memory invSig = _signInvoice(inv);
+        MezoutRouter.PermitSig memory p = _permit(payerPk, payer, inv.amount);
         vm.prank(relayer);
-        vm.expectRevert("BorrowerOperationsSignatures: Invalid signature");
-        router.payWithBorrow(inv, invSig, payer, paySig, 0, _noPermit(), b);
+        vm.expectRevert(MezoutRouter.InvalidBorrowSignature.selector);
+        router.payWithBorrow(inv, invSig, payer, paySig, 0, p, b);
     }
 
     function test_revert_borrowNothing() public {
@@ -374,8 +419,8 @@ contract MezoutRouterTest is Test {
 
         MezoutRouter.Invoice memory inv = _invoice(amount, fee, keccak256(abi.encode("b", amount, fromBalance, fee)));
         bytes memory paySig = _signPayment(payerPk, inv, payer);
-        MezoutRouter.BorrowAuth memory b = _borrowAuth(payerPk, payer, borrowed, address(router));
-        MezoutRouter.PermitSig memory p = fromBalance > 0 ? _permit(payerPk, payer, fromBalance) : _noPermit();
+        MezoutRouter.BorrowAuth memory b = _borrowAuth(payerPk, payer, borrowed, payer);
+        MezoutRouter.PermitSig memory p = _permit(payerPk, payer, amount);
 
         vm.prank(relayer);
         router.payWithBorrow(inv, _signInvoice(inv), payer, paySig, fromBalance, p, b);

@@ -260,10 +260,10 @@ function CheckoutInner({
         const fresh = await quote.refetch();
         if (!fresh.data?.canBorrow) throw new Error("This borrow is no longer possible at the current price");
       }
-      setStatus({ kind: "working", step: `Sign the payment (1 of ${fromBalance > 0n ? 3 : 2})` });
+      setStatus({ kind: "working", step: "Sign the payment (1 of 3)" });
       const payerSig = await signPayment(address);
-      const permit = fromBalance > 0n ? await splitPermitStep(address, fromBalance) : noPermit;
-      setStatus({ kind: "working", step: "Sign the borrow authorization" });
+      const permit = await splitPermitStep(address, invoice.amount);
+      setStatus({ kind: "working", step: "Sign the borrow authorization (3 of 3)" });
       const nonce = await client!.readContract({
         address: mezoTestnetAddresses.borrowerOperationsSignatures,
         abi: borrowerOperationsSignaturesAbi,
@@ -275,7 +275,7 @@ function CheckoutInner({
         domain: borrowerOperationsSignaturesDomain(),
         types: withdrawMusdTypes,
         primaryType: "WithdrawMUSD",
-        message: { amount: borrowed, borrower: address, recipient: router, nonce, deadline },
+        message: { amount: borrowed, borrower: address, recipient: address, nonce, deadline },
       });
       setStatus({ kind: "working", step: "Sending" });
       await finish(

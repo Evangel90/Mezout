@@ -5,6 +5,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {ReentrancyGuardTransient} from "@openzeppelin/contracts/utils/ReentrancyGuardTransient.sol";
@@ -65,6 +66,12 @@ contract MezoutRouter is EIP712, ReentrancyGuardTransient {
     bytes32 public constant SWAP_PAYMENT_TYPEHASH = keccak256(
         "SwapPayment(Invoice invoice,address payer,address tokenIn,uint256 maxAmountIn,uint256 deadline)Invoice(address merchant,uint256 amount,uint256 fee,bytes32 orderId,uint64 expiry)"
     );
+    bytes32 internal constant EIP712_DOMAIN_TYPEHASH =
+        keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
+    bytes32 internal constant BORROWER_OPERATIONS_NAME_HASH = keccak256("BorrowerOperationsSignatures");
+    bytes32 internal constant VERSION_ONE_HASH = keccak256("1");
+    bytes32 internal constant WITHDRAW_MUSD_TYPEHASH =
+        keccak256("WithdrawMUSD(uint256 amount,address borrower,address recipient,uint256 nonce,uint256 deadline)");
 
     uint256 public constant MIN_BORROW_ICR = 1.6e18;
     uint256 internal constant FEE_DENOMINATOR = 10_000;
@@ -100,6 +107,8 @@ contract MezoutRouter is EIP712, ReentrancyGuardTransient {
     error InvalidPayerSignature();
     error PermitFailed();
     error InvalidBorrowAmount();
+    error BorrowAuthorizationExpired();
+    error InvalidBorrowSignature();
     error BorrowMismatch();
     error TroveBelowSafetyFloor(uint256 icr);
     error ZeroAddress();
@@ -163,7 +172,9 @@ contract MezoutRouter is EIP712, ReentrancyGuardTransient {
     }
 
     /// @notice Pays `fromBalance` from the payer's MUSD and borrows the rest against the payer's trove.
-    /// @dev The borrow signature must name this router as recipient. Reverts if the trove ends below 160%.
+    /// @dev The borrow signature names the payer as recipient. The router then pulls the full invoice under permit,
+    /// so a third party submitting the public borrow signature first cannot strand MUSD or block checkout.
+    /// Reverts if the trove ends below 160%.
     function payWithBorrow(
         Invoice calldata invoice,
         bytes calldata invoiceSig,
@@ -177,12 +188,12 @@ contract MezoutRouter is EIP712, ReentrancyGuardTransient {
         _useInvoice(invoice, invoiceSig, payer, payerSig);
 
         uint256 borrowed = invoice.amount - fromBalance;
-        _borrowToRouter(payer, borrowed, borrow);
-
-        if (fromBalance > 0) {
-            _permit(musd, payer, fromBalance, fromBalance, permit);
-            musd.safeTransferFrom(payer, address(this), fromBalance);
-        }
+        if (block.timestamp > borrow.deadline) revert BorrowAuthorizationExpired();
+        // The full allowance covers both the payer's existing balance and the MUSD minted to them by the borrow.
+        // As with the direct MUSD path, a front-run permit is harmless because its allowance remains available.
+        _permit(musd, payer, invoice.amount, invoice.amount, permit);
+        _borrowToPayer(payer, borrowed, borrow);
+        musd.safeTransferFrom(payer, address(this), invoice.amount);
 
         musd.safeTransfer(invoice.merchant, invoice.amount - invoice.fee);
         if (invoice.fee > 0) musd.safeTransfer(feeRecipient, invoice.fee);
@@ -349,12 +360,46 @@ contract MezoutRouter is EIP712, ReentrancyGuardTransient {
         amountIn = Math.mulDiv(afterFee - 1, FEE_DENOMINATOR, FEE_DENOMINATOR - fee) + 1;
     }
 
-    function _borrowToRouter(address payer, uint256 amount, BorrowAuth calldata borrow) internal {
-        uint256 before = musd.balanceOf(address(this));
-        borrowerOperationsSignatures.withdrawMUSDWithSignature(
-            amount, borrow.upperHint, borrow.lowerHint, payer, address(this), borrow.signature, borrow.deadline
+    function _borrowToPayer(address payer, uint256 amount, BorrowAuth calldata borrow) internal {
+        uint256 nonce = borrowerOperationsSignatures.getNonce(payer);
+        bytes32 currentDigest = _borrowDigest(amount, payer, nonce, borrow.deadline);
+
+        if (ECDSA.recover(currentDigest, borrow.signature) == payer) {
+            uint256 before = musd.balanceOf(payer);
+            borrowerOperationsSignatures.withdrawMUSDWithSignature(
+                amount, borrow.upperHint, borrow.lowerHint, payer, payer, borrow.signature, borrow.deadline
+            );
+            if (musd.balanceOf(payer) - before != amount) revert BorrowMismatch();
+            return;
+        }
+
+        // Anyone can submit a Mezo borrow signature. If exactly this authorization was submitted first, the
+        // borrower's nonce has advanced once and the MUSD is already in their wallet. Accept that state and let
+        // the full-invoice permit finish checkout. No funds can be stranded in or claimed from this router.
+        if (
+            nonce == 0
+                || ECDSA.recover(_borrowDigest(amount, payer, nonce - 1, borrow.deadline), borrow.signature) != payer
+        ) {
+            revert InvalidBorrowSignature();
+        }
+    }
+
+    function _borrowDigest(uint256 amount, address payer, uint256 nonce, uint256 deadline)
+        internal
+        view
+        returns (bytes32)
+    {
+        bytes32 bosDomainSeparator = keccak256(
+            abi.encode(
+                EIP712_DOMAIN_TYPEHASH,
+                BORROWER_OPERATIONS_NAME_HASH,
+                VERSION_ONE_HASH,
+                block.chainid,
+                address(borrowerOperationsSignatures)
+            )
         );
-        if (musd.balanceOf(address(this)) - before != amount) revert BorrowMismatch();
+        bytes32 structHash = keccak256(abi.encode(WITHDRAW_MUSD_TYPEHASH, amount, payer, payer, nonce, deadline));
+        return keccak256(abi.encodePacked("\x19\x01", bosDomainSeparator, structHash));
     }
 
     function _emitPaid(

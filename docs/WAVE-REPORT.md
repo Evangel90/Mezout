@@ -139,7 +139,7 @@ All contracts are verified on Sourcify with exact matches.
 | Method | How it pays |
 | --- | --- |
 | `payWithMUSD` | Uses an MUSD permit (or an existing allowance) and transfers `amount - fee` to the merchant and `fee` to the fee recipient |
-| `payWithBorrow` | Takes any part from the payer's MUSD, borrows the rest from the payer's trove with `withdrawMUSDWithSignature` straight to the router, checks the router received exactly that, pays the merchant, then reads `getCurrentICR` and reverts with `TroveBelowSafetyFloor` if the trove ended below 160% |
+| `payWithBorrow` | Takes any part from the payer's MUSD and borrows the rest from their trove. The borrow names the payer as recipient and a full-invoice permit moves the combined balance through the router, so a copied borrow submitted first cannot strand MUSD or block checkout. It pays the merchant, then reads `getCurrentICR` and reverts with `TroveBelowSafetyFloor` if the trove ended below 160% |
 | `payWithBTC` | Exact-output swap on the Tigris BTC/MUSD pool, using Mezo's BTC ERC-20 (which shares its balance with native BTC and supports permit) |
 | `payWithMEZO` | The same on the MUSD/MEZO pool |
 
