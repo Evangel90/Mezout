@@ -433,7 +433,7 @@ function CheckoutInner({
         </div>
         <div>
           <p className="text-4xl font-semibold tracking-tight">{fmt(invoice.amount)} MUSD</p>
-          {invoice.fee > 0n && <p className="mt-1 text-xs text-stone-500">You pay this exact amount; the merchant's platform fee is deducted from their settlement.</p>}
+          {invoice.fee > 0n && <p className="mt-1 text-xs text-stone-500">You pay this exact amount; the merchant&apos;s platform fee is deducted from their settlement.</p>}
           {reference && <p className="mt-1 text-sm text-stone-600">{reference}</p>}
         </div>
         {!paid && (
