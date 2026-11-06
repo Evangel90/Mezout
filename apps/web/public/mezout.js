@@ -80,6 +80,8 @@
   global.Mezout = Object.freeze({ open: open });
   document.addEventListener("click", function (event) {
     var trigger = event.target.closest && event.target.closest("[data-mezout-checkout]");
-    if (trigger) open({ checkoutUrl: trigger.getAttribute("data-mezout-checkout") });
+    if (!trigger) return;
+    event.preventDefault();
+    open({ checkoutUrl: trigger.getAttribute("data-mezout-checkout") });
   });
 })(window);
