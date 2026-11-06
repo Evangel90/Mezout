@@ -40,7 +40,6 @@ const SWAP_TOKENS = {
   MEZO: { address: mezoTestnetAddresses.mezoToken, domain: mezoDomain },
 } as const;
 type SwapMethod = keyof typeof SWAP_TOKENS;
-const noPermit = { deadline: "0", v: 0, r: zeroHash, s: zeroHash };
 
 const fmt = (v: bigint) => Number(formatUnits(v, 18)).toLocaleString(undefined, { maximumFractionDigits: 2 });
 const fmtToken = (v: bigint) => Number(formatUnits(v, 18)).toLocaleString(undefined, { maximumSignificantDigits: 4 });
