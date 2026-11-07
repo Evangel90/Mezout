@@ -2,11 +2,11 @@
 
 **Pay with Bitcoin. Get paid in MUSD.**
 
-Mezout is a checkout for Mezo that lets any store accept Bitcoin. Customers pay with MUSD, BTC or MEZO, or borrow MUSD against their BTC so they never have to sell it, and the merchant always receives the exact invoiced amount in MUSD. Merchants sign up with a passkey instead of a wallet, nobody pays gas, and it plugs into a store through payment links, a REST API or a WooCommerce plugin.
+Mezout is a checkout for Mezo that lets any store accept Bitcoin. Customers pay with MUSD, BTC or MEZO, or borrow MUSD against their BTC so they never have to sell it. The customer pays the displayed invoice total; merchants receive stable MUSD less the disclosed platform fee. Merchants sign up with a passkey instead of a wallet, nobody pays gas, and it plugs into a store through payment links, a REST API, WooCommerce or an embedded checkout.
 
 Built for the Mezo Buildathon, Access & Distribution track. Live on Mezo testnet.
 
-[**Live app**](https://usemezout.vercel.app) · [**API reference**](https://usemezout.vercel.app/docs) · [**Contracts on Sourcify**](https://repo.sourcify.dev/31611/0xe132f9a1c8dbc31015C3Cf4eE8706c9031bFa431) · [**WooCommerce plugin**](plugins/woocommerce)
+[**Live app**](https://usemezout.vercel.app) · [**API reference**](https://usemezout.vercel.app/docs) · [**Contracts on Sourcify**](https://repo.sourcify.dev/31611/0x7151473F1300c2529A2eEFaA517684e974A9b3E6) · [**WooCommerce plugin**](plugins/woocommerce)
 
 <p align="center"><img src="docs/motion/svg/06-receipt.svg" width="420" alt="A Mezout receipt for Satoshi’s Coffee Store: 25.00 MUSD, stamped paid, whichever way the customer paid"></p>
 
@@ -15,12 +15,12 @@ Built for the Mezo Buildathon, Access & Distribution track. Live on Mezo testnet
 | | |
 | --- | --- |
 | **4 ways to pay** | MUSD, BTC, MEZO, or MUSD borrowed against BTC inside the payment |
-| **Exact settlement** | The merchant gets exactly the invoiced MUSD in the same transaction, or the whole payment reverts |
+| **Exact gross settlement** | The router receives exactly the invoiced MUSD in the same transaction, or the whole payment reverts; the signed platform fee is deducted from the merchant payout |
 | **0 gas** | A relayer submits payments from EVM wallets and every passkey withdrawal |
 | **0 wallets for merchants** | A passkey (Face ID, Touch ID, Windows Hello) owns an ERC-4337 smart account |
 | **0 custody** | Funds go from the customer to the merchant. Mezout never holds funds or keys |
 | **0 admin keys** | The router has no owner, no pause switch and no upgrade path |
-| **166 tests** | 75 Foundry tests, including fork tests against live Mezo contracts, plus 77 app and 14 SDK tests |
+| **Validated end to end** | Foundry unit and live-fork tests, plus web and SDK test suites, lint and production build |
 | **Live proof** | Every payment path has been paid on Mezo testnet, with [transactions linked below](#proof-it-works-on-mezo-testnet) |
 
 ## Contents
@@ -52,9 +52,9 @@ For Mezo, every checkout is new demand for MUSD and a reason to open and use a t
 
 ## What Mezout does
 
-### Customers pay any way, merchants get exact MUSD
+### Customers pay any way, merchants settle in MUSD
 
-The hosted checkout reads the customer's wallet and shows only the options they can actually use. Whatever they pick, `MezoutRouter` pays the merchant the invoiced amount in one transaction.
+The hosted checkout reads the customer's wallet and shows only the options they can actually use. Whatever they pick, `MezoutRouter` settles the signed invoice in one transaction: the customer pays the displayed amount and the merchant receives its disclosed net MUSD payout.
 
 ![Pay any way: MUSD, BTC, MEZO and borrowing against BTC all settle as exactly 25.00 MUSD](docs/motion/svg/01-pay-any-way.svg)
 
@@ -187,7 +187,7 @@ sequenceDiagram
     K->>R: POST /api/relay
     R->>M: Simulate, then submit. Relayer pays the gas
     M->>M: Check invoice signature, payer signature, expiry, not already paid
-    M->>M: Take payment, send merchant exactly the invoiced MUSD
+    M->>M: Take the invoiced amount; send merchant net MUSD and the signed fee to its recipient
     M-->>I: Paid event
     K->>I: Ask for a sync now
     I->>I: Record the payment, queue invoice.paid
@@ -225,7 +225,7 @@ Bitcoin wallets in Mezo Passport act through smart accounts, which cannot sign t
 
 ### Pay with BTC or MEZO: exact-output swap
 
-Tigris has no exact-output swap, and the merchant must receive an exact amount. The router computes, at execution, the smallest input that buys exactly the invoiced MUSD, and takes only that.
+Tigris has no exact-output swap, and the router must receive the full signed invoice amount before splitting merchant net settlement and the platform fee. It computes, at execution, the smallest input that buys exactly that MUSD amount, and takes only that.
 
 ```mermaid
 sequenceDiagram
@@ -279,7 +279,7 @@ sequenceDiagram
     R->>M: payWithBorrow
     M->>B: withdrawMUSDWithSignature, borrowed MUSD to customer
     M->>M: Pull the invoice from customer under permit
-    M->>W: Exact MUSD
+    M->>W: Net MUSD settlement
     M->>B: getCurrentICR(customer)
     alt below 160%
         M-->>R: Revert TroveBelowSafetyFloor, whole payment undone
@@ -373,7 +373,7 @@ Saving the plugin settings checks the API key and registers the store's webhook 
 
 | Guarantee | How it is enforced |
 | --- | --- |
-| The merchant gets the exact amount | The router transfers `amount - fee` to the merchant in the same transaction. Swaps check the MUSD received equals the invoice. Any shortfall reverts everything |
+| Settlement is exact and disclosed | Swaps deliver the full signed `amount` to the router; it transfers `amount - fee` to the merchant and the signed fee to its recipient in the same transaction. Any shortfall reverts everything |
 | One invoice, one payment | `paid[orderId]` is set before any transfer. Invoices are EIP-712 signed by Mezout's invoice signer and expire |
 | A copied signature can't pay anything else | Relayed payments need the payer's own `Payment` or `SwapPayment` signature naming that exact invoice. A permit or borrow signature alone is not enough |
 | Checkout can't push a customer toward liquidation | After a borrow, `getCurrentICR` must be at least 160%, or the whole payment reverts |
@@ -393,7 +393,7 @@ The contracts are built from OpenZeppelin 5.6 parts and use transient-storage re
 | | |
 | --- | --- |
 | Live app | https://usemezout.vercel.app (dashboard: `/dashboard`, API reference: `/docs`, status: `/api/health`) |
-| MezoutRouter | [`0xe132f9a1c8dbc31015C3Cf4eE8706c9031bFa431`](https://explorer.test.mezo.org/address/0xe132f9a1c8dbc31015C3Cf4eE8706c9031bFa431) (block 16,367,275): MUSD, borrow, MEZO and BTC |
+| MezoutRouter | [`0x7151473F1300c2529A2eEFaA517684e974A9b3E6`](https://explorer.test.mezo.org/address/0x7151473F1300c2529A2eEFaA517684e974A9b3E6) (block 16,619,132): hardened MUSD, borrow, MEZO and BTC |
 | MezoutRouter v1 | [`0xAF79AB1cdB38c0C3944bB9440614B58871Ba6199`](https://explorer.test.mezo.org/address/0xAF79AB1cdB38c0C3944bB9440614B58871Ba6199) (block 16,341,328): MUSD and borrow only; still pays links made before 25 Oct |
 | MezoutAccountFactory | [`0xeE85EE32488FF2D63eFe48159ddB59e6863cdF79`](https://explorer.test.mezo.org/address/0xeE85EE32488FF2D63eFe48159ddB59e6863cdF79) (block 16,343,339) |
 | Tigris MUSD/MEZO pool | [`0x8eb88d745B0aFFF9D71AbC40d7F550Cded7bB342`](https://explorer.test.mezo.org/address/0x8eb88d745B0aFFF9D71AbC40d7F550Cded7bB342): created by Mezout with test tokens at 1 MUSD per MEZO (80 + 80) |
@@ -401,7 +401,7 @@ The contracts are built from OpenZeppelin 5.6 parts and use transient-storage re
 | Invoice signer | `0x289E256BF9Fb2ce0AF3186B015c371C5b3965943` |
 | Fee recipient | `0x36A95C939Fa70F29421261C770160645Efa9F9E4` |
 | Network | Mezo testnet, chain 31611 |
-| Source verification | Sourcify, exact match: [MezoutRouter](https://repo.sourcify.dev/31611/0xe132f9a1c8dbc31015C3Cf4eE8706c9031bFa431), [v1](https://repo.sourcify.dev/31611/0xAF79AB1cdB38c0C3944bB9440614B58871Ba6199), [MezoutAccountFactory](https://repo.sourcify.dev/31611/0xeE85EE32488FF2D63eFe48159ddB59e6863cdF79). The Mezo explorer's verifier only supports EVM versions up to London, so it cannot verify Cancun builds |
+| Source verification | Sourcify, exact match: [MezoutRouter](https://repo.sourcify.dev/31611/0x7151473F1300c2529A2eEFaA517684e974A9b3E6), [v1](https://repo.sourcify.dev/31611/0xAF79AB1cdB38c0C3944bB9440614B58871Ba6199), [MezoutAccountFactory](https://repo.sourcify.dev/31611/0xeE85EE32488FF2D63eFe48159ddB59e6863cdF79). The Mezo explorer's verifier only supports EVM versions up to London, so it cannot verify Cancun builds |
 
 ### Reference transactions (24 Oct 2026)
 
@@ -415,7 +415,7 @@ All relayed by `0x7ECf…9a15`, so the customer paid no gas. Merchant `0x36A9…
 
 ### Pay with BTC or MEZO (25 Oct 2026)
 
-Relayed, so the customer paid no gas. Each time the customer was charged exactly the router's quote and the merchant received exactly the invoiced MUSD.
+Relayed, so the customer paid no gas. Each time the customer was charged exactly the router's quote; invoices created with a nonzero fee settle the signed net amount to the merchant.
 
 | Path | Amount | Transaction |
 | --- | --- | --- |
@@ -489,12 +489,11 @@ pnpm --filter @mezout/web dev
 ## What's next
 
 - **Shopify app**, alongside the WooCommerce gateway
-- **Embedded checkout**: a drop-in `mezout.js` script and React component that open the checkout in a modal inside the merchant's own site, with fulfilment still driven by the signed webhook
 - **Agent payments**: AI agents that pay and get paid through Mezout. First a Mezout MCP server (create, check, pay and refund invoices from any MCP-capable agent), then pay-per-request APIs over HTTP 402, where an agent pays an exact MUSD price and retries with proof; later, agent wallets with spending limits the owner approves with a passkey, optionally funded by borrowing against BTC
 - **Mainnet readiness**: a passkey recovery key, an external security review, and deployment on Mezo mainnet
 - **Deeper MEZO liquidity**: the current MUSD/MEZO pool is a small test pool
 - **Gasless payments for Bitcoin-wallet accounts**, which pay their own gas today
-- **Turning on the fee**: the signed invoice already carries a fee field, set to 0 during the buildathon, so no contract change is needed
+- **Fee calibration**: measure confirmed relayer gas costs across every payment method and adjust the merchant-paid testnet fee only when the evidence supports it. See [`docs/RELAYER_GAS_COST.md`](docs/RELAYER_GAS_COST.md)
 - **More merchant tools**: payouts to exchanges, more ecommerce platforms, and in-person QR checkout
 
 ## License

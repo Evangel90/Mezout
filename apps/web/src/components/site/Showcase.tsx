@@ -6,15 +6,15 @@ import { useEffect, useRef, useState } from "react";
 const TABS = [
   {
     label: "Pay any way",
-    title: "Customers choose. You get exact MUSD.",
-    body: "MUSD from their balance, BTC or MEZO swapped on Tigris, or MUSD borrowed against their BTC. Whatever they pick, the router pays you the invoiced amount in one transaction.",
+    title: "Customers choose. You settle in MUSD.",
+    body: "MUSD from their balance, BTC or MEZO swapped on Tigris, or MUSD borrowed against their BTC. Whatever they pick, the customer pays the invoice total and the signed platform fee is deducted from settlement.",
     src: "/motion/01-pay-any-way.svg",
     dur: 8,
   },
   {
     label: "Borrow against BTC",
     title: "Spend Bitcoin without selling it.",
-    body: "Customers borrow MUSD against their BTC inside the payment. The router checks the loan afterwards and reverts anything that would leave it under 160% collateral.",
+    body: "Customers borrow MUSD against their BTC inside the payment. The router checks the loan afterwards and reverts anything under 160%; after payment, checkout shows the live loan health and a Mezo repay/add-BTC route.",
     src: "/motion/02-borrow-dont-sell.svg",
     dur: 10,
   },

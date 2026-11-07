@@ -1,6 +1,6 @@
 # Mezout API
 
-Mezout is a checkout for Mezo. Your server creates an invoice for an exact amount of MUSD, the customer pays it in MUSD, BTC or MEZO, or by borrowing MUSD against their BTC, and your payout address receives exactly the invoiced amount. Mezout never holds funds: payments go from the customer to you through the `MezoutRouter` contract in one transaction.
+Mezout is a checkout for Mezo. Your server creates an invoice for an exact gross amount of MUSD; the customer pays that amount in MUSD, BTC or MEZO, or by borrowing MUSD against their BTC. Your payout address receives the gross amount less the invoice's signed platform fee. Mezout never holds funds: payments move through the `MezoutRouter` contract in one transaction.
 
 > **Testnet.** Mezout runs on Mezo testnet (chain 31611). Every amount is test MUSD with no value. Keys start with `mzk_test_`.
 
@@ -10,7 +10,7 @@ A payment goes like this:
 
 1. **Your server creates an invoice** with `POST /v1/invoices`, giving the amount and your own order number.
 2. **You send the customer to the invoice's `checkout_url`.** They pick how to pay and confirm in their wallet.
-3. **The router pays you.** One transaction moves the exact amount to your payout address and records the invoice's `order_id` in a `Paid` event on Mezo.
+3. **The router settles your payment.** One transaction moves the invoice net amount to your payout address, the signed fee to its recipient, and records the invoice's `order_id` in a `Paid` event on Mezo.
 4. **Mezout tells your server.** It reads the `Paid` event and sends an `invoice.paid` webhook to your endpoint.
 5. **Your server fulfils the order.** It marks the order paid, ships it, or grants access.
 
@@ -144,7 +144,8 @@ curl "https://usemezout.vercel.app/v1/invoices?limit=50&starting_after=inv_3bf9a
   "order_id": "0x4f3d7953e110470549275f6172dff8cca526384ed77d0a98a07083d21b821623",
   "merchant": "0x7049Fcb3a331481a1EE860eb041cf0F9A133E264",
   "amount": "25",
-  "fee": "0",
+  "fee": "0.25",
+  "net": "24.75",
   "currency": "MUSD",
   "reference": "Order 1001",
   "status": "pending",
@@ -163,7 +164,8 @@ curl "https://usemezout.vercel.app/v1/invoices?limit=50&starting_after=inv_3bf9a
 | `order_id` | The id the router records on-chain when the invoice is paid. It appears in the `Paid` event. |
 | `merchant` | Your payout address, which the payment goes to. |
 | `amount` | The amount the customer pays, in MUSD. |
-| `fee` | Mezout's fee, taken from `amount`. Always `"0"` on testnet. |
+| `fee` | Merchant-paid platform fee, deducted from `amount` and signed into the invoice. New testnet invoices default to 1% (`MERCHANT_FEE_BPS=100`). |
+| `net` | What reaches your payout address: `amount` minus `fee`. |
 | `reference` | Your own order number or note, or `null`. **The customer sees it at checkout.** |
 | `status` | `pending`, `paid`, `expired` or `refunded`. See [Invoice status](#invoice-status). |
 | `amount_refunded` | MUSD refunded so far, counting completed refunds only. |
@@ -250,8 +252,8 @@ An invoice's `payment` describes the on-chain payment:
   "payer": "0x5a1c…77e0",
   "method": "MEZO",
   "amount": "25",
-  "fee": "0",
-  "net": "25",
+  "fee": "0.25",
+  "net": "24.75",
   "asset_in": "0x7B7c000000000000000000000000000000000001",
   "amount_in": "25.18",
   "borrowed": "0",

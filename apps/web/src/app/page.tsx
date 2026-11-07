@@ -6,7 +6,7 @@ const EXPLORER = "https://explorer.test.mezo.org/address";
 const SOURCIFY = "https://repo.sourcify.dev/31611";
 
 const contracts = [
-  { name: "MezoutRouter", address: "0xe132f9a1c8dbc31015C3Cf4eE8706c9031bFa431" },
+  { name: "MezoutRouter", address: "0x7151473F1300c2529A2eEFaA517684e974A9b3E6" },
   { name: "MezoutAccountFactory", address: "0xeE85EE32488FF2D63eFe48159ddB59e6863cdF79" },
 ];
 
@@ -22,8 +22,8 @@ const methods = [
 const guarantees = [
   {
     icon: "equal",
-    title: "Exact payout",
-    body: "The router pays you exactly the invoiced amount in the same transaction, or the whole payment reverts.",
+    title: "Clear MUSD settlement",
+    body: "The customer pays the listed amount; the signed platform fee is deducted from your MUSD settlement in the same transaction.",
   },
   {
     icon: "shield",
@@ -69,7 +69,7 @@ const stats = [
 const faqs = [
   {
     q: "What can my customers pay with?",
-    a: "MUSD, BTC or MEZO, or MUSD borrowed against the BTC in their Mezo loan. The checkout only shows the options their wallet can actually use, and you receive MUSD whichever they choose.",
+    a: "MUSD, BTC or MEZO, or MUSD borrowed against the BTC in their Mezo loan. The checkout only shows the options their wallet can actually use, and you receive MUSD settlement whichever they choose.",
   },
   {
     q: "Do I need a crypto wallet to get paid?",
@@ -85,11 +85,11 @@ const faqs = [
   },
   {
     q: "What does it cost?",
-    a: "Nothing on testnet. Each invoice carries a signed fee field, so any future fee is shown up front and deducted from the payout. The customer always pays the price on the invoice.",
+    a: "New testnet invoices carry a 1% merchant-paid platform fee. The customer always pays the listed invoice total; the signed fee is deducted from the merchant settlement and shown as gross, fee and net before the link is shared.",
   },
   {
     q: "Can I use it with my store?",
-    a: "Yes. Install the WooCommerce plugin, or create invoices from any backend with the REST API and send customers to the checkout link. Shopify and an embeddable checkout are next.",
+    a: "Yes. Install the WooCommerce plugin, create invoices from any backend with the REST API, or embed checkout with `mezout.js` or the React component. Shopify is planned next.",
   },
   {
     q: "Is Mezout live on mainnet?",

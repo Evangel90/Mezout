@@ -10,7 +10,7 @@ const geistMono = localFont({ src: "./fonts/GeistMonoVF.woff", variable: "--font
 
 const REPO = "https://github.com/Evangel90/Mezout";
 const description =
-  "Merchant checkout on Mezo: customers pay with MUSD, BTC or MEZO, or borrow against BTC, and merchants receive the exact amount in MUSD.";
+  "Merchant checkout on Mezo: customers pay with MUSD, BTC or MEZO, or borrow against BTC, while merchants settle in MUSD with clear, signed fees.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(
