@@ -2,6 +2,8 @@
 
 Merchant fees are deducted from settlement; the payer always signs and pays the invoice's `amount`. Before changing `MERCHANT_FEE_BPS`, review the relayer's actual gas cost for each payment method from confirmed testnet transactions.
 
+The first confirmed receipts for MUSD, hardened borrow-to-pay, BTC and MEZO are recorded in [RELAYER_GAS_EVIDENCE.md](RELAYER_GAS_EVIDENCE.md). They prove the payment paths and receipt-level gas use, but cannot set an economic MUSD fee on testnet because testnet assets have no reliable market price.
+
 For every representative MUSD, BORROW, BTC, and MEZO payment, save its transaction hash and run:
 
 ```sh
