@@ -10,9 +10,9 @@ import { pruneRateLimits } from "./rateLimit";
 import { allowPrivateWebhooks, webhookSender } from "./webhookSender";
 import { dispatchDue } from "./webhooks";
 
-/** Every router whose payments Mezout records: the current one and v1, which still pays older links. */
+/** Every router whose payments Mezout records: the current one, plus v1 and v2, which still pay older links. */
 export function indexedRouters(): Address[] {
-  return [...new Set([getAddress(mezoTestnetAddresses.mezoutRouterV1), serverEnv.router()])];
+  return [...new Set([getAddress(mezoTestnetAddresses.mezoutRouterV1), getAddress(mezoTestnetAddresses.mezoutRouterV2), serverEnv.router()])];
 }
 
 export async function syncNow(maxChunks: number) {

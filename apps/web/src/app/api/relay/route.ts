@@ -61,14 +61,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid payment link" }, { status: 400 });
   }
   const { invoice, signature: invoiceSig } = signed;
-  // Only our own routers: the current one, and the first one for links signed before swaps existed.
+  // Only our own routers: the current one, v1 (links signed before swaps existed) and v2 (links signed before v3).
   const router = linkRouter(signed);
   const current = serverEnv.router();
   const isCurrent = isAddressEqual(router, current);
-  if (!isCurrent && !isAddressEqual(router, mezoTestnetAddresses.mezoutRouterV1)) {
+  const isV2 = isAddressEqual(router, mezoTestnetAddresses.mezoutRouterV2);
+  if (!isCurrent && !isV2 && !isAddressEqual(router, mezoTestnetAddresses.mezoutRouterV1)) {
     return NextResponse.json({ error: "This payment link is not valid." }, { status: 400 });
   }
-  if ((input.method === "MEZO" || input.method === "BTC") && !isCurrent) {
+  if ((input.method === "MEZO" || input.method === "BTC") && !isCurrent && !isV2) {
     return NextResponse.json({ error: "This link was made before MEZO and BTC payments. Pay with MUSD." }, { status: 400 });
   }
   const client = publicClient();
