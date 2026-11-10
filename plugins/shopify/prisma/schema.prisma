@@ -32,3 +32,47 @@ model Session {
   refreshToken        String?
   refreshTokenExpires DateTime?
 }
+
+// Mezout settings for each shop. The API key and webhook signing secret are secrets: keep this database private.
+model MezoutShop {
+  shop              String   @id
+  apiKey            String   @default("")
+  gatewayName       String   @default("")
+  linkLifetimeHours Int      @default(24)
+  webhookEndpointId String?
+  webhookUrl        String?
+  webhookSecret     String?
+  webhookKeyHash    String?
+  appUrlPublished   String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+// One Mezout invoice per Shopify order paid with the Mezout manual payment method.
+model MezoutOrder {
+  id          Int      @id @default(autoincrement())
+  shop        String
+  orderId     String
+  orderGid    String
+  orderName   String
+  invoiceId   String
+  checkoutUrl String
+  amount      String
+  expiresAt   DateTime
+  status      String   @default("pending")
+  txHash      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([shop, orderId])
+  @@unique([shop, invoiceId])
+}
+
+// Mezout event ids already handled, so a redelivered webhook is ignored.
+model MezoutEvent {
+  shop       String
+  eventId    String
+  receivedAt DateTime @default(now())
+
+  @@id([shop, eventId])
+}

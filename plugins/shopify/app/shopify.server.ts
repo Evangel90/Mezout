@@ -6,6 +6,7 @@ import {
 } from "@shopify/shopify-app-react-router/server";
 import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
 import prisma from "./db.server";
+import { syncAllShopsOnce, syncShop } from "./mezout/services.server";
 
 const shopify = shopifyApp({
   apiKey: process.env.SHOPIFY_API_KEY,
@@ -19,10 +20,19 @@ const shopify = shopifyApp({
   future: {
     expiringOfflineAccessTokens: true,
   },
+  hooks: {
+    // After install (and re-auth), point Mezout's webhooks and the checkout extension at the current app URL.
+    afterAuth: async ({ session, admin }) => {
+      await syncShop(session.shop, admin.graphql);
+    },
+  },
   ...(process.env.SHOP_CUSTOM_DOMAIN
     ? { customShopDomains: [process.env.SHOP_CUSTOM_DOMAIN] }
     : {}),
 });
+
+// `shopify app dev` gives the app a new tunnel URL on every run: re-register connected shops' Mezout webhooks.
+syncAllShopsOnce(async (shop) => (await shopify.unauthenticated.admin(shop)).admin.graphql);
 
 export default shopify;
 export const apiVersion = ApiVersion.October26;

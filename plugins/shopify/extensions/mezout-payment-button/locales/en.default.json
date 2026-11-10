@@ -1,0 +1,11 @@
+{
+  "pendingHeading": "Complete your payment",
+  "pendingBody": "Your order is reserved. Pay with Bitcoin, MUSD or MEZO on Mezo to complete it.",
+  "pendingBodyAmount": "Your order is reserved. Pay {{amount}} MUSD with Bitcoin, MUSD or MEZO on Mezo to complete it.",
+  "completePayment": "Complete payment",
+  "paidHeading": "Payment received on Mezo. Thank you!",
+  "expiredHeading": "Your payment link has expired",
+  "expiredBody": "Contact the store for a new payment link.",
+  "reviewHeading": "Your payment is being checked",
+  "reviewBody": "The store will contact you if anything is needed."
+}

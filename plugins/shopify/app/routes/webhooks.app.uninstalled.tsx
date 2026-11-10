@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs } from "react-router";
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
+import { clientFor, mezoutStore } from "../mezout/services.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { shop, session, topic } = await authenticate.webhook(request);
@@ -12,6 +13,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (session) {
     await db.session.deleteMany({ where: { shop } });
   }
+
+  // Stop Mezout sending this shop's events here, and forget its API key. Order records stay until shop/redact.
+  const settings = await mezoutStore.getShop(shop);
+  if (settings?.apiKey && settings.webhookEndpointId) {
+    try {
+      await clientFor(settings.apiKey).deleteWebhookEndpoint(settings.webhookEndpointId);
+    } catch (e) {
+      console.error(`Mezout: could not delete the webhook endpoint of ${shop}`, e);
+    }
+  }
+  await mezoutStore.deleteShop(shop);
 
   return new Response();
 };
