@@ -159,6 +159,7 @@ flowchart TB
 | Webhooks | [`apps/web/src/lib/server/webhooks.ts`](apps/web/src/lib/server/webhooks.ts) | Signed events with retries and a delivery log, protected against requests to private networks |
 | Merchant API | [`apps/web/src/app/v1`](apps/web/src/app/v1) | Invoices, refunds, webhook endpoints, with idempotency keys and rate limits |
 | WooCommerce gateway | [`plugins/woocommerce`](plugins/woocommerce) | PHP plugin: creates invoices at checkout, completes orders from verified webhooks |
+| Shopify app | [`plugins/shopify`](plugins/shopify) | Manual payment method plus a "Complete payment" button; creates an invoice per order and marks it paid from verified webhooks |
 
 ## How a payment flows
 
@@ -451,6 +452,7 @@ The full list, with what we learned, is in [`docs/SUBMISSION-ANSWERS.md`](docs/S
 | Web app (Vitest) | 77 | API, idempotency, indexer, passkeys, refunds, sessions, rate limits, webhooks, profiles |
 | SDK (Vitest) | 14 | Typed data, accounts, chain config. 2 more run against the live testnet on request |
 | WooCommerce (PHP) | | Webhook signature verification and amount handling, run in the WordPress container |
+| Shopify app (Vitest) | 55 | Signatures, amounts, payment method and currency matching, idempotent invoices, the paid/expired/refund webhook paths, endpoint re-registration. Run with `pnpm test` in `plugins/shopify` |
 
 ```
 pnpm test                        # app and SDK
@@ -464,7 +466,7 @@ contracts/            Foundry: MezoutRouter, MezoutAccount and factory, tests, d
 apps/web/             Next.js 14: landing page, hosted checkout, dashboard, REST API, relayer, indexer
 packages/sdk/         Typed data, payment links, chain config, ABIs, trove reads
 plugins/woocommerce/  WooCommerce gateway (PHP) and its local WordPress setup
-plugins/shopify/      Shopify app (next milestone)
+plugins/shopify/      Shopify app (React Router, Prisma) and its checkout UI extension
 examples/             Dependency-free webhook receiver
 docs/                 API reference, development guide, findings, motion graphics
 ```
@@ -484,11 +486,11 @@ cp .env.example .env.local
 pnpm --filter @mezout/web dev
 ```
 
-[`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) covers the database, tests, deploying the router and the app, seeding the pool, running the indexer and paying an invoice from a script. The WooCommerce plugin has its own guide in [`plugins/woocommerce`](plugins/woocommerce).
+[`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) covers the database, tests, deploying the router and the app, seeding the pool, running the indexer and paying an invoice from a script. The WooCommerce plugin has its own guide in [`plugins/woocommerce`](plugins/woocommerce), and the Shopify app in [`plugins/shopify`](plugins/shopify).
 
 ## What's next
 
-- **Shopify app**, alongside the WooCommerce gateway
+- **Shopify app on a live store**: the app in [`plugins/shopify`](plugins/shopify) is built and unit-tested; installing it on a development store needs a Shopify Partner login
 - **Agent payments**: AI agents that pay and get paid through Mezout. First a Mezout MCP server (create, check, pay and refund invoices from any MCP-capable agent), then pay-per-request APIs over HTTP 402, where an agent pays an exact MUSD price and retries with proof; later, agent wallets with spending limits the owner approves with a passkey, optionally funded by borrowing against BTC
 - **Mainnet readiness**: a passkey recovery key, an external security review, and deployment on Mezo mainnet
 - **Deeper MEZO liquidity**: the current MUSD/MEZO pool is a small test pool
