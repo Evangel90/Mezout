@@ -293,7 +293,7 @@ M0 and M1 must be done by Sunday 26 Oct for the Wave 1 submission. M2–M6 fill 
 ### M6 — Wave 2 submission (15 Nov)
 
 - [ ] Self security review of the router, with findings fixed or documented
-- [ ] Explicitly investigate borrow-signature front-running/griefing; add an attacker-first regression test, bind authorization to the router/caller where supported, or document and test a safe recovery path
+- [x] Explicitly investigate borrow-signature front-running/griefing; add an attacker-first regression test, bind authorization to the router/caller where supported, or document and test a safe recovery path (hardened router v3 `0x7151…b3E6`: a copied borrow submitted first is recognized and checkout completes from the payer's balance; unit and fork regressions)
 - [ ] Exercise borrow-to-pay end to end against router v2, including payer intent, resulting trove debt/ICR, and the front-running case
 - [ ] Add post-checkout borrower safety follow-up: show current debt/ICR and a clear repay/top-up route; define monitoring/alerting and document limits. Do not automate top-ups without explicit borrower authorization
 - [ ] Run a merchant pilot with outside payers; record completed payments, repeat merchants, methods, and failures as evidence for the submission

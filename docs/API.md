@@ -257,7 +257,7 @@ An invoice's `payment` describes the on-chain payment:
   "asset_in": "0x7B7c000000000000000000000000000000000001",
   "amount_in": "25.18",
   "borrowed": "0",
-  "router": "0xe132f9a1c8dbc31015C3Cf4eE8706c9031bFa431",
+  "router": "0x7151473F1300c2529A2eEFaA517684e974A9b3E6",
   "tx_hash": "0x…",
   "block_number": 16400000,
   "paid_at": "2026-10-24T16:31:02.000Z"

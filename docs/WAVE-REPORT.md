@@ -123,7 +123,8 @@ All contracts are verified on Sourcify with exact matches.
 
 | Contract | Address |
 | --- | --- |
-| MezoutRouter (v2: MUSD, borrow, BTC, MEZO) | [`0xe132f9a1c8dbc31015C3Cf4eE8706c9031bFa431`](https://explorer.test.mezo.org/address/0xe132f9a1c8dbc31015C3Cf4eE8706c9031bFa431) |
+| MezoutRouter (v3, current: hardened MUSD, borrow, BTC, MEZO) | [`0x7151473F1300c2529A2eEFaA517684e974A9b3E6`](https://explorer.test.mezo.org/address/0x7151473F1300c2529A2eEFaA517684e974A9b3E6) |
+| MezoutRouter v2 (MUSD, borrow, BTC, MEZO; Wave 1, still pays older links) | [`0xe132f9a1c8dbc31015C3Cf4eE8706c9031bFa431`](https://explorer.test.mezo.org/address/0xe132f9a1c8dbc31015C3Cf4eE8706c9031bFa431) |
 | MezoutRouter v1 (MUSD and borrow, still pays older links) | [`0xAF79AB1cdB38c0C3944bB9440614B58871Ba6199`](https://explorer.test.mezo.org/address/0xAF79AB1cdB38c0C3944bB9440614B58871Ba6199) |
 | MezoutAccountFactory | [`0xeE85EE32488FF2D63eFe48159ddB59e6863cdF79`](https://explorer.test.mezo.org/address/0xeE85EE32488FF2D63eFe48159ddB59e6863cdF79) |
 | Tigris MUSD/MEZO pool, created and seeded by Mezout | [`0x8eb88d745B0aFFF9D71AbC40d7F550Cded7bB342`](https://explorer.test.mezo.org/address/0x8eb88d745B0aFFF9D71AbC40d7F550Cded7bB342) |
