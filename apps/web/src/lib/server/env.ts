@@ -1,5 +1,5 @@
 import "server-only";
-import { getAddress, isAddress, type Address, type Hex } from "viem";
+import { getAddress, isAddress, parseEther, type Address, type Hex } from "viem";
 
 function required(name: string): string {
   const v = process.env[name];
@@ -20,6 +20,10 @@ export const serverEnv = {
   invoiceSignerKey: () => required("INVOICE_SIGNER_PRIVATE_KEY") as Hex,
   webhookSigningSecret: () => required("WEBHOOK_SIGNING_SECRET"),
   cronSecret: () => required("CRON_SECRET"),
+  // Optional: a Discord or Slack incoming-webhook URL for operator alerts. Without it alerts are only logged.
+  alertWebhookUrl: () => process.env.ALERT_WEBHOOK_URL || undefined,
+  // Alert when the relayer's gas balance falls below this many BTC.
+  relayerMinBalanceWei: () => parseEther(process.env.RELAYER_MIN_BALANCE_BTC || "0.0001"),
   // Absolute links in webhook payloads. Vercel sets VERCEL_PROJECT_PRODUCTION_URL to the production domain.
   appUrl: () =>
     process.env.APP_URL ??

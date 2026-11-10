@@ -69,7 +69,7 @@ MUSD_AMOUNT=250 MEZO_AMOUNT=1000 ./script/seed-mezo-pool.sh
 
 ## Run the indexer
 
-The indexer runs from `/api/cron`, protected by `CRON_SECRET`. In production, `.github/workflows/indexer.yml` calls it every 5 minutes (Vercel's Hobby plan only allows daily crons). The checkout also asks for a sync when a payment lands, and reading an unpaid invoice syncs if the index is stale, so invoices usually show paid within seconds. The first run backfills from router v1's deploy block.
+The indexer runs from `/api/cron`, protected by `CRON_SECRET`. In production, an external scheduler (cron-job.org) calls it every 5 minutes, because Vercel's Hobby plan only allows daily crons and GitHub Actions' 5-minute schedule in practice runs hours apart. `.github/workflows/indexer.yml` stays as a backstop. The checkout also asks for a sync when a payment lands, and reading an unpaid invoice syncs if the index is stale, so invoices usually show paid within seconds. The first run backfills from router v1's deploy block.
 
 To run it once by hand, with the web app running, in your Mac terminal, inside the `Mezout` folder:
 
@@ -95,6 +95,25 @@ gh secret set CRON_SECRET
 ```
 
 Each webhook endpoint's secret is derived from `WEBHOOK_SIGNING_SECRET`, so changing it changes every endpoint's secret.
+
+Pushing to `main` deploys production automatically through Vercel's Git integration; the command above is only needed for a deploy from local changes.
+
+## Scheduler, alerts and status
+
+**Scheduler.** On cron-job.org, create a job:
+
+- URL `https://usemezout.vercel.app/api/cron`, every 5 minutes, method GET
+- Header `Authorization: Bearer <CRON_SECRET>` (the value set in Vercel)
+- Timeout 60 seconds; turn on notification on failure
+
+**Alerts.** Each scheduled run checks the relayer's gas balance and webhook deliveries that ran out of retries, and reports a run that fails. Alerts go to `ALERT_WEBHOOK_URL`, a Discord or Slack incoming-webhook URL, at most once per alert per window (6 hours for a low balance, 1 hour otherwise). Without it, alerts are only logged. `RELAYER_MIN_BALANCE_BTC` sets the balance threshold (default `0.0001`).
+
+```
+pnpm dlx vercel env add ALERT_WEBHOOK_URL production
+pnpm dlx vercel env add RELAYER_MIN_BALANCE_BTC production   # optional
+```
+
+**Status.** `/api/health` is public. It answers 503 with `status: "degraded"` and a list of `problems` when the relayer balance is below the threshold or the indexer hasn't run for 15 minutes. That second check catches a scheduler that stopped calling `/api/cron`, which no alert from that job could report. Watch it with a second cron-job.org job (or any uptime monitor) every 5 minutes with failure notifications on.
 
 ## Apply migrations to production
 

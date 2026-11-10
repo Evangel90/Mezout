@@ -1,6 +1,6 @@
-# Runs Mezout's indexer every 5 minutes: records new payments, announces expiries and sends due webhooks.
-# Vercel's Hobby plan only allows daily cron jobs, so GitHub Actions calls /api/cron instead. The checkout also
-# triggers an immediate sync after each payment, so this run is the backstop, not the fast path.
+# Backstop for Mezout's scheduled run (records new payments, announces expiries, sends due webhooks and alerts).
+# The primary scheduler is cron-job.org every 5 minutes (docs/DEVELOPMENT.md): GitHub's 5-minute schedule in
+# practice runs hours apart. Runs are idempotent, so overlapping calls are safe.
 name: Indexer
 on:
   schedule:
