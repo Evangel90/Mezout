@@ -56,7 +56,7 @@ export function GettingStarted({ orders }: { orders: Order[] | null }) {
   };
 
   return (
-    <section aria-labelledby="getting-started" className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm shadow-stone-900/[0.03]">
+    <section aria-labelledby="getting-started" className="rounded-xl border border-stone-200/90 bg-white p-5 shadow-card">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 id="getting-started" className="text-base font-semibold">
           Get set up
@@ -74,7 +74,7 @@ export function GettingStarted({ orders }: { orders: Order[] | null }) {
             <span
               aria-hidden
               className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
-                s.done ? "bg-green-600 text-white" : "border border-stone-300 text-stone-600"
+                s.done ? "bg-musd-500 text-white" : "border border-stone-300 text-stone-600"
               }`}
             >
               {s.done ? <CheckIcon className="h-3.5 w-3.5" /> : i + 1}

@@ -22,7 +22,7 @@ export function OverviewStats({ orders }: { orders: Order[] | null }) {
   const pendingTotal = pending.reduce((sum, o) => sum + parseUnits(o.amount, 18), 0n);
 
   return (
-    <dl className="grid gap-px overflow-hidden rounded-xl border border-stone-200 bg-stone-200 shadow-sm shadow-stone-900/[0.03] sm:grid-cols-3">
+    <dl className="grid gap-4 sm:grid-cols-3">
       <Stat
         label={method === "passkey" ? "Available balance" : "MUSD in your wallet"}
         value={balance === null ? null : show(balance)}
@@ -52,9 +52,9 @@ export function OverviewStats({ orders }: { orders: Order[] | null }) {
 
 function Stat({ label, value, footer }: { label: string; value: string | null; footer: React.ReactNode }) {
   return (
-    <div className="space-y-1 bg-white p-5">
+    <div className="space-y-1 rounded-xl border border-stone-200/90 bg-white p-5 shadow-card">
       <dt className="text-sm text-stone-600">{label}</dt>
-      <dd className="text-2xl font-semibold tracking-tight tabular-nums text-stone-900">
+      <dd className="text-[1.75rem] font-semibold tracking-[-0.03em] tabular-nums text-stone-900">
         {value === null ? (
           <Skeleton className="my-1 h-7 w-28" />
         ) : (

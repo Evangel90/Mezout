@@ -29,10 +29,10 @@ export function SignInChoice(props: Props) {
   const busyIn = (card: "passkey" | "wallet") => (chosen === card ? props.busy : null);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-8 py-4">
-      <div className="space-y-3 text-center">
-        <LogoMark className="mx-auto h-10 w-10 text-stone-900" />
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Sign in to Mezout</h1>
+    <div className="mx-auto w-full max-w-4xl flex-1 space-y-8 px-4 py-12 sm:py-16">
+      <div className="space-y-4 text-center">
+        <LogoMark className="mx-auto h-12 w-12 text-ink" />
+        <h1 className="text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">Sign in to Mezout</h1>
         <p className="mx-auto max-w-xl text-stone-600">
           Create a merchant account or sign back in. Each option below is a separate account with its own payout
           address, so use the same one every time.
@@ -72,21 +72,21 @@ function Card({
 }) {
   return (
     <section
-      className={`flex flex-col gap-5 rounded-2xl border bg-white p-6 shadow-sm ${recommended ? "border-stone-900 ring-1 ring-stone-900" : "border-stone-200"}`}
+      className={`flex flex-col gap-5 rounded-2xl border bg-white p-6 shadow-card sm:p-7 ${recommended ? "border-ink ring-1 ring-ink" : "border-stone-200"}`}
     >
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-stone-900 text-white">{icon}</span>
-          <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${recommended ? "bg-green-50 text-green-800" : "bg-stone-100 text-stone-700"}`}>
+          <span className={`flex h-11 w-11 items-center justify-center rounded-xl ${recommended ? "bg-ink text-white" : "border border-stone-200 bg-stone-50 text-stone-800"}`}>{icon}</span>
+          <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${recommended ? "bg-musd-50 text-musd-800 ring-1 ring-inset ring-musd-200" : "bg-stone-100 text-stone-700"}`}>
             {tag}
           </span>
         </div>
-        <h2 className="text-lg font-semibold">{title}</h2>
+        <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
         <p className="text-sm text-stone-600">{intro}</p>
         <ul className="space-y-1.5 text-sm text-stone-700">
           {points.map((p) => (
             <li key={p} className="flex gap-2">
-              <CheckIcon className="mt-0.5 h-4 w-4 text-green-700" />
+              <CheckIcon className="mt-0.5 h-4 w-4 text-musd-600" />
               {p}
             </li>
           ))}
@@ -213,7 +213,7 @@ function WalletCard({ walletAddress, busy, onStart, onWalletSignIn, onWalletDisc
         <>
           <div className="flex items-center justify-between gap-2 rounded-lg bg-stone-50 px-3 py-2 text-sm">
             <span className="flex items-center gap-2">
-              <span aria-hidden className="h-2 w-2 rounded-full bg-green-600" />
+              <span aria-hidden className="h-2 w-2 rounded-full bg-musd-500" />
               Connected <span className="font-mono">{short(walletAddress)}</span>
             </span>
             <button disabled={!!busy} onClick={onWalletDisconnect} className={link}>

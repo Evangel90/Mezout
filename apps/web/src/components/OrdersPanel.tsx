@@ -149,12 +149,12 @@ function PaymentsList({ orders, error, refreshing, reload }: OrdersState) {
                 key={f.id}
                 onClick={() => setFilter(f.id)}
                 aria-pressed={filter === f.id}
-                className={`whitespace-nowrap rounded-full px-3 py-1 text-sm transition-colors ${
-                  filter === f.id ? "bg-stone-900 text-white" : "text-stone-600 hover:bg-stone-100 hover:text-stone-900"
+                className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-sm transition-colors ${
+                  filter === f.id ? "bg-stone-200/80 font-medium text-stone-900" : "text-stone-600 hover:bg-stone-100 hover:text-stone-900"
                 }`}
               >
                 {f.label}
-                <span className={`ml-1.5 tabular-nums ${filter === f.id ? "text-stone-300" : "text-stone-400"}`}>{counts[f.id]}</span>
+                <span className={`ml-1.5 tabular-nums ${filter === f.id ? "text-stone-600" : "text-stone-400"}`}>{counts[f.id]}</span>
               </button>
             ))}
           </div>

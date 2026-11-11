@@ -76,7 +76,7 @@ export function EmbedOriginsForm() {
       </Field>
       <div className="flex items-center justify-end gap-3">
         {saved && (
-          <p role="status" className="text-sm text-green-800">
+          <p role="status" className="text-sm text-musd-800">
             Saved.
           </p>
         )}

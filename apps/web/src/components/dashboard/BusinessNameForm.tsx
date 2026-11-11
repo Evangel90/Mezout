@@ -67,7 +67,7 @@ export function BusinessNameForm({ variant }: { variant: "prompt" | "settings" }
           {busy ? "Saving…" : "Save"}
         </Button>
       </div>
-      {saved && !prompt && <p role="status" className="text-sm text-green-800">Saved.</p>}
+      {saved && !prompt && <p role="status" className="text-sm text-musd-800">Saved.</p>}
       {error && <Alert tone="danger">{error}</Alert>}
     </form>
   );
