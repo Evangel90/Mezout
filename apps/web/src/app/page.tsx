@@ -471,7 +471,7 @@ export default function Home() {
               </a>
             </div>
           </div>
-          <div className="reveal min-w-0 overflow-hidden rounded-3xl bg-ink shadow-lift">
+          <div className="reveal min-w-0 self-start overflow-hidden rounded-3xl bg-ink shadow-lift">
             <div className="flex items-center justify-between border-b border-white/10 px-4 py-3 text-xs text-stone-500">
               <span className="flex gap-1.5">
                 <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
