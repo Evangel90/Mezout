@@ -1,26 +1,30 @@
 "use client";
 
 /**
- * Mezout's small design system: buttons, cards, form fields, badges, notices, empty states and dialogs. Everything is
- * stone neutrals with green, amber and red for state, so the dashboard and checkout read as one product.
+ * Mezout's small design system: buttons, cards, form fields, badges, notices, empty states and dialogs. Warm stone
+ * neutrals on a light canvas, ink for primary actions, 1px borders and 8–12px corners, with green, amber and red for
+ * state, so the dashboard and checkout read as one calm product. Tokens live in tailwind.config.ts.
  */
 
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
 
 /* Buttons ------------------------------------------------------------------------------------------------------- */
 
-type Variant = "primary" | "secondary" | "ghost" | "danger" | "danger-outline";
+type Variant = "primary" | "secondary" | "ghost" | "danger" | "danger-outline" | "accent";
 type Size = "sm" | "md" | "lg";
 
 const VARIANT: Record<Variant, string> = {
-  primary: "bg-stone-900 text-white hover:bg-stone-700 disabled:hover:bg-stone-900",
-  secondary: "border border-stone-300 bg-white text-stone-900 hover:bg-stone-50 disabled:hover:bg-white",
-  ghost: "text-stone-600 hover:bg-stone-100 hover:text-stone-900",
+  primary:
+    "bg-ink text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(12_10_9/0.3)] hover:bg-stone-800 disabled:hover:bg-ink",
+  secondary:
+    "border border-stone-300 bg-white text-stone-900 shadow-[0_1px_0_rgb(12_10_9/0.05)] hover:border-stone-400 hover:bg-stone-50 disabled:hover:bg-white",
+  ghost: "text-stone-600 hover:bg-stone-200/60 hover:text-stone-900",
+  accent: "bg-signal-500 text-ink hover:bg-signal-400 disabled:hover:bg-signal-500",
   danger: "bg-red-700 text-white hover:bg-red-600 disabled:hover:bg-red-700",
   "danger-outline": "border border-red-200 bg-white text-red-700 hover:bg-red-50",
 };
 const SIZE: Record<Size, string> = {
-  sm: "h-8 gap-1.5 px-3 text-sm",
+  sm: "h-8 gap-1.5 px-3 text-[13px]",
   md: "h-10 gap-2 px-4 text-sm",
   lg: "h-12 gap-2 px-5 text-base",
 };
@@ -50,7 +54,7 @@ export function Button({
 
 /* Layout -------------------------------------------------------------------------------------------------------- */
 
-export const cardClass = "rounded-xl border border-stone-200 bg-white shadow-sm shadow-stone-900/[0.03]";
+export const cardClass = "rounded-xl border border-stone-200/90 bg-white shadow-card";
 
 export function Card({ className = "", children, id }: { className?: string; children: ReactNode; id?: string }) {
   return (
@@ -75,7 +79,7 @@ export function CardHeader({
   return (
     <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
       <div className="min-w-0 max-w-2xl space-y-1">
-        <h2 id={id} className="text-base font-semibold text-stone-900">
+        <h2 id={id} className="text-[15px] font-semibold tracking-tight text-stone-900">
           {title}
         </h2>
         {description && <p className="text-sm leading-relaxed text-stone-600">{description}</p>}
@@ -88,9 +92,9 @@ export function CardHeader({
 /** A dashboard page's heading. */
 export function PageHeader({ title, description, action }: { title: string; description?: ReactNode; action?: ReactNode }) {
   return (
-    <div className="flex flex-wrap items-end justify-between gap-4">
+    <div className="flex flex-wrap items-end justify-between gap-4 pb-1">
       <div className="min-w-0 space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-stone-900">{title}</h1>
+        <h1 className="text-[1.6rem] font-semibold tracking-[-0.03em] text-stone-900">{title}</h1>
         {description && <p className="max-w-2xl text-sm text-stone-600">{description}</p>}
       </div>
       {action && <div className="flex flex-wrap items-center gap-2">{action}</div>}
@@ -101,7 +105,7 @@ export function PageHeader({ title, description, action }: { title: string; desc
 /* Forms --------------------------------------------------------------------------------------------------------- */
 
 export const inputClass =
-  "block w-full min-w-0 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 transition-colors hover:border-stone-400 focus:border-stone-900 disabled:bg-stone-50 disabled:text-stone-500 aria-[invalid=true]:border-red-500";
+  "block w-full min-w-0 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 shadow-[inset_0_1px_1px_rgb(12_10_9/0.04)] placeholder:text-stone-400 transition-colors hover:border-stone-400 focus:border-ink focus:ring-1 focus:ring-ink disabled:bg-stone-50 disabled:text-stone-500 aria-[invalid=true]:border-red-500";
 
 /**
  * A labelled form control. `children` receives the ids to wire up, so the label, hint and error are always announced
@@ -161,19 +165,19 @@ type Tone = "neutral" | "success" | "warning" | "danger" | "info" | "orange";
 
 const BADGE: Record<Tone, string> = {
   neutral: "bg-stone-100 text-stone-700 ring-stone-200",
-  success: "bg-green-50 text-green-800 ring-green-200",
+  success: "bg-musd-50 text-musd-800 ring-musd-200",
   warning: "bg-amber-50 text-amber-900 ring-amber-200",
   danger: "bg-red-50 text-red-800 ring-red-200",
-  info: "bg-blue-50 text-blue-800 ring-blue-200",
-  orange: "bg-orange-50 text-orange-900 ring-orange-200",
+  info: "bg-agent-50 text-agent-800 ring-agent-200",
+  orange: "bg-signal-50 text-signal-900 ring-signal-200",
 };
 const DOT: Record<Tone, string> = {
   neutral: "bg-stone-400",
-  success: "bg-green-600",
+  success: "bg-musd-500",
   warning: "bg-amber-500",
   danger: "bg-red-600",
-  info: "bg-blue-600",
-  orange: "bg-orange-500",
+  info: "bg-agent-500",
+  orange: "bg-signal-500",
 };
 
 export function Badge({ tone = "neutral", children, dot = true }: { tone?: Tone; children: ReactNode; dot?: boolean }) {
@@ -187,10 +191,10 @@ export function Badge({ tone = "neutral", children, dot = true }: { tone?: Tone;
 
 const ALERT: Record<Exclude<Tone, "orange" | "neutral"> | "neutral", string> = {
   neutral: "border-stone-200 bg-stone-50 text-stone-800",
-  success: "border-green-200 bg-green-50 text-green-900",
+  success: "border-musd-200 bg-musd-50 text-musd-900",
   warning: "border-amber-200 bg-amber-50 text-amber-950",
   danger: "border-red-200 bg-red-50 text-red-900",
-  info: "border-blue-200 bg-blue-50 text-blue-950",
+  info: "border-agent-200 bg-agent-50 text-agent-900",
 };
 
 /** An inline notice. Errors are announced to screen readers as soon as they appear. */
@@ -208,7 +212,7 @@ export function Alert({
   className?: string;
 }) {
   return (
-    <div role={tone === "danger" ? "alert" : "status"} className={`flex flex-wrap items-start justify-between gap-3 rounded-lg border px-4 py-3 text-sm ${ALERT[tone]} ${className}`}>
+    <div role={tone === "danger" ? "alert" : "status"} className={`flex flex-wrap items-start justify-between gap-3 rounded-xl border px-4 py-3 text-sm ${ALERT[tone]} ${className}`}>
       <div className="min-w-0 space-y-0.5">
         {title && <p className="font-medium">{title}</p>}
         {children && <div className="leading-relaxed">{children}</div>}
@@ -244,8 +248,8 @@ export function Loading({ label = "Loading…", className = "py-16" }: { label?:
 
 export function EmptyState({ icon, title, children, action }: { icon?: ReactNode; title: string; children?: ReactNode; action?: ReactNode }) {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-stone-300 px-6 py-10 text-center">
-      {icon && <span className="flex h-10 w-10 items-center justify-center rounded-full bg-stone-100 text-stone-600">{icon}</span>}
+    <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-stone-300 bg-stone-50/60 px-6 py-12 text-center">
+      {icon && <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-stone-200 bg-white text-stone-700 shadow-card">{icon}</span>}
       <div className="max-w-sm space-y-1">
         <p className="font-medium text-stone-900">{title}</p>
         {children && <p className="text-sm text-stone-600">{children}</p>}
@@ -294,7 +298,7 @@ export function CopyButton({
   const { copied, copy } = useCopy();
   return (
     <Button variant={variant} size={size} onClick={() => copy(text)} className={className}>
-      {copied ? <CheckIcon className="h-4 w-4 text-green-700" /> : <CopyIcon className="h-4 w-4" />}
+      {copied ? <CheckIcon className="h-4 w-4 text-musd-700" /> : <CopyIcon className="h-4 w-4" />}
       <span aria-live="polite">{copied ? "Copied" : label}</span>
     </Button>
   );
@@ -366,7 +370,7 @@ export function Dialog({
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
-      <div aria-hidden className="absolute inset-0 bg-stone-950/40" onClick={onClose} />
+      <div aria-hidden className="absolute inset-0 bg-ink/50 backdrop-blur-[2px]" onClick={onClose} />
       <div
         ref={ref}
         role="dialog"
@@ -374,7 +378,7 @@ export function Dialog({
         aria-labelledby={titleId}
         aria-describedby={description ? descId : undefined}
         tabIndex={-1}
-        className="relative w-full max-w-md space-y-5 rounded-2xl bg-white p-6 shadow-xl outline-none"
+        className="relative w-full max-w-md space-y-5 rounded-2xl border border-stone-200 bg-white p-6 shadow-lift outline-none"
       >
         <div className="space-y-1.5">
           <h2 id={titleId} className="text-lg font-semibold text-stone-900">
@@ -485,4 +489,10 @@ export const SearchIcon = icon("M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4
 export const PlusIcon = icon("M12 5v14M5 12h14");
 export const ShieldIcon = icon("M12 3l7 3v6c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9V6z");
 export const ChevronIcon = icon("M9 6l6 6-6 6");
+export const LockIcon = icon("M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3");
+export const BotIcon = icon("M12 4v3M7 7h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2zM9.5 12.5h.01M14.5 12.5h.01M9.5 16h5M3 12v3M21 12v3");
+export const PersonIcon = icon("M12 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM5 20c.8-3.6 3.6-6 7-6s6.2 2.4 7 6");
+export const StoreIcon = icon("M4 9l1.5-5h13L20 9M4 9h16M4 9a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0A2.7 2.7 0 0 0 20 9M5 11v9h14v-9M10 20v-5h4v5");
+export const BoltIcon = icon("M13 3L5 13.5h6L10 21l8-10.5h-6z");
+export const BookIcon = icon("M5 4.5h9.5A3.5 3.5 0 0 1 18 8v11.5H8.5A3.5 3.5 0 0 1 5 16zM5 16a3.5 3.5 0 0 1 3.5-3.5H18");
 export const AlertIcon = icon("M12 9v4M12 17h.01M10.3 4.3L2.6 18a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 4.3a2 2 0 0 0-3.4 0z");
