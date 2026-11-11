@@ -1,10 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Alert, Button, CardHeader, Field, cardClass, inputClass } from "@/components/ui";
 import { api, errorText } from "@/lib/api";
 
 type Response = { origins: string[] };
 
+/** The sites allowed to open this merchant's checkout in an embedded modal. */
 export function EmbedOriginsForm() {
   const [value, setValue] = useState("");
   const [loaded, setLoaded] = useState(false);
@@ -40,32 +43,48 @@ export function EmbedOriginsForm() {
   }
 
   return (
-    <form onSubmit={save} className="space-y-4 rounded-xl border border-stone-200 bg-white p-6">
-      <div className="space-y-1">
-        <h2 className="text-lg font-semibold">Embedded checkout sites</h2>
-        <p className="text-sm text-stone-600">
-          Only these sites may open your checkout inside a modal. Add one origin per line, including https:// and no path.
-        </p>
-      </div>
-      <textarea
-        value={value}
-        onChange={(event) => {
-          setValue(event.target.value);
-          setSaved(false);
-        }}
-        disabled={!loaded || busy}
-        rows={4}
-        placeholder={"https://shop.example.com\nhttp://localhost:3000"}
-        aria-label="Allowed embedded checkout sites"
-        className="w-full rounded-lg border border-stone-300 px-3 py-2 font-mono text-sm disabled:bg-stone-50"
+    <form onSubmit={save} aria-labelledby="embed-title" className={`${cardClass} space-y-5 p-6`}>
+      <CardHeader
+        id="embed-title"
+        title="Embedded checkout sites"
+        description={
+          <>
+            Only these sites may open your checkout inside a modal on their own pages, with <code className="font-mono text-xs">mezout.js</code> or the React
+            component. Payment links work everywhere regardless.{" "}
+            <Link href="/docs#embedded-checkout" className="font-medium text-stone-900 underline underline-offset-2">
+              Embedding guide
+            </Link>
+          </>
+        }
       />
-      <div className="flex items-center gap-3">
-        <button disabled={!loaded || busy} className="rounded-lg bg-stone-900 px-4 py-2 text-white hover:bg-stone-700 disabled:opacity-50">
+      <Field label="Allowed sites" hint="One origin per line, including https:// and no path.">
+        {(ids) => (
+          <textarea
+            {...ids}
+            value={value}
+            onChange={(event) => {
+              setValue(event.target.value);
+              setSaved(false);
+            }}
+            disabled={!loaded || busy}
+            rows={4}
+            spellCheck={false}
+            placeholder={"https://shop.example.com\nhttp://localhost:3000"}
+            className={`${inputClass} font-mono`}
+          />
+        )}
+      </Field>
+      <div className="flex items-center justify-end gap-3">
+        {saved && (
+          <p role="status" className="text-sm text-green-800">
+            Saved.
+          </p>
+        )}
+        <Button type="submit" disabled={!loaded} loading={busy}>
           {busy ? "Saving…" : "Save sites"}
-        </button>
-        {saved && <p className="text-sm text-green-800">Saved.</p>}
+        </Button>
       </div>
-      {error && <p className="text-sm text-red-700">{error}</p>}
+      {error && <Alert tone="danger">{error}</Alert>}
     </form>
   );
 }

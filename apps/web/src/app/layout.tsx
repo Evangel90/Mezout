@@ -1,16 +1,13 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import Link from "next/link";
-import { LogoMark } from "@/components/site/Logo";
-import { SiteNav } from "@/components/site/SiteNav";
+import { SiteFooter, SiteHeader } from "@/components/site/SiteChrome";
 import "./globals.css";
 
 const geistSans = localFont({ src: "./fonts/GeistVF.woff", variable: "--font-geist-sans", weight: "100 900" });
 const geistMono = localFont({ src: "./fonts/GeistMonoVF.woff", variable: "--font-geist-mono", weight: "100 900" });
 
-const REPO = "https://github.com/Evangel90/Mezout";
 const description =
-  "Merchant checkout on Mezo: customers pay with MUSD, BTC or MEZO, or borrow against BTC, while merchants settle in MUSD with clear, signed fees.";
+  "Checkout for Mezo. Customers pay with MUSD, BTC or MEZO, or borrow against their Bitcoin; merchants are paid in MUSD with the fee shown up front.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(
@@ -27,63 +24,17 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body
         className={`${geistSans.variable} ${geistMono.variable} flex min-h-screen flex-col bg-stone-50 text-stone-900 antialiased`}
       >
-        <header className="sticky top-0 z-40 border-b border-stone-200/80 bg-white/80 backdrop-blur-md">
-          <nav className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-2.5">
-            <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-              <LogoMark className="h-6 w-6 text-stone-900" />
-              Mezout
-            </Link>
-            <SiteNav />
-            <div className="flex items-center gap-3 text-sm">
-              <Link href="/docs" className="text-stone-600 hover:text-stone-900 md:hidden">
-                Docs
-              </Link>
-              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800">Testnet</span>
-              <Link
-                href="/dashboard"
-                className="hidden rounded-full bg-stone-900 px-4 py-1.5 font-medium text-white hover:bg-stone-700 sm:inline-block"
-              >
-                Get started
-              </Link>
-            </div>
-          </nav>
-        </header>
-        <main className="flex-1">{children}</main>
-        <footer className="border-t border-stone-200 bg-white">
-          <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 text-sm text-stone-600 sm:flex-row sm:items-start sm:justify-between">
-            <div className="max-w-sm space-y-1">
-              <p className="flex items-center gap-2 font-medium text-stone-900">
-                <LogoMark className="h-5 w-5 text-stone-900" /> Mezout
-              </p>
-              <p className="text-xs">
-                Runs on Mezo testnet. Balances and payments use test tokens with no real value. Mezout never holds
-                merchant or customer funds.
-              </p>
-            </div>
-            <ul className="grid grid-cols-2 gap-x-8 gap-y-1">
-              <li>
-                <Link href="/docs" className="hover:text-stone-900">
-                  API reference
-                </Link>
-              </li>
-              <li>
-                <Link href="/dashboard" className="hover:text-stone-900">
-                  Dashboard
-                </Link>
-              </li>
-              <li>
-                <a href={REPO} className="hover:text-stone-900">
-                  Source code
-                </a>
-              </li>
-              <li>
-                <a href="/#contracts" className="hover:text-stone-900">
-                  Contracts
-                </a>
-              </li>
-            </ul>
-          </div>
-        </footer>
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:shadow"
+        >
+          Skip to content
+        </a>
+        <SiteHeader />
+        <main id="main" className="flex-1">
+          {children}
+        </main>
+        <SiteFooter />
       </body>
     </html>
   );

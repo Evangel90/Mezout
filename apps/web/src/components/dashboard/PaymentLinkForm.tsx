@@ -2,28 +2,38 @@
 
 import { useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
+import { AmountBreakdown, Alert, Button, Card, CardHeader, CopyButton, ExternalIcon, Field, UnitInput, buttonClass, cardClass, inputClass } from "@/components/ui";
 import { api, errorText } from "@/lib/api";
 
 type Created = { url: string; orderId: string; expiry: string; amount: string; fee: string; net: string };
 
-/** Creates a payment link for the signed-in merchant and shows it as a link and QR code. */
-export function PaymentLinkForm() {
+/** How long a link stays payable; the dashboard route accepts 5 minutes to 30 days. */
+const EXPIRY = [
+  { minutes: 60, label: "1 hour" },
+  { minutes: 24 * 60, label: "24 hours" },
+  { minutes: 7 * 24 * 60, label: "7 days" },
+  { minutes: 30 * 24 * 60, label: "30 days" },
+];
+
+/** Creates a payment link for the signed-in merchant and shows it as a link and QR code, with gross, fee and net. */
+export function PaymentLinkForm({ onCreated }: { onCreated?: () => void }) {
   const [amount, setAmount] = useState("");
   const [reference, setReference] = useState("");
+  const [ttlMinutes, setTtlMinutes] = useState(24 * 60);
   const [created, setCreated] = useState<(Created & { reference: string }) | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
     try {
-      const link = await api<Created>("/api/invoices", { body: { amount, reference: reference || undefined } });
+      const link = await api<Created>("/api/invoices", { body: { amount, reference: reference || undefined, ttlMinutes } });
       setCreated({ ...link, reference });
       setAmount("");
       setReference("");
+      onCreated?.();
     } catch (err) {
       setError(errorText(err, "Could not create the link"));
     } finally {
@@ -33,93 +43,95 @@ export function PaymentLinkForm() {
 
   if (created) {
     return (
-      <section className="space-y-4 rounded-xl border border-stone-200 bg-white p-6">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-semibold">Payment link ready</h2>
-            <p className="text-sm text-stone-600">
-              {created.amount} MUSD{created.reference && ` · ${created.reference}`} · expires{" "}
-              {new Date(Number(created.expiry) * 1000).toLocaleString()}
-            </p>
-            <p className="mt-1 text-xs text-stone-500">
-              Customer pays {created.amount} MUSD · platform fee {created.fee} MUSD · you receive {created.net} MUSD
-            </p>
-          </div>
-          <button onClick={() => setCreated(null)} className="shrink-0 rounded border border-stone-300 px-3 py-1 text-sm hover:bg-stone-100">
-            New link
-          </button>
-        </div>
+      <Card className="space-y-5 p-6">
+        <CardHeader
+          id="new-link"
+          title="Payment link ready"
+          description={
+            <>
+              {created.reference ? `${created.reference} · ` : ""}Expires {new Date(Number(created.expiry) * 1000).toLocaleString()}
+            </>
+          }
+          action={
+            <Button variant="secondary" size="sm" onClick={() => setCreated(null)}>
+              New link
+            </Button>
+          }
+        />
         <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-start">
-          <div className="shrink-0 rounded-lg border border-stone-200 bg-white p-3">
-            <QRCodeSVG value={created.url} size={168} />
+          <div className="shrink-0 rounded-xl border border-stone-200 bg-white p-3">
+            <QRCodeSVG value={created.url} size={152} aria-label="QR code for the payment link" role="img" />
           </div>
-          <div className="w-full min-w-0 space-y-3">
-            <p className="text-sm text-stone-600">Show the QR code at the till, or send the link to your customer.</p>
+          <div className="w-full min-w-0 space-y-4">
+            <AmountBreakdown gross={created.amount} fee={created.fee} net={created.net} compact />
             <input
               readOnly
               value={created.url}
               onFocus={(e) => e.target.select()}
               aria-label="Payment link"
-              className="w-full truncate rounded-lg border border-stone-300 bg-stone-50 px-3 py-2 font-mono text-xs"
+              className={`${inputClass} truncate bg-stone-50 font-mono text-xs`}
             />
             <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(created.url);
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 1500);
-                }}
-                className="rounded-lg bg-stone-900 px-4 py-2 text-sm text-white hover:bg-stone-700"
-              >
-                {copied ? "Copied" : "Copy link"}
-              </button>
-              <a href={created.url} target="_blank" rel="noreferrer" className="rounded-lg border border-stone-300 px-4 py-2 text-sm hover:bg-stone-100">
-                Open checkout
+              <CopyButton text={created.url} label="Copy link" variant="primary" size="md" />
+              <a href={created.url} target="_blank" rel="noreferrer" className={buttonClass("secondary")}>
+                Open checkout <ExternalIcon className="h-4 w-4" />
               </a>
             </div>
           </div>
         </div>
-      </section>
+        <p className="text-xs text-stone-500">Show the QR code at the till, or send the link to your customer. It appears under Payments straight away.</p>
+      </Card>
     );
   }
 
   return (
-    <form onSubmit={create} className="space-y-4 rounded-xl border border-stone-200 bg-white p-6">
-      <div>
-        <h2 className="text-lg font-semibold">Create a payment link</h2>
-        <p className="text-sm text-stone-600">Customers pay the listed amount with MUSD, BTC, MEZO, or by borrowing against BTC. The platform fee is deducted from your MUSD settlement.</p>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label className="block space-y-1">
-          <span className="text-sm font-medium">Amount (MUSD)</span>
-          <input
-            required
-            inputMode="decimal"
-            pattern="^\d+(\.\d{1,18})?$"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className="w-full rounded-lg border border-stone-300 px-3 py-2"
-            placeholder="25.00"
-          />
-        </label>
-        <label className="block space-y-1">
-          <span className="text-sm font-medium">Reference (optional)</span>
-          <input
-            maxLength={200}
-            value={reference}
-            onChange={(e) => setReference(e.target.value)}
-            className="w-full rounded-lg border border-stone-300 px-3 py-2"
-            placeholder="Order 1001"
-          />
-        </label>
-      </div>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs text-stone-500">Links expire after 24 hours. The signed fee is shown before you share the link; customers never pay more than the listed amount.</p>
-        <button disabled={busy} className="rounded-lg bg-stone-900 px-4 py-2 text-white hover:bg-stone-700 disabled:opacity-50">
-          {busy ? "Creating…" : "Create link"}
-        </button>
-      </div>
-      {error && <p className="text-sm text-red-700">{error}</p>}
+    <form onSubmit={create} aria-labelledby="new-link" className={`${cardClass} scroll-mt-24 space-y-5 p-6`}>
+        <CardHeader
+          id="new-link"
+          title="Create a payment link"
+          description="Customers pay this amount with MUSD, BTC or MEZO, or by borrowing against BTC. You see the fee before you share it."
+        />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Amount">
+            {(ids) => (
+              <UnitInput
+                {...ids}
+                unit="MUSD"
+                required
+                inputMode="decimal"
+                pattern="^\d+(\.\d{1,18})?$"
+                title="A positive amount, such as 25 or 25.50"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="25.00"
+              />
+            )}
+          </Field>
+          <Field label="Expires after">
+            {(ids) => (
+              <select {...ids} value={ttlMinutes} onChange={(e) => setTtlMinutes(Number(e.target.value))} className={inputClass}>
+                {EXPIRY.map((x) => (
+                  <option key={x.minutes} value={x.minutes}>
+                    {x.label}
+                  </option>
+                ))}
+              </select>
+            )}
+          </Field>
+          <div className="sm:col-span-2">
+            <Field label="Reference" optional hint="Your order number or a note. The customer sees it.">
+              {(ids) => (
+                <input {...ids} maxLength={200} value={reference} onChange={(e) => setReference(e.target.value)} className={inputClass} placeholder="Order 1001" />
+              )}
+            </Field>
+          </div>
+        </div>
+        {error && <Alert tone="danger">{error}</Alert>}
+        <div className="flex justify-end">
+          <Button type="submit" loading={busy}>
+            {busy ? "Creating…" : "Create link"}
+          </Button>
+        </div>
     </form>
   );
 }

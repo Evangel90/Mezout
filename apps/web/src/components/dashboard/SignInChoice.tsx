@@ -3,6 +3,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import type { Address } from "viem";
+import { LogoMark } from "@/components/site/Logo";
+import { Alert, Button, CheckIcon, Field, KeyIcon, WalletIcon, inputClass } from "@/components/ui";
 import { createPasskeyAccount, signInWithPasskey, type PasskeySession } from "@/lib/passkey";
 
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
@@ -27,36 +29,26 @@ export function SignInChoice(props: Props) {
   const busyIn = (card: "passkey" | "wallet") => (chosen === card ? props.busy : null);
 
   return (
-    <div className="space-y-8">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Sign in to your merchant dashboard</h1>
-        <p className="max-w-2xl text-stone-600">
-          Choose <span className="font-medium text-stone-900">one</span> way to get paid. Each option is a separate
-          merchant account with its own payout address, so use the same one every time you sign in.
+    <div className="mx-auto max-w-4xl space-y-8 py-4">
+      <div className="space-y-3 text-center">
+        <LogoMark className="mx-auto h-10 w-10 text-stone-900" />
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Sign in to Mezout</h1>
+        <p className="mx-auto max-w-xl text-stone-600">
+          Create a merchant account or sign back in. Each option below is a separate account with its own payout
+          address, so use the same one every time.
         </p>
       </div>
 
-      <div className="grid items-stretch gap-4 md:grid-cols-[1fr_auto_1fr]">
+      {props.error && <Alert tone="danger">{props.error}</Alert>}
+
+      <div className="grid items-stretch gap-4 md:grid-cols-2">
         <PasskeyCard {...props} busy={busyIn("passkey")} onStart={() => setChosen("passkey")} />
-        <Or />
         <WalletCard {...props} busy={busyIn("wallet")} onStart={() => setChosen("wallet")} />
       </div>
 
-      {props.error && (
-        <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-800">
-          {props.error}
-        </p>
-      )}
-    </div>
-  );
-}
-
-function Or() {
-  return (
-    <div className="flex items-center gap-3 text-xs font-medium uppercase tracking-wide text-stone-400 md:flex-col">
-      <span className="h-px flex-1 bg-stone-200 md:h-auto md:w-px" />
-      or
-      <span className="h-px flex-1 bg-stone-200 md:h-auto md:w-px" />
+      <p className="text-center text-xs text-stone-500">
+        Mezout runs on Mezo testnet. Signing in never costs gas and never gives Mezout access to your funds.
+      </p>
     </div>
   );
 }
@@ -65,6 +57,7 @@ function Card({
   icon,
   title,
   tag,
+  recommended,
   intro,
   points,
   children,
@@ -72,23 +65,28 @@ function Card({
   icon: ReactNode;
   title: string;
   tag: string;
+  recommended?: boolean;
   intro: string;
   points: string[];
   children: ReactNode;
 }) {
   return (
-    <section className="flex flex-col gap-5 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+    <section
+      className={`flex flex-col gap-5 rounded-2xl border bg-white p-6 shadow-sm ${recommended ? "border-stone-900 ring-1 ring-stone-900" : "border-stone-200"}`}
+    >
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-stone-900 text-white">{icon}</span>
-          <span className="rounded-full bg-stone-100 px-2.5 py-1 text-xs font-medium text-stone-700">{tag}</span>
+          <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${recommended ? "bg-green-50 text-green-800" : "bg-stone-100 text-stone-700"}`}>
+            {tag}
+          </span>
         </div>
         <h2 className="text-lg font-semibold">{title}</h2>
         <p className="text-sm text-stone-600">{intro}</p>
         <ul className="space-y-1.5 text-sm text-stone-700">
           {points.map((p) => (
             <li key={p} className="flex gap-2">
-              <span aria-hidden className="text-green-700">✓</span>
+              <CheckIcon className="mt-0.5 h-4 w-4 text-green-700" />
               {p}
             </li>
           ))}
@@ -99,9 +97,7 @@ function Card({
   );
 }
 
-const primary = "w-full rounded-lg bg-stone-900 px-4 py-2.5 font-medium text-white hover:bg-stone-700 disabled:opacity-50";
-const secondary = "w-full rounded-lg border border-stone-300 px-4 py-2.5 hover:bg-stone-50 disabled:opacity-50";
-const link = "text-sm text-stone-600 underline hover:text-stone-900 disabled:opacity-50";
+const link = "text-sm font-medium text-stone-700 underline underline-offset-2 hover:text-stone-900 disabled:opacity-50";
 
 function PasskeyCard({
   savedPasskey,
@@ -139,20 +135,21 @@ function PasskeyCard({
     <Card
       icon={<KeyIcon />}
       title="Passkey account"
-      tag="No wallet needed"
+      tag="Recommended · no wallet"
+      recommended
       intro="Mezout creates a payout account for you, secured by Face ID, Touch ID, Windows Hello or your phone."
-      points={["Nothing to install or back up", "Withdraw any time, Mezout pays the gas", "Mezout never holds your funds or your key"]}
+      points={["Nothing to install or back up", "Gasless withdrawals, any time", "Only your passkey can move funds"]}
     >
       {!supported ? (
-        <p className="text-sm text-amber-800">This browser does not support passkeys. Use a wallet instead.</p>
+        <Alert tone="warning">This browser does not support passkeys. Use a Mezo wallet instead.</Alert>
       ) : savedPasskey && !creating ? (
         <>
-          <button disabled={!!status} onClick={() => run("Confirm with your passkey", async () => savedPasskey)} className={primary}>
+          <Button size="lg" className="w-full" loading={!!status} onClick={() => run("Confirm with your passkey", async () => savedPasskey)}>
             {status ?? `Continue as ${short(savedPasskey.address)}`}
-          </button>
-          <button disabled={!!status} onClick={() => run("Choose your passkey", signInWithPasskey)} className={secondary}>
+          </Button>
+          <Button variant="secondary" className="w-full" disabled={!!status} onClick={() => run("Choose your passkey", signInWithPasskey)}>
             Use a different passkey
-          </button>
+          </Button>
           <button
             disabled={!!status}
             onClick={() => {
@@ -173,20 +170,22 @@ function PasskeyCard({
             }}
             className="space-y-3"
           >
-            <label className="block space-y-1">
-              <span className="text-sm font-medium">Business name</span>
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                maxLength={64}
-                placeholder="Satoshi's Coffee Store"
-                className="w-full rounded-lg border border-stone-300 px-3 py-2"
-              />
-              <span className="block text-xs text-stone-500">Customers see it when they pay. You can change it later.</span>
-            </label>
-            <button disabled={!!status} className={primary}>
+            <Field label="Business name" hint="Customers see it when they pay. You can change it later.">
+              {(ids) => (
+                <input
+                  {...ids}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  maxLength={64}
+                  autoComplete="organization"
+                  placeholder="Satoshi's Coffee Store"
+                  className={inputClass}
+                />
+              )}
+            </Field>
+            <Button type="submit" size="lg" className="w-full" loading={!!status}>
               {status ?? "Create account with passkey"}
-            </button>
+            </Button>
           </form>
           <p className="text-center text-sm text-stone-600">
             Already have one?{" "}
@@ -207,57 +206,41 @@ function WalletCard({ walletAddress, busy, onStart, onWalletSignIn, onWalletDisc
       icon={<WalletIcon />}
       title="Mezo wallet"
       tag="Bring your own"
-      intro="Get paid straight into a wallet you already use, such as MetaMask or a Bitcoin wallet through Mezo Passport."
-      points={["Payments land directly in your wallet", "You sign refunds in your wallet", "Your wallet pays its own gas for refunds"]}
+      intro="Get paid straight into a wallet you already use, such as MetaMask, or a Bitcoin wallet through Mezo Passport."
+      points={["Payments land directly in your wallet", "You approve refunds in your wallet", "Your wallet pays gas for refunds"]}
     >
       {walletAddress ? (
         <>
-          <p className="flex items-center justify-between gap-2 rounded-lg bg-stone-50 px-3 py-2 text-sm">
-            <span>
+          <div className="flex items-center justify-between gap-2 rounded-lg bg-stone-50 px-3 py-2 text-sm">
+            <span className="flex items-center gap-2">
+              <span aria-hidden className="h-2 w-2 rounded-full bg-green-600" />
               Connected <span className="font-mono">{short(walletAddress)}</span>
             </span>
             <button disabled={!!busy} onClick={onWalletDisconnect} className={link}>
               Disconnect
             </button>
-          </p>
-          <button
-            disabled={!!busy}
+          </div>
+          <Button
+            size="lg"
+            className="w-full"
+            loading={!!busy}
             onClick={() => {
               onStart();
               onWalletSignIn();
             }}
-            className={primary}
           >
             {busy ?? "Sign in with this wallet"}
-          </button>
-          <p className="text-xs text-stone-500">Signing a message proves you own the wallet. It costs no gas.</p>
+          </Button>
+          <p className="text-xs text-stone-500">You sign a message to prove you own the wallet. It costs no gas.</p>
         </>
       ) : (
         <>
-          <button onClick={() => openConnectModal?.()} className={primary}>
+          <Button variant="secondary" size="lg" className="w-full" onClick={() => openConnectModal?.()}>
             Connect wallet
-          </button>
+          </Button>
           <p className="text-xs text-stone-500">Then sign one message to sign in. It costs no gas.</p>
         </>
       )}
     </Card>
-  );
-}
-
-function KeyIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-5 w-5" aria-hidden>
-      <circle cx="8" cy="15" r="4" />
-      <path d="M10.8 12.2 20 3m-4 4 3 3m-5-1 2 2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function WalletIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-5 w-5" aria-hidden>
-      <rect x="3" y="6" width="18" height="14" rx="2" />
-      <path d="M3 10h18M16 15h2M6 6l9-3 1 3" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
   );
 }

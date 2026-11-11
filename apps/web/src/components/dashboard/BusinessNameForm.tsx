@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Alert, Button, CardHeader, cardClass, inputClass } from "@/components/ui";
 import { errorText } from "@/lib/api";
 import { useMerchant } from "@/lib/merchant";
 
@@ -31,19 +32,23 @@ export function BusinessNameForm({ variant }: { variant: "prompt" | "settings" }
   }
 
   const prompt = variant === "prompt";
+  const unchanged = !prompt && name.trim() === (businessName ?? "");
   return (
     <form
+      id="business-name"
       onSubmit={save}
-      className={`space-y-3 rounded-xl border p-6 ${prompt ? "border-amber-200 bg-amber-50" : "border-stone-200 bg-white"}`}
+      aria-labelledby="business-name-title"
+      className={`scroll-mt-24 space-y-4 p-6 ${prompt ? "rounded-xl border border-amber-200 bg-amber-50/70" : cardClass}`}
     >
-      <div className="space-y-1">
-        <h2 className="text-lg font-semibold">{prompt ? "Add your business name" : "Business name"}</h2>
-        <p className="text-sm text-stone-600">
-          {prompt
+      <CardHeader
+        id="business-name-title"
+        title={prompt ? "Add your business name" : "Business name"}
+        description={
+          prompt
             ? `Customers see it when they pay, instead of your ${method === "passkey" ? "account" : "wallet"} address.`
-            : "Shown to customers at checkout and on this dashboard. Leave it empty to show your address instead."}
-        </p>
-      </div>
+            : "Shown to customers at checkout. Leave it empty to show your payout address instead."
+        }
+      />
       <div className="flex flex-col gap-2 sm:flex-row">
         <input
           value={name}
@@ -53,19 +58,17 @@ export function BusinessNameForm({ variant }: { variant: "prompt" | "settings" }
           }}
           required={prompt}
           maxLength={64}
+          autoComplete="organization"
           placeholder="Satoshi's Coffee Store"
           aria-label="Business name"
-          className="min-w-0 flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2"
+          className={`${inputClass} sm:flex-1`}
         />
-        <button
-          disabled={busy || (!prompt && name.trim() === (businessName ?? ""))}
-          className="rounded-lg bg-stone-900 px-4 py-2 text-white hover:bg-stone-700 disabled:opacity-50"
-        >
+        <Button type="submit" loading={busy} disabled={unchanged}>
           {busy ? "Saving…" : "Save"}
-        </button>
+        </Button>
       </div>
-      {saved && !prompt && <p className="text-sm text-green-800">Saved.</p>}
-      {error && <p className="text-sm text-red-700">{error}</p>}
+      {saved && !prompt && <p role="status" className="text-sm text-green-800">Saved.</p>}
+      {error && <Alert tone="danger">{error}</Alert>}
     </form>
   );
 }

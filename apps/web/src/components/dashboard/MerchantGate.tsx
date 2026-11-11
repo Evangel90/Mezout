@@ -7,6 +7,7 @@ import { useAccount, useBytecode, useDisconnect, usePublicClient, useSendTransac
 import { mezoTestnet, mezoTestnetAddresses, signInMessage } from "@mezout/sdk";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { SignInChoice } from "@/components/dashboard/SignInChoice";
+import { Loading } from "@/components/ui";
 import { api, errorText } from "@/lib/api";
 import { MerchantContext, type Merchant } from "@/lib/merchant";
 import { loadSession, passkeySendMusd, passkeySign, saveSession, type PasskeySession } from "@/lib/passkey";
@@ -148,7 +149,7 @@ export function MerchantGate({ children }: { children: ReactNode }) {
     [method, signedIn, passkey, businessName, setBusinessName, sendMusd, signOut],
   );
 
-  if (signedIn === undefined) return <p className="text-sm text-stone-500">Loading…</p>;
+  if (signedIn === undefined) return <Loading label="Checking your session…" />;
   if (!merchant) {
     return (
       <SignInChoice

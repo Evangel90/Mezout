@@ -11,6 +11,19 @@ body {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
 
+/* One visible keyboard focus style everywhere; mouse clicks don't show it. */
+:focus-visible {
+  outline: 2px solid #1c1917;
+  outline-offset: 2px;
+}
+:focus:not(:focus-visible) {
+  outline: none;
+}
+.bg-stone-900 :focus-visible,
+.bg-stone-950 :focus-visible {
+  outline-color: #fafaf9;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   html {
     scroll-behavior: smooth;
