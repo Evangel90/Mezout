@@ -1,6 +1,7 @@
 import prisma from "../db.server";
 import { MezoutClient, mezoutApiBase } from "./client";
 import { ensureWebhookEndpoint, publishAppUrl } from "./connect";
+import { ensureShopWebhooks } from "./shop-webhooks";
 import { ShopifyAdmin, type AdminGraphql } from "./shopify-admin";
 import { PrismaMezoutStore } from "./store.server";
 
@@ -36,7 +37,22 @@ export async function syncShop(shop: string, graphql: AdminGraphql): Promise<voi
   } catch (e) {
     console.error(`Mezout: could not publish the app URL to ${shop}`, e);
   }
+  // Once per process, shop and app URL: one Admin API read, plus writes only when the tunnel URL changed.
+  const key = `${shop}|${url}`;
+  if (!shopWebhooksSynced.has(key)) {
+    try {
+      const { created, deleted } = await ensureShopWebhooks(graphql, url);
+      shopWebhooksSynced.add(key);
+      if (created.length || deleted.length) {
+        console.log(`Mezout: Shopify webhooks for ${shop}: created ${created.join(", ") || "none"}, removed ${deleted.length} old`);
+      }
+    } catch (e) {
+      console.error(`Mezout: could not subscribe ${shop} to order and refund webhooks`, e);
+    }
+  }
 }
+
+const shopWebhooksSynced = new Set<string>();
 
 declare global {
   // eslint-disable-next-line no-var

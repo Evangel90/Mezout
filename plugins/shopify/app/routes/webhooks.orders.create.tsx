@@ -10,7 +10,11 @@ import { ShopifyAdmin } from "../mezout/shopify-admin";
  * retry return the same invoice.
  */
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const { shop, payload, admin } = await authenticate.webhook(request);
+  console.log(`Mezout: orders/create request from ${request.headers.get("x-shopify-shop-domain") ?? "unknown shop"}`);
+  const { shop, payload, admin } = await authenticate.webhook(request).catch((err: unknown) => {
+    console.error("Mezout: orders/create was rejected (signature or session):", err instanceof Response ? err.status : err);
+    throw err;
+  });
   if (!admin) return new Response(); // The app was uninstalled.
 
   await syncShop(shop, admin.graphql);
@@ -21,6 +25,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     clientFor,
     admin: new ShopifyAdmin(admin.graphql),
   });
-  if (result !== "not mezout") console.log(`Mezout: orders/create ${payload.id} on ${shop}: ${result}`);
+  // Logged for every order, including ones paid another way, so a missing invoice can be traced to its cause.
+  console.log(
+    `Mezout: orders/create ${payload.id} on ${shop} (payment: ${JSON.stringify((payload as ShopifyOrderPayload).payment_gateway_names ?? [])}): ${result}`,
+  );
   return Response.json({ result });
 };
