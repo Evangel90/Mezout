@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useQuery } from "@tanstack/react-query";
 import { useSendTransaction } from "@mezo-org/passport";
@@ -77,9 +77,11 @@ export function Checkout({ token, businessName, reference, successUrl, embedded,
 
   if (!signed) {
     return (
-      <div role="alert" className="mx-auto max-w-md space-y-1 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
-        <h1 className="font-semibold text-stone-900">This payment link is not valid</h1>
-        <p className="text-sm text-stone-600">Check that it was copied in full, or ask the merchant to send it again.</p>
+      <div className="flex min-h-[70vh] items-center justify-center bg-stone-50 px-5 py-16">
+        <div role="alert" className="w-full max-w-md space-y-2 rounded-xl border border-stone-200 bg-white p-6 shadow-card">
+          <h1 className="text-lg font-semibold tracking-tight text-stone-900">This payment link is not valid</h1>
+          <p className="text-sm text-stone-600">Check that it was copied in full, or ask the merchant to send it again.</p>
+        </div>
       </div>
     );
   }
@@ -127,6 +129,8 @@ function CheckoutInner({
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [useBalanceFirst, setUseBalanceFirst] = useState(true);
   const [borrowedToPay, setBorrowedToPay] = useState(false);
+  // The payment method radio card the customer has selected (display only; null picks the first available).
+  const [choice, setChoice] = useState<PayMethod | null>(null);
   const paidMessageSent = useRef(false);
 
   const { data: code } = useBytecode({ address });
@@ -435,32 +439,85 @@ function CheckoutInner({
   const merchantName = businessName ?? shortAddr(invoice.merchant);
   const fee = isSmartAccount ? "You pay the network fee" : "No network fee";
 
+  // Which payment method's radio card is selected. Purely presentational: the options shown, and whether each can be
+  // paid, come from the same gating as before (canPayMusd, canSwap, quote.data.active, canBorrow).
+  const options = [
+    ...(canPayMusd ? (["MUSD"] as const) : []),
+    ...(["BTC", "MEZO"] as const).filter(canSwap),
+    ...(!isSmartAccount && quote.data?.active ? (["BORROW"] as const) : []),
+  ];
+  const selected = choice && (options as readonly PayMethod[]).includes(choice) ? choice : options[0] ?? null;
+  const payDisabled = busy || !selected || (selected === "BORROW" && !canBorrow);
+  function payNow() {
+    if (selected === "MUSD") payWithMusd();
+    else if (selected === "BTC" || selected === "MEZO") payWithSwap(selected);
+    else if (selected === "BORROW") payWithBorrow();
+  }
+
   return (
-    <div className="mx-auto max-w-md space-y-4 pb-6">
-      <section aria-label="Payment summary" className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
-        <div className="space-y-5 p-6">
-          <div className="flex items-center gap-3">
-            <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-stone-900 text-sm font-semibold uppercase text-white">
-              {businessName ? businessName.trim().charAt(0) : "M"}
-            </span>
+    <div className="grid min-h-[calc(100vh-1px)] grid-cols-[minmax(0,1fr)] [grid-template-areas:'header'_'summary'_'main'] lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:bg-[linear-gradient(to_right,white_50%,#fafaf9_50%)] lg:[grid-template-areas:'header_summary'_'main_summary']">
+      {/* Store header */}
+      <header className="border-b border-stone-200 bg-white [grid-area:header] lg:border-b-0">
+        <div className="mx-auto flex w-full max-w-xl items-center justify-between gap-4 px-5 py-5 sm:px-8 lg:ml-auto lg:mr-0 lg:px-12 lg:pt-10">
+          <div className="flex min-w-0 items-center gap-3">
+            <MerchantTile name={businessName} />
             <div className="min-w-0">
               <p className="text-xs text-stone-500">Pay</p>
-              <h1 className="truncate font-semibold leading-tight text-stone-900">{merchantName}</h1>
-              {businessName && <p className="font-mono text-xs text-stone-500">{shortAddr(invoice.merchant)}</p>}
+              <h1 className="truncate text-lg font-semibold leading-tight tracking-tight text-stone-900">{merchantName}</h1>
             </div>
           </div>
-          <div className="space-y-1">
-            <p className="text-4xl font-semibold tracking-tight tabular-nums text-stone-900">
-              {fmt(invoice.amount)} <span className="text-xl font-medium text-stone-500">MUSD</span>
-            </p>
-            {reference && <p className="text-sm text-stone-600">{reference}</p>}
-            {invoice.fee > 0n && (
-              <p className="text-xs text-stone-500">You pay exactly this amount. The merchant&apos;s platform fee comes out of their settlement.</p>
-            )}
+          <span className="flex shrink-0 items-center gap-1.5 text-xs text-stone-500">
+            <LockIcon />
+            <span className="hidden sm:inline">Secure checkout</span>
+            <span className="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-900">Testnet</span>
+          </span>
+        </div>
+      </header>
+
+      {/* Order summary */}
+      <aside aria-label="Payment summary" className="border-b border-stone-200 bg-stone-50 [grid-area:summary] lg:border-b-0 lg:border-l">
+        <div className="mx-auto w-full max-w-xl space-y-5 px-5 py-6 sm:px-8 lg:sticky lg:top-0 lg:ml-0 lg:mr-auto lg:max-w-md lg:px-12 lg:pt-12">
+          <div className="flex items-center gap-4">
+            <span className="relative shrink-0">
+              <MerchantTile name={businessName} size="lg" />
+              <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-stone-600 px-1.5 text-[11px] font-semibold text-white">
+                1<span className="sr-only"> item</span>
+              </span>
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium text-stone-900">{reference ?? "Payment"}</p>
+              <p className="truncate text-xs text-stone-500">
+                {merchantName}
+                {businessName && <span className="font-mono"> · {shortAddr(invoice.merchant)}</span>}
+              </p>
+            </div>
+            <p className="text-sm font-medium tabular-nums text-stone-900">{fmt(invoice.amount)} MUSD</p>
           </div>
+          <dl className="space-y-2 border-t border-stone-200 pt-5 text-sm">
+            <div className="flex justify-between gap-4">
+              <dt className="text-stone-600">Subtotal</dt>
+              <dd className="tabular-nums text-stone-900">{fmt(invoice.amount)} MUSD</dd>
+            </div>
+            {address && !paid && (
+              <div className="flex justify-between gap-4">
+                <dt className="text-stone-600">Network fee</dt>
+                <dd className="text-stone-900">{isSmartAccount ? "Paid by your wallet" : "Free"}</dd>
+              </div>
+            )}
+            <div className="flex items-baseline justify-between gap-4 pt-2">
+              <dt className="text-base font-semibold text-stone-900">Total</dt>
+              <dd className="flex items-baseline gap-2">
+                <span className="text-xs text-stone-500">MUSD</span>
+                <span className="text-3xl font-semibold tracking-tight tabular-nums text-stone-900">{fmt(invoice.amount)}</span>
+              </dd>
+            </div>
+          </dl>
+          {invoice.fee > 0n && (
+            <p className="text-xs leading-relaxed text-stone-500">You pay exactly this amount. The merchant&apos;s platform fee comes out of their settlement.</p>
+          )}
           {!paid && (
             <p
-              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${expired ? "bg-stone-100 text-stone-600" : "bg-amber-50 text-amber-900"}`}
+              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${expired ? "bg-stone-200/70 text-stone-600" : "bg-amber-50 text-amber-900 ring-1 ring-inset ring-amber-200"}`}
               title={new Date(Number(invoice.expiry) * 1000).toLocaleString()}
             >
               <ClockIcon />
@@ -468,76 +525,216 @@ function CheckoutInner({
             </p>
           )}
         </div>
+      </aside>
 
-        <div className="border-t border-stone-200 bg-stone-50/70 p-6">
+      {/* Steps, or the thank-you page */}
+      <main className="bg-white [grid-area:main]">
+        <div className="mx-auto w-full max-w-xl space-y-6 px-5 py-8 sm:px-8 lg:ml-auto lg:mr-0 lg:px-12 lg:pb-16">
           {paid ? (
-            <div className="space-y-4" aria-live="polite">
-              <div className="flex items-start gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-600 text-white">
+            <div className="space-y-6" aria-live="polite">
+              <div className="flex items-center gap-4">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-musd-600 text-musd-600">
                   <CheckMark />
                 </span>
-                <div className="space-y-1">
-                  <h2 className="font-semibold text-stone-900">Payment complete</h2>
-                  <p className="text-sm text-stone-600">
-                    You paid {fmt(invoice.amount)} MUSD. {merchantName} received {fmt(invoice.amount - invoice.fee)} MUSD.
-                    {successUrl ? "" : " You can close this page."}
+                <div className="min-w-0">
+                  <p className="text-sm text-stone-500">
+                    Confirmation <span className="font-mono">{shortAddr(invoice.orderId)}</span>
                   </p>
+                  <h2 className="text-2xl font-semibold tracking-tight text-stone-900">Thank you!</h2>
                 </div>
               </div>
+
+              <section className="space-y-1 rounded-xl border border-stone-200 p-5">
+                <h3 className="font-semibold text-stone-900">Payment complete</h3>
+                <p className="text-sm leading-relaxed text-stone-600">
+                  You paid {fmt(invoice.amount)} MUSD. {merchantName} received {fmt(invoice.amount - invoice.fee)} MUSD.
+                  {successUrl ? "" : " You can close this page."}
+                </p>
+              </section>
+
               {borrowedToPay && <BorrowerFollowUp snapshot={followUp.data} loading={followUp.isLoading} error={followUp.isError} />}
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+
+              <section className="rounded-xl border border-stone-200 p-5">
+                <h3 className="mb-4 font-semibold text-stone-900">Payment details</h3>
+                <dl className="grid gap-x-6 gap-y-4 text-sm sm:grid-cols-2">
+                  <Detail label="Paid to">
+                    {merchantName}
+                    {businessName && <span className="block font-mono text-xs text-stone-500">{shortAddr(invoice.merchant)}</span>}
+                  </Detail>
+                  <Detail label="Amount">{fmt(invoice.amount)} MUSD</Detail>
+                  {reference && <Detail label="Reference">{reference}</Detail>}
+                  {address && <Detail label="Paid from">
+                      <span className="font-mono">{shortAddr(address)}</span>
+                    </Detail>}
+                  <Detail label="Network">Mezo testnet</Detail>
+                  {status.kind === "sent" && (
+                    <Detail label="Transaction">
+                      <a href={txUrl(status.hash)} target="_blank" rel="noreferrer" className="font-mono underline underline-offset-2 hover:text-stone-600">
+                        {shortAddr(status.hash)}
+                      </a>
+                    </Detail>
+                  )}
+                </dl>
+              </section>
+
+              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+                  {embedded && (
+                    <button type="button" onClick={closeEmbeddedCheckout} className="text-sm font-medium text-stone-700 underline underline-offset-2">
+                      Close checkout
+                    </button>
+                  )}
+                  {status.kind === "sent" && (
+                    <a href={txUrl(status.hash)} target="_blank" rel="noreferrer" className="text-sm text-stone-600 underline underline-offset-2">
+                      View transaction
+                    </a>
+                  )}
+                </div>
                 {successUrl && (
-                  <a href={successUrl} className="inline-flex h-11 items-center rounded-lg bg-stone-900 px-5 text-sm font-medium text-white hover:bg-stone-700">
+                  <a href={successUrl} className="inline-flex h-12 items-center justify-center rounded-lg bg-ink px-6 text-sm font-medium text-white hover:bg-stone-800">
                     Return to {businessName ?? "the store"}
-                  </a>
-                )}
-                {embedded && (
-                  <button type="button" onClick={closeEmbeddedCheckout} className="text-sm font-medium text-stone-700 underline underline-offset-2">
-                    Close checkout
-                  </button>
-                )}
-                {status.kind === "sent" && (
-                  <a href={txUrl(status.hash)} target="_blank" rel="noreferrer" className="text-sm text-stone-600 underline underline-offset-2">
-                    View transaction
                   </a>
                 )}
               </div>
             </div>
           ) : expired ? (
-            <div className="space-y-1">
+            <section className="space-y-1 rounded-xl border border-stone-200 p-5">
               <h2 className="font-semibold text-stone-900">This link has expired</h2>
               <p className="text-sm text-stone-600">Ask {businessName ?? "the merchant"} for a new one. Nothing was charged.</p>
-            </div>
-          ) : !address ? (
-            <div className="space-y-4">
-              <div className="space-y-1">
-                <h2 className="font-semibold text-stone-900">Connect a wallet to pay</h2>
-                <p className="text-sm text-stone-600">
-                  Use a Bitcoin wallet (Xverse, Unisat, OKX) or an EVM wallet. You&apos;ll only see the payment options
-                  your wallet can use.
-                </p>
-              </div>
-              <ConnectButton />
-            </div>
+            </section>
           ) : (
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="text-sm">
-                  <p className="text-xs text-stone-500">MUSD balance</p>
-                  <p className="font-medium tabular-nums text-stone-900">{fmt(balance)} MUSD</p>
-                </div>
-                <ConnectButton showBalance={false} chainStatus="none" accountStatus="address" />
-              </div>
+            <>
+              <section aria-labelledby="checkout-wallet" className="space-y-3">
+                <h2 id="checkout-wallet" className="text-lg font-semibold tracking-tight text-stone-900">
+                  Wallet
+                </h2>
+                {!address ? (
+                  <div className="space-y-4 rounded-xl border border-stone-200 p-4">
+                    <p className="text-sm leading-relaxed text-stone-600">
+                      Use a Bitcoin wallet (Xverse, Unisat, OKX) or an EVM wallet. You&apos;ll only see the payment options
+                      your wallet can use.
+                    </p>
+                    <ConnectButton />
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-stone-200 p-4">
+                    <div className="text-sm">
+                      <p className="text-xs text-stone-500">MUSD balance</p>
+                      <p className="font-medium tabular-nums text-stone-900">{fmt(balance)} MUSD</p>
+                    </div>
+                    <ConnectButton showBalance={false} chainStatus="none" accountStatus="address" />
+                  </div>
+                )}
+              </section>
+
+              {!address && (
+                <section aria-labelledby="checkout-payment" className="space-y-3">
+                  <h2 id="checkout-payment" className="text-lg font-semibold tracking-tight text-stone-900">
+                    Payment
+                  </h2>
+                  <ul className="overflow-hidden rounded-xl border border-stone-200 text-sm text-stone-500">
+                    {(["MUSD", "BTC", "MEZO", "BORROW"] as const).map((m, i) => (
+                      <li key={m} className={`flex items-center gap-3 px-4 py-3.5 ${i ? "border-t border-stone-200" : ""}`}>
+                        <span aria-hidden className="h-4 w-4 shrink-0 rounded-full border border-stone-300" />
+                        <span className="flex-1">{m === "BORROW" ? "Borrow against BTC" : `Pay with ${m}`}</span>
+                        <span aria-hidden className={`h-2.5 w-2.5 rounded-full ${METHOD_DOT[m]}`} />
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-xs text-stone-500">Connect a wallet to see which of these it can pay with.</p>
+                </section>
+              )}
+
+              {address && (
+                <section aria-labelledby="checkout-payment" className="space-y-3">
+                  <div className="space-y-1">
+                    <h2 id="checkout-payment" className="text-lg font-semibold tracking-tight text-stone-900">
+                      Payment
+                    </h2>
+                    <p className="text-sm text-stone-500">Whichever you choose, {merchantName} is paid in MUSD.</p>
+                  </div>
+
+                  {options.length > 0 && (
+                    <fieldset>
+                      <legend className="sr-only">Choose how to pay</legend>
+                      <div className="overflow-hidden rounded-xl border border-stone-200">
+                        {options.map((method, i) => (
+                          <RadioCard
+                            key={method}
+                            first={i === 0}
+                            checked={selected === method}
+                            onSelect={() => setChoice(method)}
+                            disabled={busy}
+                            dot={METHOD_DOT[method]}
+                            title={method === "BORROW" ? "Borrow against my BTC" : `Pay with ${method}`}
+                            detail={
+                              method === "MUSD"
+                                ? `${fmt(invoice.amount)} MUSD · ${fee.toLowerCase()}`
+                                : method === "BORROW"
+                                  ? `Borrow ${fmt(borrowed)} MUSD${fromBalance > 0n ? ` + ${fmt(fromBalance)} from balance` : ""}, no network fee`
+                                  : `≈ ${fmtToken(swapQuotes.data![method]!)} ${method} · ${fee.toLowerCase()}`
+                            }
+                          >
+                            {method === "MUSD" && <p className="text-xs text-stone-600">Paid straight from your MUSD balance.</p>}
+                            {(method === "BTC" || method === "MEZO") && (
+                              <p className="text-xs text-stone-600">
+                                Never more than {fmtToken(withSlippage(swapQuotes.data![method]!))} {method}. Swapped to MUSD as you pay.
+                              </p>
+                            )}
+                            {method === "BORROW" && (
+                              <div className="space-y-3">
+                                <p className="text-xs text-stone-600">Keep your Bitcoin. The MUSD is added to your Mezo loan.</p>
+                                {partialBalance && (
+                                  <label className="flex items-center gap-2 text-sm text-stone-700">
+                                    <input
+                                      type="checkbox"
+                                      checked={useBalanceFirst}
+                                      onChange={(e) => setUseBalanceFirst(e.target.checked)}
+                                      className="h-4 w-4 rounded border-stone-300 accent-stone-900"
+                                    />
+                                    Use my MUSD balance first
+                                  </label>
+                                )}
+                                <BorrowDetails quote={quote.data} loading={false} />
+                              </div>
+                            )}
+                          </RadioCard>
+                        ))}
+                      </div>
+                    </fieldset>
+                  )}
+
+                  {checking ? (
+                    <p role="status" className="flex items-center gap-2 rounded-xl border border-stone-200 px-4 py-3.5 text-sm text-stone-500">
+                      <Spinner />
+                      Checking what this wallet can pay with…
+                    </p>
+                  ) : (
+                    !hasOption && (
+                      <div className="space-y-1 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3.5 text-sm">
+                        <p className="font-medium text-stone-900">This wallet can&apos;t pay {fmt(invoice.amount)} MUSD yet</p>
+                        <p className="text-stone-600">
+                          You can pay with MUSD, BTC or MEZO, or by borrowing against a Mezo BTC loan.
+                          {!supportsSwaps && " This link was made for an earlier version of Mezout, so only MUSD payments work."}
+                        </p>
+                      </div>
+                    )
+                  )}
+                  {isSmartAccount && (
+                    <p className="text-xs text-stone-500">Borrow-to-pay needs an EVM wallet for now; Bitcoin-wallet support is coming.</p>
+                  )}
+                </section>
+              )}
 
               <div aria-live="polite" className="empty:hidden">
                 {status.kind === "working" && (
-                  <p className="flex items-center gap-2 rounded-lg border border-stone-200 bg-white px-4 py-3 text-sm text-stone-800">
+                  <p className="flex items-center gap-2 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-800">
                     <Spinner />
                     {status.step}…
                   </p>
                 )}
                 {status.kind === "sent" && !paid && (
-                  <p className="flex flex-wrap items-center gap-2 rounded-lg border border-stone-200 bg-white px-4 py-3 text-sm text-stone-800">
+                  <p className="flex flex-wrap items-center gap-2 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-800">
                     <Spinner />
                     Waiting for confirmation…
                     <a href={txUrl(status.hash)} target="_blank" rel="noreferrer" className="underline underline-offset-2">
@@ -546,131 +743,118 @@ function CheckoutInner({
                   </p>
                 )}
                 {status.kind === "error" && (
-                  <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
+                  <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
                     {status.message}
                   </p>
                 )}
               </div>
 
-              {(hasOption || checking) && <h2 className="pt-1 text-sm font-medium text-stone-900">Choose how to pay</h2>}
-
-              <div className="space-y-2">
-                {canPayMusd && (
-                  <MethodOption
-                    dot="bg-green-600"
-                    title="Pay with MUSD"
-                    detail={`${fmt(invoice.amount)} MUSD · ${fee.toLowerCase()}`}
-                    disabled={busy}
-                    onClick={payWithMusd}
-                  />
-                )}
-
-                {(["BTC", "MEZO"] as const).filter(canSwap).map((method) => (
-                  <MethodOption
-                    key={method}
-                    dot={method === "BTC" ? "bg-[#f7931a]" : "bg-rose-600"}
-                    title={`Pay with ${method}`}
-                    detail={`≈ ${fmtToken(swapQuotes.data![method]!)} ${method} · ${fee.toLowerCase()}`}
-                    note={`Never more than ${fmtToken(withSlippage(swapQuotes.data![method]!))} ${method}. Swapped to MUSD as you pay.`}
-                    disabled={busy}
-                    onClick={() => payWithSwap(method)}
-                  />
-                ))}
-
-                {!isSmartAccount && quote.data?.active && (
-                  <div className="space-y-3 rounded-xl border border-stone-200 bg-white p-3">
-                    <MethodOption
-                      dot="bg-orange-600"
-                      title="Borrow against my BTC"
-                      detail={`Borrow ${fmt(borrowed)} MUSD${fromBalance > 0n ? ` + ${fmt(fromBalance)} from balance` : ""}, no network fee`}
-                      note="Keep your Bitcoin. The MUSD is added to your Mezo loan."
-                      disabled={!canBorrow || busy}
-                      onClick={payWithBorrow}
-                      flush
-                    />
-                    {partialBalance && (
-                      <label className="flex items-center gap-2 px-1 text-sm text-stone-700">
-                        <input
-                          type="checkbox"
-                          checked={useBalanceFirst}
-                          onChange={(e) => setUseBalanceFirst(e.target.checked)}
-                          className="h-4 w-4 rounded border-stone-300 accent-stone-900"
-                        />
-                        Use my MUSD balance first
-                      </label>
-                    )}
-                    <BorrowDetails quote={quote.data} loading={false} />
-                  </div>
-                )}
-              </div>
-
-              {checking ? (
-                <p role="status" className="flex items-center gap-2 text-sm text-stone-500">
-                  <Spinner />
-                  Checking what this wallet can pay with…
-                </p>
-              ) : (
-                !hasOption && (
-                  <div className="space-y-1 rounded-lg border border-stone-200 bg-white px-4 py-3 text-sm">
-                    <p className="font-medium text-stone-900">This wallet can&apos;t pay {fmt(invoice.amount)} MUSD yet</p>
-                    <p className="text-stone-600">
-                      You can pay with MUSD, BTC or MEZO, or by borrowing against a Mezo BTC loan.
-                      {!supportsSwaps && " This link was made for an earlier version of Mezout, so only MUSD payments work."}
-                    </p>
-                  </div>
-                )
+              {address && options.length > 0 && (
+                <button
+                  type="button"
+                  disabled={payDisabled}
+                  aria-busy={busy || undefined}
+                  onClick={payNow}
+                  className="flex h-14 w-full items-center justify-center gap-2 rounded-lg bg-ink text-base font-semibold text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.12)] transition-colors hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-ink"
+                >
+                  {busy && <Spinner />}
+                  Pay now
+                </button>
               )}
-              {isSmartAccount && (
-                <p className="text-xs text-stone-500">Borrow-to-pay needs an EVM wallet for now; Bitcoin-wallet support is coming.</p>
-              )}
-            </div>
+            </>
           )}
+
+          <div className="space-y-2 border-t border-stone-200 pt-5 text-xs text-stone-500">
+            <p>Paid straight to {merchantName} through a verified Mezo contract. Mezout never holds your funds.</p>
+            <p>
+              Powered by{" "}
+              <a href="/" className="font-medium text-stone-700 underline underline-offset-2 hover:text-stone-900">
+                Mezout
+              </a>
+              , checkout for Mezo.
+            </p>
+          </div>
         </div>
-      </section>
-      <p className="text-center text-xs text-stone-500">
-        Paid straight to {merchantName} through a verified Mezo contract. Mezout never holds your funds.
-      </p>
+      </main>
     </div>
   );
 }
 
-/** One way to pay: a full-width button with a coloured marker, what it costs, and an optional note. */
-function MethodOption({
+type PayMethod = "MUSD" | "BTC" | "MEZO" | "BORROW";
+
+const METHOD_DOT: Record<PayMethod, string> = {
+  MUSD: "bg-green-600",
+  BTC: "bg-[#f7931a]",
+  MEZO: "bg-rose-600",
+  BORROW: "bg-orange-600",
+};
+
+/** One payment method as a radio card; the selected card expands to show its details. */
+function RadioCard({
+  first,
+  checked,
+  onSelect,
+  disabled,
   dot,
   title,
   detail,
-  note,
-  disabled,
-  onClick,
-  flush = false,
+  children,
 }: {
+  first: boolean;
+  checked: boolean;
+  onSelect: () => void;
+  disabled: boolean;
   dot: string;
   title: string;
   detail: string;
-  note?: string;
-  disabled: boolean;
-  onClick: () => void;
-  flush?: boolean;
+  children?: ReactNode;
 }) {
   return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-        flush ? "bg-stone-50 hover:bg-stone-100" : "border border-stone-200 bg-white hover:border-stone-900"
+    <div className={`${first ? "" : "border-t border-stone-200"} ${checked ? "bg-stone-50" : "bg-white"} transition-colors`}>
+      <label
+        className={`flex cursor-pointer items-center gap-3 px-4 py-4 ${checked ? "rounded-none ring-1 ring-inset ring-ink" : "hover:bg-stone-50"} ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
+      >
+        <input type="radio" name="payment-method" checked={checked} onChange={onSelect} disabled={disabled} className="h-4 w-4 shrink-0 accent-stone-900" />
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-medium text-stone-900">{title}</span>
+          <span className="block text-xs text-stone-600">{detail}</span>
+        </span>
+        <span aria-hidden className={`h-2.5 w-2.5 shrink-0 rounded-full ${dot}`} />
+      </label>
+      {checked && children && <div className="border-t border-stone-200 bg-stone-50 px-4 py-3.5 pl-11">{children}</div>}
+    </div>
+  );
+}
+
+function Detail({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="min-w-0 space-y-0.5">
+      <dt className="text-xs font-medium text-stone-500">{label}</dt>
+      <dd className="break-words text-stone-900">{children}</dd>
+    </div>
+  );
+}
+
+/** The merchant's initial on a tile, standing in for a product image. */
+function MerchantTile({ name, size = "md" }: { name: string | null; size?: "md" | "lg" }) {
+  return (
+    <span
+      aria-hidden
+      className={`flex shrink-0 items-center justify-center rounded-lg border border-stone-200 bg-gradient-to-br from-stone-800 to-stone-950 font-semibold uppercase text-white ${
+        size === "lg" ? "h-16 w-16 rounded-xl text-xl" : "h-10 w-10 text-sm"
       }`}
     >
-      <span aria-hidden className={`h-2.5 w-2.5 shrink-0 rounded-full ${dot}`} />
-      <span className="min-w-0 flex-1">
-        <span className="block font-medium text-stone-900">{title}</span>
-        <span className="block text-xs text-stone-600">{detail}</span>
-        {note && <span className="block text-xs text-stone-500">{note}</span>}
-      </span>
-      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4 shrink-0 text-stone-400 group-hover:text-stone-900" aria-hidden>
-        <path d="M7.5 5l5 5-5 5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </button>
+      {name ? name.trim().charAt(0) : "M"}
+    </span>
+  );
+}
+
+function LockIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-3.5 w-3.5" aria-hidden>
+      <rect x="5" y="11" width="14" height="9" rx="2" />
+      <path d="M8 11V8a4 4 0 0 1 8 0v3" strokeLinecap="round" />
+    </svg>
   );
 }
 
