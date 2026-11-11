@@ -39,7 +39,7 @@ async function serve() {
       ? `paying as ${privateKeyToAccount(config.payerKey).address}, max ${config.maxPerPayment} MUSD per payment, ${config.maxPerSession} per session`
       : "paying off (no payer key)",
   ];
-  const from = resolved.file.found ? `; settings from ${resolved.file.path} and env` : "";
+  const from = resolved.file.found ? `; settings from ${resolved.file.path} (environment variables override it)` : "";
   console.error(`mezout-mcp: Mezo testnet via ${config.apiUrl}; ${roles.join("; ")}${from}`);
 }
 

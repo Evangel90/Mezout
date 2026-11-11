@@ -22,13 +22,16 @@ export function terminalPrompter(input: NodeJS.ReadStream = process.stdin, outpu
     process.exit(130);
   });
   const ask: Ask = async (question, opts = {}) => {
+    // Visible prompts go through readline, which redraws its prompt as you type; hidden ones are written once,
+    // then the muted line editor (prompt "") echoes nothing.
+    if (!opts.hidden) return (await rl.question(question)).trim();
     output.write(question);
-    muted = !!opts.hidden;
+    muted = true;
     try {
       return (await rl.question("")).trim();
     } finally {
-      if (muted) output.write("\n");
       muted = false;
+      output.write("\n");
     }
   };
   return { ask, close: () => rl.close() };
