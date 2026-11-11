@@ -80,7 +80,7 @@ export function Showcase() {
   return (
     <div ref={ref} className="space-y-8">
       <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-        <div role="tablist" aria-label="How Mezout works" className="mx-auto flex w-max gap-1 rounded-full border border-stone-200 bg-white p-1 shadow-sm">
+        <div role="tablist" aria-label="How Mezout works" className="mx-auto flex w-max gap-1 rounded-full border border-stone-200 bg-white p-1 shadow-card">
           {TABS.map((t, i) => (
             <button
               key={t.label}
@@ -88,7 +88,7 @@ export function Showcase() {
               aria-selected={i === active}
               onClick={() => choose(i)}
               className={`relative overflow-hidden whitespace-nowrap rounded-full px-4 py-2 text-sm transition-colors ${
-                i === active ? "bg-stone-900 font-medium text-white" : "text-stone-600 hover:text-stone-900"
+                i === active ? "bg-ink font-medium text-white" : "text-stone-600 hover:bg-stone-100 hover:text-ink"
               }`}
             >
               {t.label}
@@ -96,7 +96,7 @@ export function Showcase() {
                 <span
                   key={run}
                   aria-hidden
-                  className="tab-progress absolute inset-x-4 bottom-1 h-0.5 origin-left rounded-full bg-white/50"
+                  className="tab-progress absolute inset-x-4 bottom-1 h-0.5 origin-left rounded-full bg-signal-400"
                   style={{ animationDuration: `${t.dur}s` }}
                 />
               )}
@@ -106,12 +106,12 @@ export function Showcase() {
       </div>
 
       <div className="mx-auto max-w-2xl space-y-2 text-center" aria-live="polite">
-        <h3 className="text-xl font-semibold tracking-tight">{tab.title}</h3>
-        <p className="text-stone-600">{tab.body}</p>
+        <h3 className="display-3">{tab.title}</h3>
+        <p className="text-lg leading-relaxed text-stone-600">{tab.body}</p>
       </div>
 
-      <div className="rounded-3xl border border-stone-200 bg-stone-100/70 p-2 shadow-sm">
-        <div className="overflow-x-auto rounded-2xl border border-stone-200 bg-stone-50">
+      <div className="rounded-4xl border border-stone-200 bg-white p-2 shadow-card">
+        <div className="overflow-x-auto rounded-3xl bg-canvas">
           <div className="aspect-[1120/440] min-w-[680px] p-4 sm:p-8">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img key={run} src={`${tab.src}?run=${run}`} alt={`${tab.title} ${tab.body}`} className="h-full w-full object-contain" />
