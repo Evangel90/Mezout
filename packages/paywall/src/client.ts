@@ -79,7 +79,14 @@ export function createMusdPayer(opts: PayerOptions) {
   let spent = 0n;
   let reserved = 0n;
 
-  async function pay(checkoutUrlOrToken: string, expect: { amount?: bigint; merchant?: string } = {}): Promise<PaidInvoice> {
+  /**
+   * Pays one link. `expect.amount` and `expect.merchant` must match the link exactly (a 402 requirement's terms);
+   * `expect.maxAmount` (decimal MUSD) is an extra ceiling for this call.
+   */
+  async function pay(
+    checkoutUrlOrToken: string,
+    expect: { amount?: bigint; merchant?: string; maxAmount?: string } = {},
+  ): Promise<PaidInvoice> {
     const token = paymentLinkToken(checkoutUrlOrToken);
     let signed;
     try {
@@ -93,6 +100,9 @@ export function createMusdPayer(opts: PayerOptions) {
     if (expect.amount !== undefined && invoice.amount !== expect.amount) throw new PaymentRefused("The link's amount differs from the request.");
     if (expect.merchant !== undefined && !isAddressEqual(invoice.merchant, getAddress(expect.merchant))) {
       throw new PaymentRefused("The link pays a different merchant than the request names.");
+    }
+    if (expect.maxAmount !== undefined && invoice.amount > parseUnits(expect.maxAmount, 18)) {
+      throw new PaymentRefused(`The invoice asks ${formatUnits(invoice.amount, 18)} MUSD, more than the ${expect.maxAmount} MUSD allowed for this call.`);
     }
     if (Number(invoice.expiry) * 1000 < now() + 30_000) throw new PaymentRefused("The payment link has expired.");
     if (invoice.amount > maxPerPayment) {

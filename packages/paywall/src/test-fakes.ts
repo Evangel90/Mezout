@@ -44,6 +44,21 @@ export class FakeMezout {
       this.invoices.set(id, inv);
       return json(201, this.invoiceJson(inv));
     }
+    if (url.pathname === "/v1/invoices" && (init?.method ?? "GET") === "GET") {
+      const limit = Number(url.searchParams.get("limit") ?? 20);
+      const all = [...this.invoices.values()].reverse();
+      return json(200, { object: "list", data: all.slice(0, limit).map((i) => this.invoiceJson(i)), has_more: all.length > limit });
+    }
+    if (url.pathname.startsWith("/v1/invoices/")) {
+      const inv = this.invoices.get(decodeURIComponent(url.pathname.slice("/v1/invoices/".length)));
+      return inv ? json(200, this.invoiceJson(inv)) : json(404, { error: "No such invoice" });
+    }
+    if (url.pathname === "/v1/refunds" && init?.method === "POST") {
+      const inv = this.invoices.get(body.invoice);
+      if (!inv) return json(404, { error: "No such invoice" });
+      if (!inv.tx) return json(400, { error: "The invoice is not paid" });
+      return json(201, { id: "re_1", object: "refund", invoice: inv.id, amount: body.amount ?? inv.amount, status: "pending" });
+    }
     if (url.pathname === "/v1/verify") {
       const inv = this.invoices.get(body.invoice);
       if (!inv) return json(404, { error: "No such invoice" });

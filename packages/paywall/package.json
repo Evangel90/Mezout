@@ -10,7 +10,8 @@
     ".": "./src/index.ts",
     "./express": "./src/express.ts",
     "./next": "./src/next.ts",
-    "./client": "./src/client.ts"
+    "./client": "./src/client.ts",
+    "./testing": "./src/test-fakes.ts"
   },
   "scripts": {
     "test": "vitest run",
