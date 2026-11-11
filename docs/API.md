@@ -440,7 +440,7 @@ AI agents can use Mezout in two ways: an agent pays invoices and runs your Mezou
 
 ### Set up the MCP server
 
-The MCP server gives Claude, Cursor or any other MCP client these tools:
+The MCP server gives Claude, Codex, Cursor, Hermes Agent or any other MCP client these tools:
 
 | Tool | Needs | What it does |
 | --- | --- | --- |
@@ -450,95 +450,67 @@ The MCP server gives Claude, Cursor or any other MCP client these tools:
 | `fetch_paid_resource` | Payer key | Fetch a URL, paying its HTTP 402 Mezout paywall on the way |
 | `get_budget` | Payer key | Show the payer address and how much of the spending limit is left |
 
-You need [Node.js](https://nodejs.org) 20 or later. The server is published on npm as [`@mezout/mcp`](https://www.npmjs.com/package/@mezout/mcp), and your agent starts it with `npx`, so there is nothing to download or build. Give it an API key, a payer key or both, depending on which tools you want.
+You need [Node.js](https://nodejs.org) 20 or later. The server is [`@mezout/mcp`](https://www.npmjs.com/package/@mezout/mcp) on npm; your agent starts it with `npx`, so there is nothing to download or build.
 
-**1. Get your keys.**
+**1. Get your keys.** Give it an API key, a payer key or both, depending on which tools you want.
 
 - **API key** (to take payments): on the [dashboard](https://usemezout.vercel.app/dashboard), open **Developers** and create a key. It starts with `mzk_test_`.
 - **Payer key** (to make payments): create a new wallet used only for testing, for example a fresh account in MetaMask, and export its private key. Get test BTC and MUSD for it from [faucet.test.mezo.org](https://faucet.test.mezo.org). Never use a wallet that holds real funds.
 
-**2. Add it to your agent.** It works with any agent that can run a local MCP server, including Claude, Codex, Cursor and Hermes Agent. Replace the keys in the examples below.
-
-**Claude Code.** Run this in any terminal:
+**2. Run the setup** in any terminal:
 
 ```bash
-claude mcp add mezout \
-  -e MEZOUT_API_KEY=mzk_test_YOUR_KEY \
-  -e MEZOUT_PAYER_PRIVATE_KEY=0xYOUR_TEST_WALLET_KEY \
-  -e MEZOUT_MAX_PAYMENT_MUSD=1 \
-  -e MEZOUT_MAX_SESSION_MUSD=5 \
-  -- npx -y @mezout/mcp
+npx -y @mezout/mcp init
 ```
 
-**Claude Desktop, Cursor and other clients.** Add this to the client's MCP settings file (in Claude Desktop: **Settings → Developer → Edit Config**), then restart the client:
+It asks for the two keys (typed input stays hidden) and the spending limits, and saves them to `~/.mezout/mcp.json`, a file only you can read. Then it finds the MCP clients on your machine (Claude Code, Claude Desktop, Cursor, Codex, Hermes Agent) and adds Mezout to the ones you pick. Their configs only get the command `npx -y @mezout/mcp`, never your keys. Before changing a config file it saves a `.bak` copy next to it; it leaves other servers alone and doesn't touch a file it can't read, printing what to add by hand instead. It can also install the [agent skill](#agent-skill).
+
+**3. Restart your agent** as the setup tells you, and ask it:
+
+> Create a Mezout invoice for 0.5 MUSD for "Test order", then pay it and tell me the transaction.
+
+The agent creates the invoice, pays it from the test wallet and returns a link to the transaction on the Mezo explorer. The invoice appears as paid on your dashboard.
+
+To check your setup (key formats, the network, the wallet's MUSD balance and whether Mezout accepts the API key), run `npx -y @mezout/mcp doctor`. It never prints your keys. Run `init` again to change keys or limits; press Enter to keep a saved value.
+
+**Add it by hand.** If you'd rather not run `init` for your clients, save your keys with `npx -y @mezout/mcp init --client none`, then add the server yourself. None of these contain keys.
+
+Claude Code:
+
+```bash
+claude mcp add --scope user mezout -- npx -y @mezout/mcp
+```
+
+Codex (the CLI, the IDE extension and the ChatGPT desktop app share one config):
+
+```bash
+codex mcp add mezout -- npx -y @mezout/mcp
+```
+
+Claude Desktop (**Settings → Developer → Edit Config**) and Cursor (`~/.cursor/mcp.json`):
 
 ```json
 {
   "mcpServers": {
-    "mezout": {
-      "command": "npx",
-      "args": ["-y", "@mezout/mcp"],
-      "env": {
-        "MEZOUT_API_KEY": "mzk_test_YOUR_KEY",
-        "MEZOUT_PAYER_PRIVATE_KEY": "0xYOUR_TEST_WALLET_KEY",
-        "MEZOUT_MAX_PAYMENT_MUSD": "1",
-        "MEZOUT_MAX_SESSION_MUSD": "5"
-      }
-    }
+    "mezout": { "command": "npx", "args": ["-y", "@mezout/mcp"] }
   }
 }
 ```
 
-**Codex** (Codex CLI, the IDE extension and the ChatGPT desktop app share one config). Run this in any terminal:
-
-```bash
-codex mcp add mezout \
-  --env MEZOUT_API_KEY=mzk_test_YOUR_KEY \
-  --env MEZOUT_PAYER_PRIVATE_KEY=0xYOUR_TEST_WALLET_KEY \
-  --env MEZOUT_MAX_PAYMENT_MUSD=1 \
-  --env MEZOUT_MAX_SESSION_MUSD=5 \
-  -- npx -y @mezout/mcp
-```
-
-Or add it to `~/.codex/config.toml` yourself:
-
-```toml
-[mcp_servers.mezout]
-command = "npx"
-args = ["-y", "@mezout/mcp"]
-
-[mcp_servers.mezout.env]
-MEZOUT_API_KEY = "mzk_test_YOUR_KEY"
-MEZOUT_PAYER_PRIVATE_KEY = "0xYOUR_TEST_WALLET_KEY"
-MEZOUT_MAX_PAYMENT_MUSD = "1"
-MEZOUT_MAX_SESSION_MUSD = "5"
-```
-
-**Hermes Agent** (Nous Research). Add this under `mcp_servers` in `~/.hermes/config.yaml`, then run `/reload-mcp` in Hermes or start a new session:
+Hermes Agent: add this under `mcp_servers` in `~/.hermes/config.yaml`, then run `/reload-mcp`:
 
 ```yaml
 mcp_servers:
   mezout:
     command: "npx"
     args: ["-y", "@mezout/mcp"]
-    env:
-      MEZOUT_API_KEY: "mzk_test_YOUR_KEY"
-      MEZOUT_PAYER_PRIVATE_KEY: "0xYOUR_TEST_WALLET_KEY"
-      MEZOUT_MAX_PAYMENT_MUSD: "1"
-      MEZOUT_MAX_SESSION_MUSD: "5"
 ```
 
 Agents that only connect to MCP servers hosted on the internet, such as Grok and the Muse app, can't use it yet: the server runs on your machine so that the payer key never leaves it.
 
-**3. Try it.** Ask your agent:
-
-> Create a Mezout invoice for 0.5 MUSD for "Test order", then pay it and tell me the transaction.
-
-The agent creates the invoice, pays it from the test wallet and returns a link to the transaction on the Mezo explorer. The invoice appears as paid on your dashboard.
-
 **Settings**
 
-| Variable | Default | Description |
+| Setting | Default | Description |
 | --- | --- | --- |
 | `MEZOUT_API_KEY` | none | Your `mzk_test_` key, for the merchant tools |
 | `MEZOUT_PAYER_PRIVATE_KEY` | none | The test wallet's private key, for the payer tools |
@@ -547,10 +519,29 @@ The agent creates the invoice, pays it from the test wallet and returns a link t
 | `MEZOUT_API_URL` | `https://usemezout.vercel.app` | The Mezout app to use |
 | `MEZO_RPC_URL` | `https://rpc.test.mezo.org` | Mezo testnet RPC |
 
+`init` saves these in `~/.mezout/mcp.json` (set `MEZOUT_CONFIG` to use another file). Environment variables with the same names take precedence over the file, so CI and existing configs that pass `env` keep working. For scripts, `init` takes flags instead of questions:
+
+```bash
+npx -y @mezout/mcp init --yes --api-key "$MEZOUT_API_KEY" --payer-key-file ./payer.key \
+  --max-payment 1 --max-session 5 --client claude-code,codex
+```
+
+`--payer-key-file -` reads the key from standard input; `--client` takes `claude-code`, `claude-desktop`, `cursor`, `codex`, `hermes`, `all` or `none`. `npx -y @mezout/mcp init --help` lists every option.
+
 **Safety.**
 - **Where it pays:** the agent pays only on Mezo testnet, only through Mezout's own contracts, and only within the limits above.
 - **What leaves your machine:** the private key never does. Each payment sends two signatures, and only to Mezout's relay.
 - **What it refuses:** expired or already-paid invoices, and payments the wallet can't cover.
+
+### Agent skill
+
+The Mezout skill teaches coding agents the API: invoices, payment statuses, refunds, webhooks and signature checks, `/v1/verify`, the 402 paywall and the MCP tools. Agents that support [Agent Skills](https://agentskills.io) (Claude Code, Codex, Cursor, Hermes Agent and others) load it when you work on a Mezout integration. Install it for every agent on your machine:
+
+```bash
+npx skills add Evangel90/Mezout --skill mezout -g
+```
+
+`npx -y @mezout/mcp init` offers to install the same skill into the clients it sets up. In Hermes Agent you can also run `hermes skills install Evangel90/Mezout/skills/mezout`. The skill's source is [`skills/mezout`](https://github.com/Evangel90/Mezout/tree/main/skills/mezout).
 
 ### Charge agents per request
 
