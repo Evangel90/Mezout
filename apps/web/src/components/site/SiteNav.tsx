@@ -8,7 +8,7 @@ import { createPortal } from "react-dom";
 export const NAV_LINKS = [
   { href: "/#humans", label: "Checkout", section: "humans" },
   { href: "/#agents", label: "AI agents", section: "agents" },
-  { href: "/#developers", label: "Developers", section: "developers" },
+  { href: "/guides", label: "Guides" },
   { href: "/docs", label: "Docs" },
 ];
 

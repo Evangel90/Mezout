@@ -108,24 +108,28 @@ const FOOTER = [
     links: [
       { href: "/#humans", label: "Checkout" },
       { href: "/#agents", label: "AI agents" },
-      { href: "/#merchants", label: "Settlement" },
+      { href: "/#merchants", label: "Why Mezout" },
       { href: "/dashboard", label: "Dashboard" },
+    ],
+  },
+  {
+    title: "Guides",
+    links: [
+      { href: "/guides/shopify", label: "Shopify" },
+      { href: "/guides/woocommerce", label: "WooCommerce" },
+      { href: "/guides/embedded-checkout", label: "Embedded checkout" },
+      { href: "/guides/ai-agents", label: "AI agents" },
+      { href: "/guides/paywall", label: "Charge per request" },
     ],
   },
   {
     title: "Developers",
     links: [
       { href: "/docs", label: "API reference" },
+      { href: "/docs#webhooks", label: "Webhooks" },
       { href: "/docs#ai-agents", label: "MCP server" },
-      { href: `${REPO}/tree/main/packages/paywall`, label: "HTTP 402 paywall" },
-      { href: `${REPO}/tree/main/plugins`, label: "Plugins" },
-    ],
-  },
-  {
-    title: "Trust",
-    links: [
       { href: "/#contracts", label: "Verified contracts" },
-      { href: REPO, label: "Source code" },
+      { href: REPO, label: "View on GitHub" },
     ],
   },
 ];
@@ -140,8 +144,8 @@ export function SiteFooter() {
         <div className="max-w-sm space-y-4">
           <Wordmark dark />
           <p className="text-sm leading-relaxed">
-            Checkout for humans and AI agents on Mezo. Running on Mezo testnet with test tokens that have no real value.
-            Mezout never holds merchant or customer funds.
+            Get paid by people and AI agents, in MUSD. Mezout never holds your funds. Running on Mezo testnet: test
+            tokens have no real value.
           </p>
         </div>
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
@@ -152,8 +156,9 @@ export function SiteFooter() {
                 {col.links.map((l) => (
                   <li key={l.label}>
                     {l.href.startsWith("http") ? (
-                      <a href={l.href} className="text-stone-300 hover:text-white">
+                      <a href={l.href} target="_blank" rel="noopener noreferrer" className="text-stone-300 hover:text-white">
                         {l.label}
+                        <span className="sr-only"> (opens in a new tab)</span>
                       </a>
                     ) : (
                       <Link href={l.href} className="text-stone-300 hover:text-white">

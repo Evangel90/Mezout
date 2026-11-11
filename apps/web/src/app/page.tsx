@@ -6,7 +6,7 @@ import { InteractiveBackdrop } from "@/components/site/motion/InteractiveBackdro
 import { Showcase } from "@/components/site/Showcase";
 import { AGENT_BRANDS, BrandRow, STORE_BRANDS, WorksWithStrip } from "@/components/site/WorksWith";
 
-const REPO = "https://github.com/Evangel90/Mezout";
+const REPO = "https://github.com/Evangel90/Mezout"; // Only for the explicit "View on GitHub" links.
 const EXPLORER = "https://explorer.test.mezo.org/address";
 const SOURCIFY = "https://repo.sourcify.dev/31611";
 
@@ -15,74 +15,74 @@ const contracts = [
   { name: "MezoutAccountFactory", address: "0xeE85EE32488FF2D63eFe48159ddB59e6863cdF79" },
 ];
 
-const builtOn = ["MUSD", "Mezo Passport", "Tigris", "ERC-4337", "EIP-712", "Model Context Protocol", "x402", "Sourcify"];
+const builtOn = ["MUSD", "Mezo Passport", "Tigris", "Model Context Protocol", "x402", "Sourcify"];
 
 const facts = [
-  { value: "4", label: "ways for people to pay: MUSD, BTC, MEZO or a loan against BTC" },
-  { value: "160%", label: "minimum collateral on any borrow, enforced at checkout" },
-  { value: "402", label: "the HTTP status agents pay through, in the x402 v2 format" },
-  { value: "0", label: "admin keys, pause switches or upgrades on the contracts" },
+  { value: "4", label: "ways customers can pay: MUSD, BTC, MEZO or a loan against BTC" },
+  { value: "1%", label: "fee on testnet, taken from your payout. Customers pay your price." },
+  { value: "0", label: "funds Mezout holds. Payments go straight to you." },
+  { value: "160%", label: "minimum collateral when a customer borrows to pay" },
 ];
 
 const methods = [
   { dot: "bg-musd-500", name: "Pay with MUSD", body: "Straight from their balance." },
-  { dot: "bg-[#f7931a]", name: "Pay with BTC", body: "Swapped to MUSD at a live price, never above the price they approve." },
-  { dot: "bg-rose-600", name: "Pay with MEZO", body: "Swapped the same way, with the same price cap." },
-  { dot: "bg-signal-600", name: "Borrow against BTC", body: "They keep their Bitcoin and borrow the MUSD inside the payment." },
+  { dot: "bg-[#f7931a]", name: "Pay with BTC", body: "Converted at a live price, capped at the price they approve." },
+  { dot: "bg-rose-600", name: "Pay with MEZO", body: "Converted the same way, with the same cap." },
+  { dot: "bg-signal-600", name: "Borrow against BTC", body: "They keep their Bitcoin and borrow the MUSD." },
 ];
 
 const mcpTools = ["create_invoice", "get_invoice", "list_invoices", "refund", "verify_payment", "pay_invoice", "fetch_paid_resource", "get_budget"];
 
 const guarantees = [
-  { icon: "equal", title: "Exact MUSD, every time", body: "The customer pays the listed amount and you see the fee and your net payout before you share a link. Both settle in the same transaction." },
-  { icon: "arrow", title: "Non-custodial", body: "Money goes from the payer straight to your payout account. Mezout never holds funds or keys." },
-  { icon: "check", title: "No admin keys", body: "No owner, no pause switch, no upgrades. The contract source is published and verified as an exact match." },
-  { icon: "shield", title: "160% borrow floor", body: "A borrow that would leave the customer’s loan under 160% collateral is refused, so checkout never pushes anyone toward liquidation." },
-  { icon: "receipt", title: "One invoice, one payment", body: "Each invoice can be paid once, and every approval names a single invoice, so it can’t be reused for anything else." },
-  { icon: "blocks", title: "Paid means on-chain", body: "Orders, and agents’ API calls, count as paid only once the payment is confirmed on Mezo, never on a browser’s word." },
+  { icon: "equal", title: "The exact amount", body: "Customers pay your price. You see the fee and your payout before you share a link." },
+  { icon: "arrow", title: "Your money, your account", body: "Payments go straight to you. Mezout never holds your funds or keys." },
+  { icon: "check", title: "No one can change the rules", body: "No owner, no pause switch, no upgrades. The contract code is public and verified." },
+  { icon: "shield", title: "Safe borrowing", body: "Checkout refuses any loan that would drop below 160% collateral." },
+  { icon: "receipt", title: "Paid once, never twice", body: "Each payment link can be paid once. Each approval covers one link only." },
+  { icon: "blocks", title: "Paid means confirmed", body: "An order counts as paid only once Mezo confirms it. Never on a browser’s word." },
 ];
 
 const integrations = [
-  { name: "REST API", body: "API keys, idempotency keys and rate limits. Create invoices from any backend.", href: "/docs#quickstart", tag: "Developers" },
-  { name: "Signed webhooks", body: "invoice.paid and refund events, retried for 24 hours, with a delivery log.", href: "/docs#webhooks", tag: "Developers" },
-  { name: "Embedded checkout", body: "Open checkout in a modal on your own site with a drop-in script or React component.", href: "/docs#embedded-checkout", tag: "Developers" },
-  { name: "WooCommerce plugin", body: "Adds Mezout to classic and block checkouts.", href: `${REPO}/tree/main/plugins/woocommerce`, tag: "Stores" },
-  { name: "Shopify app", body: "Adds a Mezout payment step to orders.", href: `${REPO}/tree/main/plugins/shopify`, tag: "Stores" },
-  { name: "MCP server", body: "Tools for agents to create, check, refund and pay invoices within caps.", href: "/docs#ai-agents", tag: "Agents" },
+  { name: "Shopify app", body: "Adds a “Pay with Bitcoin or MUSD” option to your store.", href: "/guides/shopify", tag: "Stores" },
+  { name: "WooCommerce plugin", body: "Adds Mezout to classic and block checkouts.", href: "/guides/woocommerce", tag: "Stores" },
+  { name: "Embedded checkout", body: "Open checkout in a pop-up on your own site.", href: "/guides/embedded-checkout", tag: "Your site" },
+  { name: "AI agents", body: "Let agents pay you, and charge them per request.", href: "/guides/ai-agents", tag: "Agents" },
+  { name: "REST API", body: "Create payment links from any backend.", href: "/docs#quickstart", tag: "Developers" },
+  { name: "Webhooks", body: "Know the moment an order is paid. Signed and retried for 24 hours.", href: "/docs#webhooks", tag: "Developers" },
 ];
 
 const faqs = [
   {
-    q: "What can people pay with?",
-    a: "MUSD, BTC or MEZO, or MUSD borrowed against the Bitcoin in their Mezo loan. Checkout only shows the options their wallet can use, and you are paid in MUSD whichever they choose.",
+    q: "What can my customers pay with?",
+    a: "MUSD, BTC or MEZO, or MUSD borrowed against their Bitcoin. They only see what their wallet can use. You get MUSD every time.",
   },
   {
-    q: "How do AI agents pay?",
-    a: "Two ways. The Mezout MCP server gives Claude, Cursor or any MCP client tools to create, check and pay invoices, within per-payment and per-session caps you set. And the HTTP 402 paywall lets your API answer unpaid requests with 402 Payment Required and a Mezout invoice, in the x402 v2 format; the agent pays and retries.",
+    q: "Do I need a crypto wallet?",
+    a: "No. Sign up with a passkey: Face ID, Touch ID, Windows Hello or your phone. You get a payout account only you control, with free withdrawals. Already on Mezo? Get paid to your wallet instead.",
   },
   {
-    q: "Do I need a crypto wallet to get paid?",
-    a: "No. Sign up with a passkey (Face ID, Touch ID, Windows Hello or your phone) and Mezout creates a payout account only you control, with free withdrawals. If you already use Mezo, you can be paid straight into your wallet instead.",
+    q: "Does Mezout hold my money?",
+    a: "Never. Each payment goes straight from the customer to you, in one transaction. Mezout has no way to move your funds.",
   },
   {
-    q: "Does Mezout ever hold my money?",
-    a: "No. Each payment goes from the payer to your payout account in a single transaction. Mezout issues invoices and pays network fees, but it has no way to move your funds.",
-  },
-  {
-    q: "How do I know an order has been paid?",
-    a: "Mezout marks an invoice paid only once the payment is confirmed on Mezo. Your dashboard updates within seconds, and your store gets a signed invoice.paid webhook. The 402 paywall serves the request only after the same check.",
+    q: "How do I know an order is paid?",
+    a: "Your dashboard updates within seconds of Mezo confirming the payment. Your store also gets a signed notification (a webhook).",
   },
   {
     q: "What does it cost?",
-    a: "On testnet, a 1% platform fee paid by the merchant. The customer always pays the listed total; the fee comes out of your payout, and the dashboard shows gross, fee and net before you share a link.",
+    a: "1% per payment on testnet, taken from your payout. Customers pay your listed price. You see the fee before you share a link.",
   },
   {
-    q: "Can I use it with my store?",
-    a: "Yes. Install the WooCommerce plugin or the Shopify app, create invoices from any backend with the REST API, or embed checkout on your own site.",
+    q: "Does it work with my store?",
+    a: "Yes. Install the Shopify app or the WooCommerce plugin, embed checkout on your own site, or use the API. The guides walk you through each.",
   },
   {
-    q: "Is Mezout live on mainnet?",
-    a: "Not yet. Mezout runs on Mezo testnet with test tokens that have no value. Mainnet follows a security review and passkey account recovery.",
+    q: "How do AI agents pay me?",
+    a: "Two ways. An agent with the Mezout MCP server can pay your payment links, within limits its owner sets. Or you put a price on your API and agents pay per request.",
+  },
+  {
+    q: "Is it live on mainnet?",
+    a: "Not yet. Mezout runs on Mezo testnet with test tokens that have no value. Mainnet comes after a security review and passkey account recovery.",
   },
 ];
 
@@ -155,8 +155,9 @@ function ArrowLink({ href, children, dark = false }: Readonly<{ href: string; ch
     </>
   );
   return href.startsWith("http") ? (
-    <a href={href} className={cls}>
+    <a href={href} target="_blank" rel="noopener noreferrer" className={cls}>
       {inner}
+      <span className="sr-only">(opens in a new tab)</span>
     </a>
   ) : (
     <Link href={href} className={cls}>
@@ -187,21 +188,21 @@ export default function Home() {
               <span aria-hidden>→</span>
             </Link>
             <h1 className="display-1 [text-wrap:balance]">
-              Checkout for <span className="text-signal-400">humans</span> and <span className="text-agent-300">AI&nbsp;agents</span>.
+              Get paid by <span className="text-signal-400">people</span> and <span className="text-agent-300">AI&nbsp;agents</span>.
             </h1>
             <p className="mx-auto max-w-2xl text-lg leading-relaxed text-stone-300 sm:text-xl">
-              People pay with Bitcoin, MUSD or MEZO, or borrow against their BTC. Agents pay through an MCP server or an
-              HTTP 402 paywall. Either way, you receive exact MUSD, settled on Mezo without custody or admin keys.
+              Customers pay with Bitcoin, MUSD or MEZO. AI agents pay from code. You get the exact amount in MUSD, straight
+              to your account.
             </p>
             <div className="flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
               <Link href="/dashboard" className="pill-signal">
-                Start accepting payments <span aria-hidden>→</span>
+                Start selling <span aria-hidden>→</span>
               </Link>
-              <Link href="/docs" className="pill-outline-dark">
-                Read the docs
+              <Link href="/guides" className="pill-outline-dark">
+                See the guides
               </Link>
             </div>
-            <p className="text-sm text-stone-500">Sign up with a passkey. No wallet, seed phrase or gas. Testnet only.</p>
+            <p className="text-sm text-stone-500">Sign up with a passkey. No wallet needed. Testnet only.</p>
           </div>
 
           <div className="mx-auto mt-14 max-w-6xl rounded-4xl border border-white/10 bg-white/[0.03] p-3 shadow-[0_40px_120px_-40px_rgba(0,0,0,0.8)] backdrop-blur-sm sm:mt-20 sm:p-6 lg:p-8">
@@ -215,7 +216,7 @@ export default function Home() {
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
           <WorksWithStrip />
           <p className="mt-4 text-center text-xs text-stone-500">
-            Compatibility, not partnership: Mezout ships its own Shopify app and WooCommerce plugin, and its MCP server runs in any client that supports local MCP servers.
+            Compatibility, not partnership. Mezout makes its own Shopify app and WooCommerce plugin, and its MCP server runs in any agent that supports local MCP servers.
           </p>
         </div>
       </section>
@@ -232,7 +233,7 @@ export default function Home() {
           ))}
         </dl>
         <div className="mt-16 border-t border-stone-200 pt-8">
-          <p className="mb-5 text-center text-sm text-stone-500">Built on Mezo, with open standards</p>
+          <p className="mb-5 text-center text-sm text-stone-500">Built on Mezo and open standards</p>
           <ul className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3">
             {builtOn.map((b) => (
               <li key={b} className="text-lg font-semibold tracking-tight text-stone-400">
@@ -248,8 +249,8 @@ export default function Home() {
         <Heading
           center
           eyebrow="Two kinds of customer"
-          title="One checkout for people and the software they send."
-          body="Shoppers pay from a wallet in a few taps. Agents pay from code, within limits you set. Both settle through the same verified contract, so your books show one thing: MUSD."
+          title="Sell to people and AI agents."
+          body="Shoppers pay from a wallet in a few taps. Agents pay from code. Either way, you get MUSD."
         />
         <div className="mt-14 grid gap-4 lg:grid-cols-2">
           <article className="reveal flex flex-col overflow-hidden rounded-4xl border border-stone-200 bg-white shadow-card">
@@ -257,11 +258,10 @@ export default function Home() {
               <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-signal-500 text-ink">
                 <Icon name="person" />
               </span>
-              <Eyebrow tone="signal">For people</Eyebrow>
-              <h3 className="display-3">Spend Bitcoin without selling it.</h3>
+              <Eyebrow tone="signal">Shoppers</Eyebrow>
+              <h3 className="display-3">Accept Bitcoin at checkout.</h3>
               <p className="text-stone-600">
-                A clean hosted checkout: choose MUSD, BTC or MEZO, or borrow MUSD against BTC, and confirm once. EVM wallets
-                pay no gas; Bitcoin wallets connect through Mezo Passport.
+                Customers pay with MUSD, BTC or MEZO, or borrow against their BTC. One tap to confirm.
               </p>
               <BrandRow label="Plugs into" brands={STORE_BRANDS} />
               <ArrowLink href="#humans">See the checkout</ArrowLink>
@@ -289,11 +289,10 @@ export default function Home() {
               <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-agent-500 text-white">
                 <Icon name="bot" />
               </span>
-              <Eyebrow tone="agent">For AI agents</Eyebrow>
-              <h3 className="display-3">Let software pay its own way.</h3>
+              <Eyebrow tone="agent">AI agents</Eyebrow>
+              <h3 className="display-3">Get paid by software.</h3>
               <p className="text-stone-400">
-                Give an agent the Mezout MCP server and it can pay invoices in MUSD, with no gas or wallet pop-ups. Put the
-                402 paywall in front of an API and agents pay per request.
+                Agents pay your payment links in MUSD, with no gas or pop-ups. Or charge them for each call to your API.
               </p>
               <BrandRow label="Runs in" brands={AGENT_BRANDS} dark />
               <ArrowLink href="#agents" dark>
@@ -318,8 +317,8 @@ export default function Home() {
           <Heading
             eyebrow="Hosted checkout"
             eyebrowTone="signal"
-            title="A checkout people already understand."
-            body="Send a link, show a QR code, or redirect from your store. Customers connect a wallet, see only the options it can use, and confirm once."
+            title="A checkout shoppers get."
+            body="Share a link or QR code, or send shoppers from your store. They see only the options their wallet can use."
           />
           <ul className="reveal overflow-hidden rounded-2xl border border-stone-200 bg-white">
             {methods.map((m, i) => (
@@ -333,13 +332,13 @@ export default function Home() {
           </ul>
           <div className="reveal flex flex-wrap gap-x-8 gap-y-3 text-sm text-stone-600">
             <span className="flex items-center gap-2">
-              <Icon name="tick" className="h-4 w-4 text-musd-600" /> Gasless for EVM wallets
+              <Icon name="tick" className="h-4 w-4 text-musd-600" /> No gas for Ethereum-style wallets
             </span>
             <span className="flex items-center gap-2">
-              <Icon name="tick" className="h-4 w-4 text-musd-600" /> Bitcoin wallets via Mezo Passport
+              <Icon name="tick" className="h-4 w-4 text-musd-600" /> Bitcoin wallets welcome
             </span>
             <span className="flex items-center gap-2">
-              <Icon name="tick" className="h-4 w-4 text-musd-600" /> Never below 160% collateral
+              <Icon name="tick" className="h-4 w-4 text-musd-600" /> Loans stay above 160% collateral
             </span>
           </div>
         </div>
@@ -359,7 +358,7 @@ export default function Home() {
       {/* How it works */}
       <Section id="how" tone="canvas" className="py-20 sm:py-28">
         <div className="mb-12">
-          <Heading center eyebrow="How it works" title="Every way to pay. One settlement." />
+          <Heading center eyebrow="How it works" title="Any way they pay. One payout." />
         </div>
         <Showcase />
       </Section>
@@ -373,14 +372,13 @@ export default function Home() {
             eyebrowTone="agent"
             title={
               <>
-                Agents are customers now. <span className="text-stone-500">Let them pay, within limits you set.</span>
+                AI agents are customers now. <span className="text-stone-500">Let them pay you.</span>
               </>
             }
           />
           <p className="reveal text-lg leading-relaxed text-stone-400">
-            An agent asks for something, gets told the price, pays in MUSD and gets it, in seconds and with the same
-            guarantees as your human customers. It can’t be talked into paying anyone else: Mezo testnet only, Mezout’s own
-            contracts only.
+            An agent asks, sees the price, pays in MUSD and gets what it asked for. In seconds, with the same guarantees as
+            your other customers.
           </p>
         </div>
 
@@ -391,10 +389,11 @@ export default function Home() {
         <div className="mt-6 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="reveal space-y-5 rounded-4xl border border-white/10 bg-white/[0.03] p-7 sm:p-8">
             <p className="eyebrow text-agent-300">MCP server</p>
-            <h3 className="display-3">Tools any MCP client can call.</h3>
+            <h3 className="display-3">Plug Mezout into your agent.</h3>
             <p className="text-stone-400">
-              Run <code className="rounded-md bg-white/10 px-1.5 py-0.5 font-mono text-[0.85em] text-stone-200">npx -y @mezout/mcp</code> in any MCP client
-              that supports local servers, and the agent gets tools to take and make payments, with caps on every payment and every session.
+              MCP is the standard AI agents use to call tools. Run{" "}
+              <code className="rounded-md bg-white/10 px-1.5 py-0.5 font-mono text-[0.85em] text-stone-200">npx -y @mezout/mcp</code> and your agent
+              can create payment links, check them, request refunds and pay, with a cap on every payment.
             </p>
             <BrandRow label="Works with" brands={AGENT_BRANDS} dark />
             <ul className="flex flex-wrap gap-2">
@@ -408,11 +407,15 @@ export default function Home() {
               <Link href="/docs#ai-agents" className="pill-light">
                 Set up the MCP server
               </Link>
+              <Link href="/guides/ai-agents" className="pill-outline-dark">
+                Read the guide
+              </Link>
             </div>
           </div>
           <div className="reveal min-w-0 space-y-5 rounded-4xl border border-white/10 bg-white/[0.03] p-7 sm:p-8">
             <p className="eyebrow text-agent-300">HTTP 402 paywall</p>
-            <h3 className="display-3">Charge per request in one wrapper.</h3>
+            <h3 className="display-3">Charge agents per request.</h3>
+            <p className="text-stone-400">Wrap an API route. Unpaid calls get a price. Paid calls get the answer.</p>
             <div className="overflow-hidden rounded-2xl border border-white/10 bg-stone-900">
               <div className="border-b border-white/10 px-4 py-2.5 font-mono text-xs text-stone-500">app/api/report/route.ts</div>
               <pre className="overflow-x-auto p-5 font-mono text-[13px] leading-relaxed text-stone-300">
@@ -429,9 +432,9 @@ export default function Home() {
                 </code>
               </pre>
             </div>
-            <a href={`${REPO}/tree/main/packages/paywall`} className="pill-outline-dark">
-              HTTP 402 paywall on GitHub
-            </a>
+            <Link href="/guides/paywall" className="pill-outline-dark">
+              Read the paywall guide
+            </Link>
           </div>
         </div>
       </Section>
@@ -443,7 +446,7 @@ export default function Home() {
           eyebrowTone="signal"
           title={
             <>
-              You always receive exact MUSD. <span className="text-stone-400">Enforced by the contract.</span>
+              You get the exact amount. <span className="text-stone-400">The contract makes sure.</span>
             </>
           }
         />
@@ -460,8 +463,8 @@ export default function Home() {
         </div>
         <div className="reveal mt-4 flex flex-col justify-between gap-6 rounded-3xl bg-canvas p-7 sm:flex-row sm:items-center sm:p-8">
           <div className="space-y-1">
-            <p className="text-lg font-semibold tracking-tight">No wallet needed to get paid.</p>
-            <p className="text-stone-600">Sign up with a passkey and get a payout account only your passkey controls, with gasless withdrawals.</p>
+            <p className="text-lg font-semibold tracking-tight">No wallet needed.</p>
+            <p className="text-stone-600">Sign up with a passkey. Only you control your payout account. Withdrawals are free.</p>
           </div>
           <Link href="/dashboard" className="pill-ink shrink-0">
             Create an account
@@ -474,16 +477,19 @@ export default function Home() {
         <div className="grid gap-12 lg:grid-cols-[0.85fr_1.15fr]">
           <div className="space-y-8">
             <Heading
-              eyebrow="For developers"
-              title="Plugs into how you already sell."
-              body="Create an invoice from your server, send the customer to its checkout link, and fulfil the order when the signed webhook arrives. Or install a plugin and skip the code."
+              eyebrow="Integrations"
+              title="Works with how you sell."
+              body="Install the Shopify app or WooCommerce plugin, no code needed. Or create payment links from your own server."
             />
             <div className="reveal flex flex-wrap gap-3">
-              <Link href="/docs" className="pill-ink">
-                Read the docs
+              <Link href="/guides" className="pill-ink">
+                Browse the guides
               </Link>
-              <a href={REPO} className="pill-outline">
-                View on GitHub
+              <Link href="/docs" className="pill-outline">
+                API reference
+              </Link>
+              <a href={REPO} target="_blank" rel="noopener noreferrer" className="pill-outline">
+                View on GitHub<span className="sr-only"> (opens in a new tab)</span>
               </a>
             </div>
           </div>
@@ -551,8 +557,8 @@ export default function Home() {
         <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
           <Heading
             eyebrow="Open and verifiable"
-            title="Check every claim yourself."
-            body="The code is open source and the contracts are verified on Sourcify, so you can read exactly what runs. Mezout is on Mezo testnet, with test tokens only."
+            title="Don’t trust us. Check."
+            body="The code is open source and the contracts are verified on Sourcify. Testnet only, with test tokens."
           />
           <div className="reveal space-y-4">
             <ul className="divide-y divide-stone-200 overflow-hidden rounded-3xl border border-stone-200 bg-white">
@@ -612,20 +618,17 @@ export default function Home() {
           className="absolute inset-0 -z-10 bg-[radial-gradient(45%_70%_at_20%_100%,rgba(255,107,20,0.25),transparent_70%),radial-gradient(45%_70%_at_80%_0%,rgba(127,92,255,0.25),transparent_70%)]"
         />
         <div className="mx-auto max-w-4xl space-y-8 px-4 py-24 text-center sm:px-6 sm:py-32">
-          <h2 className="display-1 [text-wrap:balance]">Ready for both kinds of customer?</h2>
-          <p className="mx-auto max-w-xl text-lg text-stone-400">
-            Create a merchant account with a passkey, share your first payment link or put a price on your API, and get
-            paid in MUSD.
-          </p>
+          <h2 className="display-1 [text-wrap:balance]">Start getting paid.</h2>
+          <p className="mx-auto max-w-xl text-lg text-stone-400">Sign up with a passkey and share your first payment link in minutes.</p>
           <div className="flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
             <Link href="/dashboard" className="pill-signal">
               Get started <span aria-hidden>→</span>
             </Link>
-            <Link href="/docs" className="pill-outline-dark">
-              Read the docs
+            <Link href="/guides" className="pill-outline-dark">
+              See the guides
             </Link>
           </div>
-          <p className="text-sm text-stone-500">No wallet, no seed phrase, no gas. Testnet only.</p>
+          <p className="text-sm text-stone-500">No wallet. No seed phrase. Testnet only.</p>
         </div>
       </section>
     </div>

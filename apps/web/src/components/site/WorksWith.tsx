@@ -1,14 +1,12 @@
 import Link from "next/link";
 import { BRAND_PATHS, type BrandIcon } from "./brandPaths";
 
-const PLUGINS = "https://github.com/Evangel90/Mezout/tree/main/plugins";
-
 type Brand = { name: string; icon?: BrandIcon; href: string; note: string };
 
 /** Stores Mezout ships a plugin for. */
 export const STORE_BRANDS: Brand[] = [
-  { name: "Shopify", icon: "shopify", href: `${PLUGINS}/shopify`, note: "Mezout app for Shopify stores" },
-  { name: "WooCommerce", icon: "woocommerce", href: `${PLUGINS}/woocommerce`, note: "Mezout plugin for WooCommerce" },
+  { name: "Shopify", icon: "shopify", href: "/guides/shopify", note: "Set up the Mezout app for Shopify" },
+  { name: "WooCommerce", icon: "woocommerce", href: "/guides/woocommerce", note: "Set up the Mezout plugin for WooCommerce" },
 ];
 
 /** MCP clients that can run the local `npx -y @mezout/mcp` server. Codex and Hermes Agent are text wordmarks. */
@@ -77,7 +75,7 @@ export function WorksWithStrip() {
     <div className="grid gap-6 lg:grid-cols-[auto_1px_auto] lg:items-center lg:justify-center lg:gap-10">
       <BrandRow label="Works with stores" brands={STORE_BRANDS} size="lg" />
       <span aria-hidden className="hidden h-8 w-px bg-stone-200 lg:block" />
-      <BrandRow label="Agents via MCP" brands={AGENT_BRANDS} size="lg" />
+      <BrandRow label="Works with agents" brands={AGENT_BRANDS} size="lg" />
     </div>
   );
 }

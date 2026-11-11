@@ -7,10 +7,10 @@ import { useTimeline } from "./useTimeline";
  * and get 200. The session budget fills by 0.05 MUSD per paid request. Reduced motion shows the third request done.
  */
 const STAGES = [
-  { code: "GET /api/report", title: "Request", body: "The agent calls a paid endpoint." },
-  { code: "402 · 0.05 MUSD", title: "Payment required", body: "An x402 v2 challenge with a Mezout invoice." },
-  { code: "pay_invoice", title: "Pay within caps", body: "Checked against per-payment and per-session caps." },
-  { code: "200 OK", title: "Served", body: "Confirmed on Mezo before the response is sent." },
+  { code: "GET /api/report", title: "Request", body: "The agent calls your paid API." },
+  { code: "402 · 0.05 MUSD", title: "Payment required", body: "Your API names the price." },
+  { code: "pay_invoice", title: "Pay within limits", body: "The agent pays, within its spending caps." },
+  { code: "200 OK", title: "Served", body: "Mezo confirms it. The agent gets the answer." },
 ];
 const PER_CALL = 0.05;
 const SESSION_CAP = 10;
