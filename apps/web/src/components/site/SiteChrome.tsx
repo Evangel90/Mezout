@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Wordmark } from "@/components/site/Logo";
 import { MobileMenu, SiteNav } from "@/components/site/SiteNav";
 
@@ -13,30 +14,88 @@ const REPO = "https://github.com/Evangel90/Mezout";
  */
 const ownFrame = (pathname: string) => pathname.startsWith("/pay/") || pathname === "/dashboard" || pathname.startsWith("/dashboard/");
 
+const HEADER_PX = 72;
+
+/**
+ * Header state from scroll: `dark` while the landing page's dark hero is behind the header, `scrolled` once the page
+ * has moved. Read in a passive, rAF-throttled scroll listener; React only re-renders when a value flips.
+ */
+function useHeaderState(pathname: string) {
+  const [state, setState] = useState({ dark: pathname === "/", scrolled: false });
+  useEffect(() => {
+    let frame = 0;
+    const read = () => {
+      frame = 0;
+      const hero = pathname === "/" ? document.getElementById("hero") : null;
+      const dark = !!hero && hero.getBoundingClientRect().bottom > HEADER_PX;
+      const scrolled = window.scrollY > 4;
+      setState((s) => (s.dark === dark && s.scrolled === scrolled ? s : { dark, scrolled }));
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(read);
+    };
+    read();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [pathname]);
+  return state;
+}
+
 export function SiteHeader() {
   const pathname = usePathname();
+  const header = useHeaderState(pathname);
+  // With the phone menu open, the header turns light to sit on the menu's white sheet.
+  const [menuOpen, setMenuOpen] = useState(false);
+  const dark = header.dark && !menuOpen;
+  const scrolled = header.scrolled || menuOpen;
   if (ownFrame(pathname)) return null;
 
+  const surface = menuOpen
+    ? "border-stone-200 bg-white"
+    : dark
+    ? scrolled
+      ? "on-dark border-white/10 bg-ink/70 shadow-[0_8px_30px_-12px_rgb(0_0_0/0.6)] backdrop-blur-xl backdrop-saturate-150"
+      : "on-dark border-transparent bg-transparent"
+    : scrolled
+      ? "border-stone-200/80 bg-white/80 shadow-[0_8px_30px_-16px_rgb(12_10_9/0.18)] backdrop-blur-xl backdrop-saturate-150"
+      : "border-transparent bg-white/80 backdrop-blur-xl";
+
   return (
-    <header className="sticky top-0 z-40 border-b border-stone-200/80 bg-white/90 backdrop-blur-md">
-      <nav aria-label="Main" className="relative mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
-        <div className="flex items-center gap-8">
+    <header className={`sticky top-0 z-40 border-b transition-[background-color,border-color,box-shadow] duration-300 ${surface}`}>
+      <nav aria-label="Main" className="relative mx-auto grid h-[4.5rem] max-w-7xl grid-cols-[1fr_auto] items-center gap-4 px-4 sm:px-6 md:grid-cols-[1fr_auto_1fr]">
+        <div className="flex items-center gap-3">
           <Link href="/" aria-label="Mezout home" className="rounded-lg">
-            <Wordmark />
+            <Wordmark dark={dark} />
           </Link>
-          <SiteNav />
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="hidden rounded-full border border-signal-200 bg-signal-50 px-2.5 py-1 font-mono text-[11px] font-medium uppercase tracking-wider text-signal-800 sm:inline">
+          <span
+            title="Mezout runs on Mezo testnet. Test tokens have no real value."
+            className={`hidden items-center gap-1.5 rounded-full px-2 py-0.5 font-mono text-[10.5px] font-medium uppercase tracking-wider sm:inline-flex ${
+              dark ? "bg-white/[0.06] text-stone-300 ring-1 ring-inset ring-white/10" : "bg-signal-50 text-signal-800 ring-1 ring-inset ring-signal-200"
+            }`}
+          >
+            <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-signal-500" />
             Testnet
           </span>
-          <Link href="/dashboard" className="hidden rounded-full px-3.5 py-2 text-[15px] text-stone-700 hover:bg-stone-100 hover:text-ink md:inline">
+        </div>
+        <SiteNav dark={dark} />
+        <div className="flex items-center justify-end gap-1.5">
+          <Link
+            href="/dashboard"
+            className={`hidden rounded-full px-4 py-2 text-[15px] font-medium transition-colors md:inline ${
+              dark ? "text-stone-200 hover:bg-white/10 hover:text-white" : "text-stone-700 hover:bg-stone-100 hover:text-ink"
+            }`}
+          >
             Sign in
           </Link>
-          <Link href="/dashboard" className="pill-ink hidden px-5 py-2.5 text-sm sm:inline-flex">
-            Get started
+          <Link href="/dashboard" className={`${dark ? "pill-signal" : "pill-ink"} hidden px-5 py-2.5 text-sm sm:inline-flex`}>
+            Get started <span aria-hidden>→</span>
           </Link>
-          <MobileMenu />
+          <MobileMenu dark={dark} onOpenChange={setMenuOpen} />
         </div>
       </nav>
     </header>
