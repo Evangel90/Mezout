@@ -75,7 +75,14 @@ export function Checkout({ token, businessName, reference, successUrl, embedded,
     }
   }, [token]);
 
-  if (!signed) return <p className="text-red-700">This payment link is not valid.</p>;
+  if (!signed) {
+    return (
+      <div role="alert" className="mx-auto max-w-md space-y-1 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+        <h1 className="font-semibold text-stone-900">This payment link is not valid</h1>
+        <p className="text-sm text-stone-600">Check that it was copied in full, or ask the merchant to send it again.</p>
+      </div>
+    );
+  }
   return (
     <CheckoutInner
       token={token}
@@ -425,168 +432,291 @@ function CheckoutInner({
     !hasOption &&
     ((!isSmartAccount && quote.isLoading) || (supportsSwaps && (swapQuotes.isLoading || swapBalances.isLoading)));
 
+  const merchantName = businessName ?? shortAddr(invoice.merchant);
+  const fee = isSmartAccount ? "You pay the network fee" : "No network fee";
+
   return (
-    <div className="mx-auto max-w-md space-y-6">
-      <div className="space-y-4 rounded-xl border border-stone-200 bg-white p-6">
-        <div className="min-w-0">
-          <p className="text-sm text-stone-500">Pay</p>
-          <p className="truncate text-lg font-semibold">{businessName ?? shortAddr(invoice.merchant)}</p>
-          {businessName && <p className="font-mono text-xs text-stone-500">{shortAddr(invoice.merchant)}</p>}
-        </div>
-        <div>
-          <p className="text-4xl font-semibold tracking-tight">{fmt(invoice.amount)} MUSD</p>
-          {invoice.fee > 0n && <p className="mt-1 text-xs text-stone-500">You pay this exact amount; the merchant&apos;s platform fee is deducted from their settlement.</p>}
-          {reference && <p className="mt-1 text-sm text-stone-600">{reference}</p>}
-        </div>
-        {!paid && (
-          <p className="text-xs text-stone-500" title={new Date(Number(invoice.expiry) * 1000).toLocaleString()}>
-            {expired ? "Expired" : `Link expires in ${timeLeft(invoice.expiry)}`}
-          </p>
-        )}
-      </div>
-
-      {paid ? (
-        <div className="rounded-xl border border-green-200 bg-green-50 p-6 text-green-900">
-          <p className="font-medium">Payment complete</p>
-          <p className="text-sm">
-            You paid {fmt(invoice.amount)} MUSD. {businessName ?? shortAddr(invoice.merchant)} received {fmt(invoice.amount - invoice.fee)} MUSD.
-            {successUrl ? "" : " You can close this page."}
-          </p>
-          {borrowedToPay && <BorrowerFollowUp snapshot={followUp.data} loading={followUp.isLoading} error={followUp.isError} />}
-          <div className="mt-3 flex flex-wrap items-center gap-4">
-            {successUrl && (
-              <a href={successUrl} className="rounded-lg bg-green-800 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">
-                Return to {businessName ?? "the store"}
-              </a>
-            )}
-            {embedded && (
-              <button type="button" onClick={closeEmbeddedCheckout} className="text-sm underline">
-                Close checkout
-              </button>
-            )}
-            {status.kind === "sent" && (
-              <a href={txUrl(status.hash)} target="_blank" rel="noreferrer" className="text-sm underline">
-                View transaction
-              </a>
+    <div className="mx-auto max-w-md space-y-4 pb-6">
+      <section aria-label="Payment summary" className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
+        <div className="space-y-5 p-6">
+          <div className="flex items-center gap-3">
+            <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-stone-900 text-sm font-semibold uppercase text-white">
+              {businessName ? businessName.trim().charAt(0) : "M"}
+            </span>
+            <div className="min-w-0">
+              <p className="text-xs text-stone-500">Pay</p>
+              <h1 className="truncate font-semibold leading-tight text-stone-900">{merchantName}</h1>
+              {businessName && <p className="font-mono text-xs text-stone-500">{shortAddr(invoice.merchant)}</p>}
+            </div>
+          </div>
+          <div className="space-y-1">
+            <p className="text-4xl font-semibold tracking-tight tabular-nums text-stone-900">
+              {fmt(invoice.amount)} <span className="text-xl font-medium text-stone-500">MUSD</span>
+            </p>
+            {reference && <p className="text-sm text-stone-600">{reference}</p>}
+            {invoice.fee > 0n && (
+              <p className="text-xs text-stone-500">You pay exactly this amount. The merchant&apos;s platform fee comes out of their settlement.</p>
             )}
           </div>
-        </div>
-      ) : expired ? (
-        <p className="text-stone-600">This link has expired. Ask {businessName ?? "the merchant"} for a new one.</p>
-      ) : !address ? (
-        <div className="space-y-3">
-          <p className="text-stone-600">Connect a Bitcoin wallet (Xverse, Unisat, OKX) or an EVM wallet to pay.</p>
-          <ConnectButton />
-        </div>
-      ) : (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between text-sm text-stone-600">
-            <span>MUSD balance: {fmt(balance)}</span>
-            <ConnectButton showBalance={false} chainStatus="none" accountStatus="address" />
-          </div>
-
-          {canPayMusd && (
-            <button
-              disabled={busy}
-              onClick={payWithMusd}
-              className="w-full rounded-lg bg-stone-900 px-4 py-3 text-left text-white hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-40"
+          {!paid && (
+            <p
+              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${expired ? "bg-stone-100 text-stone-600" : "bg-amber-50 text-amber-900"}`}
+              title={new Date(Number(invoice.expiry) * 1000).toLocaleString()}
             >
-              <span className="block font-medium">Pay with MUSD</span>
-              <span className="block text-xs text-stone-300">
-                {fmt(invoice.amount)} MUSD · {isSmartAccount ? "you pay the network fee" : "no network fee"}
-              </span>
-            </button>
+              <ClockIcon />
+              {expired ? "Expired" : `Link expires in ${timeLeft(invoice.expiry)}`}
+            </p>
           )}
+        </div>
 
-          {(["BTC", "MEZO"] as const).filter(canSwap).map((method) => (
-            <button
-              key={method}
-              disabled={busy}
-              onClick={() => payWithSwap(method)}
-              className="w-full rounded-lg border border-stone-300 bg-white px-4 py-3 text-left hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <span className="block font-medium">Pay with {method}</span>
-              <span className="block text-xs text-stone-500">
-                ≈ {fmtToken(swapQuotes.data![method]!)} {method} · {isSmartAccount ? "you pay the network fee" : "no network fee"}
-              </span>
-              <span className="block text-xs text-stone-400">
-                Never more than {fmtToken(withSlippage(swapQuotes.data![method]!))} {method}. Swapped to MUSD as you pay.
-              </span>
-            </button>
-          ))}
-
-          {!isSmartAccount && quote.data?.active && (
-            <div className="space-y-2 rounded-lg border border-stone-200 bg-white p-4">
-              <button
-                disabled={!canBorrow || busy}
-                onClick={payWithBorrow}
-                className="w-full rounded-lg bg-orange-600 px-4 py-3 text-left text-white hover:bg-orange-500 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <span className="block font-medium">Borrow against my BTC</span>
-                <span className="block text-xs text-orange-100">
-                  Borrow {fmt(borrowed)} MUSD{fromBalance > 0n ? ` + ${fmt(fromBalance)} from balance` : ""}, no network fee
+        <div className="border-t border-stone-200 bg-stone-50/70 p-6">
+          {paid ? (
+            <div className="space-y-4" aria-live="polite">
+              <div className="flex items-start gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-600 text-white">
+                  <CheckMark />
                 </span>
-              </button>
-              {partialBalance && (
-                <label className="flex items-center gap-2 text-xs text-stone-600">
-                  <input type="checkbox" checked={useBalanceFirst} onChange={(e) => setUseBalanceFirst(e.target.checked)} />
-                  Use my MUSD balance first
-                </label>
+                <div className="space-y-1">
+                  <h2 className="font-semibold text-stone-900">Payment complete</h2>
+                  <p className="text-sm text-stone-600">
+                    You paid {fmt(invoice.amount)} MUSD. {merchantName} received {fmt(invoice.amount - invoice.fee)} MUSD.
+                    {successUrl ? "" : " You can close this page."}
+                  </p>
+                </div>
+              </div>
+              {borrowedToPay && <BorrowerFollowUp snapshot={followUp.data} loading={followUp.isLoading} error={followUp.isError} />}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+                {successUrl && (
+                  <a href={successUrl} className="inline-flex h-11 items-center rounded-lg bg-stone-900 px-5 text-sm font-medium text-white hover:bg-stone-700">
+                    Return to {businessName ?? "the store"}
+                  </a>
+                )}
+                {embedded && (
+                  <button type="button" onClick={closeEmbeddedCheckout} className="text-sm font-medium text-stone-700 underline underline-offset-2">
+                    Close checkout
+                  </button>
+                )}
+                {status.kind === "sent" && (
+                  <a href={txUrl(status.hash)} target="_blank" rel="noreferrer" className="text-sm text-stone-600 underline underline-offset-2">
+                    View transaction
+                  </a>
+                )}
+              </div>
+            </div>
+          ) : expired ? (
+            <div className="space-y-1">
+              <h2 className="font-semibold text-stone-900">This link has expired</h2>
+              <p className="text-sm text-stone-600">Ask {businessName ?? "the merchant"} for a new one. Nothing was charged.</p>
+            </div>
+          ) : !address ? (
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <h2 className="font-semibold text-stone-900">Connect a wallet to pay</h2>
+                <p className="text-sm text-stone-600">
+                  Use a Bitcoin wallet (Xverse, Unisat, OKX) or an EVM wallet. You&apos;ll only see the payment options
+                  your wallet can use.
+                </p>
+              </div>
+              <ConnectButton />
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="text-sm">
+                  <p className="text-xs text-stone-500">MUSD balance</p>
+                  <p className="font-medium tabular-nums text-stone-900">{fmt(balance)} MUSD</p>
+                </div>
+                <ConnectButton showBalance={false} chainStatus="none" accountStatus="address" />
+              </div>
+
+              <div aria-live="polite" className="empty:hidden">
+                {status.kind === "working" && (
+                  <p className="flex items-center gap-2 rounded-lg border border-stone-200 bg-white px-4 py-3 text-sm text-stone-800">
+                    <Spinner />
+                    {status.step}…
+                  </p>
+                )}
+                {status.kind === "sent" && !paid && (
+                  <p className="flex flex-wrap items-center gap-2 rounded-lg border border-stone-200 bg-white px-4 py-3 text-sm text-stone-800">
+                    <Spinner />
+                    Waiting for confirmation…
+                    <a href={txUrl(status.hash)} target="_blank" rel="noreferrer" className="underline underline-offset-2">
+                      View transaction
+                    </a>
+                  </p>
+                )}
+                {status.kind === "error" && (
+                  <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
+                    {status.message}
+                  </p>
+                )}
+              </div>
+
+              {(hasOption || checking) && <h2 className="pt-1 text-sm font-medium text-stone-900">Choose how to pay</h2>}
+
+              <div className="space-y-2">
+                {canPayMusd && (
+                  <MethodOption
+                    dot="bg-green-600"
+                    title="Pay with MUSD"
+                    detail={`${fmt(invoice.amount)} MUSD · ${fee.toLowerCase()}`}
+                    disabled={busy}
+                    onClick={payWithMusd}
+                  />
+                )}
+
+                {(["BTC", "MEZO"] as const).filter(canSwap).map((method) => (
+                  <MethodOption
+                    key={method}
+                    dot={method === "BTC" ? "bg-[#f7931a]" : "bg-rose-600"}
+                    title={`Pay with ${method}`}
+                    detail={`≈ ${fmtToken(swapQuotes.data![method]!)} ${method} · ${fee.toLowerCase()}`}
+                    note={`Never more than ${fmtToken(withSlippage(swapQuotes.data![method]!))} ${method}. Swapped to MUSD as you pay.`}
+                    disabled={busy}
+                    onClick={() => payWithSwap(method)}
+                  />
+                ))}
+
+                {!isSmartAccount && quote.data?.active && (
+                  <div className="space-y-3 rounded-xl border border-stone-200 bg-white p-3">
+                    <MethodOption
+                      dot="bg-orange-600"
+                      title="Borrow against my BTC"
+                      detail={`Borrow ${fmt(borrowed)} MUSD${fromBalance > 0n ? ` + ${fmt(fromBalance)} from balance` : ""}, no network fee`}
+                      note="Keep your Bitcoin. The MUSD is added to your Mezo loan."
+                      disabled={!canBorrow || busy}
+                      onClick={payWithBorrow}
+                      flush
+                    />
+                    {partialBalance && (
+                      <label className="flex items-center gap-2 px-1 text-sm text-stone-700">
+                        <input
+                          type="checkbox"
+                          checked={useBalanceFirst}
+                          onChange={(e) => setUseBalanceFirst(e.target.checked)}
+                          className="h-4 w-4 rounded border-stone-300 accent-stone-900"
+                        />
+                        Use my MUSD balance first
+                      </label>
+                    )}
+                    <BorrowDetails quote={quote.data} loading={false} />
+                  </div>
+                )}
+              </div>
+
+              {checking ? (
+                <p role="status" className="flex items-center gap-2 text-sm text-stone-500">
+                  <Spinner />
+                  Checking what this wallet can pay with…
+                </p>
+              ) : (
+                !hasOption && (
+                  <div className="space-y-1 rounded-lg border border-stone-200 bg-white px-4 py-3 text-sm">
+                    <p className="font-medium text-stone-900">This wallet can&apos;t pay {fmt(invoice.amount)} MUSD yet</p>
+                    <p className="text-stone-600">
+                      You can pay with MUSD, BTC or MEZO, or by borrowing against a Mezo BTC loan.
+                      {!supportsSwaps && " This link was made for an earlier version of Mezout, so only MUSD payments work."}
+                    </p>
+                  </div>
+                )
               )}
-              <BorrowDetails quote={quote.data} loading={false} />
+              {isSmartAccount && (
+                <p className="text-xs text-stone-500">Borrow-to-pay needs an EVM wallet for now; Bitcoin-wallet support is coming.</p>
+              )}
             </div>
           )}
-
-          {checking ? (
-            <p className="text-sm text-stone-500">Checking what this wallet can pay with…</p>
-          ) : (
-            !hasOption && (
-              <p className="text-sm text-stone-600">
-                This wallet has no way to pay {fmt(invoice.amount)} MUSD yet. You can pay with MUSD, BTC or MEZO, or by
-                borrowing against a Mezo BTC loan.
-                {!supportsSwaps && " This link was made for an earlier version of Mezout, so only MUSD payments work."}
-              </p>
-            )
-          )}
-          {isSmartAccount && (
-            <p className="text-xs text-stone-500">
-              Borrow-to-pay needs an EVM wallet for now; Bitcoin-wallet support is coming.
-            </p>
-          )}
-
-          {status.kind === "working" && <p className="text-sm text-stone-600">{status.step}…</p>}
-          {status.kind === "sent" && !paid && (
-            <p className="text-sm text-stone-600">
-              Waiting for confirmation…{" "}
-              <a href={txUrl(status.hash)} target="_blank" rel="noreferrer" className="underline">
-                transaction
-              </a>
-            </p>
-          )}
-          {status.kind === "error" && <p className="text-sm text-red-700">{status.message}</p>}
         </div>
-      )}
+      </section>
+      <p className="text-center text-xs text-stone-500">
+        Paid straight to {merchantName} through a verified Mezo contract. Mezout never holds your funds.
+      </p>
     </div>
   );
 }
 
-function BorrowDetails({ quote, loading }: { quote?: Awaited<ReturnType<typeof quoteBorrow>>; loading: boolean }) {
-  if (loading) return <p className="text-xs text-stone-500">Checking your loan…</p>;
-  if (!quote) return null;
-  if (!quote.active) return <p className="text-xs text-stone-500">No MUSD loan found for this wallet.</p>;
-  if (quote.recoveryMode) return <p className="text-xs text-stone-500">Borrowing is paused while Mezo is in Recovery Mode.</p>;
+/** One way to pay: a full-width button with a coloured marker, what it costs, and an optional note. */
+function MethodOption({
+  dot,
+  title,
+  detail,
+  note,
+  disabled,
+  onClick,
+  flush = false,
+}: {
+  dot: string;
+  title: string;
+  detail: string;
+  note?: string;
+  disabled: boolean;
+  onClick: () => void;
+  flush?: boolean;
+}) {
   return (
-    <dl className="grid grid-cols-2 gap-y-1 text-xs text-stone-600">
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className={`group flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+        flush ? "bg-stone-50 hover:bg-stone-100" : "border border-stone-200 bg-white hover:border-stone-900"
+      }`}
+    >
+      <span aria-hidden className={`h-2.5 w-2.5 shrink-0 rounded-full ${dot}`} />
+      <span className="min-w-0 flex-1">
+        <span className="block font-medium text-stone-900">{title}</span>
+        <span className="block text-xs text-stone-600">{detail}</span>
+        {note && <span className="block text-xs text-stone-500">{note}</span>}
+      </span>
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4 shrink-0 text-stone-400 group-hover:text-stone-900" aria-hidden>
+        <path d="M7.5 5l5 5-5 5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </button>
+  );
+}
+
+function Spinner() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 shrink-0 motion-safe:animate-spin" aria-hidden>
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.25" strokeWidth="3" />
+      <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function ClockIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-3.5 w-3.5" aria-hidden>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function CheckMark() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} className="h-5 w-5" aria-hidden>
+      <path d="M5 12.5l4.5 4.5L19 7.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function BorrowDetails({ quote, loading }: { quote?: Awaited<ReturnType<typeof quoteBorrow>>; loading: boolean }) {
+  if (loading) return <p className="px-1 text-xs text-stone-500">Checking your loan…</p>;
+  if (!quote) return null;
+  if (!quote.active) return <p className="px-1 text-xs text-stone-500">No MUSD loan found for this wallet.</p>;
+  if (quote.recoveryMode) return <p className="px-1 text-xs text-stone-500">Borrowing is paused while Mezo is in Recovery Mode.</p>;
+  return (
+    <dl className="grid grid-cols-2 gap-y-1 px-1 text-xs text-stone-600">
       <dt>Collateral ratio</dt>
-      <dd className="text-right">
-        {pct(quote.icrBefore)} → <span className={quote.canBorrow ? "" : "text-red-700"}>{pct(quote.icrAfter)}</span>
+      <dd className="text-right tabular-nums">
+        {pct(quote.icrBefore)} → <span className={quote.canBorrow ? "font-medium text-stone-900" : "font-medium text-red-700"}>{pct(quote.icrAfter)}</span>
       </dd>
       <dt>Borrowing fee (0.1%)</dt>
-      <dd className="text-right">{fmt(quote.borrowFee)} MUSD, added to your loan</dd>
+      <dd className="text-right tabular-nums">{fmt(quote.borrowFee)} MUSD, added to your loan</dd>
       <dt>BTC price</dt>
-      <dd className="text-right">${fmt(quote.price)}</dd>
+      <dd className="text-right tabular-nums">${fmt(quote.price)}</dd>
       {!quote.canBorrow && (
-        <dd className="col-span-2 text-red-700">This would take your loan below the 160% safety floor or its borrowing limit.</dd>
+        <dd className="col-span-2 pt-1 text-red-700">This would take your loan below the 160% safety floor or its borrowing limit.</dd>
       )}
     </dl>
   );
@@ -601,9 +731,9 @@ function BorrowerFollowUp({
   loading: boolean;
   error: boolean;
 }) {
-  if (loading) return <p className="mt-3 text-sm">Refreshing your loan position…</p>;
-  if (error || !snapshot) return <p className="mt-3 text-sm">Your payment is complete. Refresh this page to check your current loan position.</p>;
-  if (!snapshot.active) return <p className="mt-3 text-sm">Your payment is complete. No active Mezo loan was found for this wallet.</p>;
+  if (loading) return <p className="text-sm text-stone-600">Refreshing your loan position…</p>;
+  if (error || !snapshot) return <p className="text-sm text-stone-600">Your payment is complete. Refresh this page to check your current loan position.</p>;
+  if (!snapshot.active) return <p className="text-sm text-stone-600">Your payment is complete. No active Mezo loan was found for this wallet.</p>;
 
   const risk = troveRisk(snapshot);
   const tone =
@@ -624,9 +754,9 @@ function BorrowerFollowUp({
           : "Your position has a 200% or greater collateral ratio.";
 
   return (
-    <section className={`mt-4 rounded-lg border p-4 ${tone}`} aria-live="polite">
-      <p className="font-medium">Loan check after payment</p>
-      <dl className="mt-2 grid grid-cols-2 gap-y-1 text-sm">
+    <section className={`rounded-xl border p-4 ${tone}`} aria-live="polite">
+      <h3 className="font-medium">Your loan after this payment</h3>
+      <dl className="mt-2 grid grid-cols-2 gap-y-1 text-sm tabular-nums">
         <dt>Current debt</dt>
         <dd className="text-right">{fmt(snapshot.debt)} MUSD</dd>
         <dt>Collateral ratio</dt>
