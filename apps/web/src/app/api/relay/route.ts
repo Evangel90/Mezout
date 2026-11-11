@@ -72,6 +72,11 @@ export async function POST(req: Request) {
   if ((input.method === "MEZO" || input.method === "BTC") && !isCurrent && !isV2) {
     return NextResponse.json({ error: "This link was made before MEZO and BTC payments. Pay with MUSD." }, { status: 400 });
   }
+  // v1 and v2 borrows send the MUSD to the router, so a copied borrow signature can strand it there. Only the current
+  // router borrows straight to the payer.
+  if (input.method === "BORROW" && !isCurrent) {
+    return NextResponse.json({ error: "This link was made before the current checkout. Pay with MUSD." }, { status: 400 });
+  }
   const client = publicClient();
   const wallet = relayerClient();
 

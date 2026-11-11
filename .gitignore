@@ -18,10 +18,12 @@ contracts/broadcast/*/31611/dry-run/
 
 # Agent skills installed by the Vercel Neon integration
 .agents/
-.claude/skills/
+.claude/
 skills-lock.json
-.claude/settings.local.json
 
 # Local screenshots and demo recordings
 docs/screenshots/
 docs/demo/
+
+# Security self-review, kept local
+docs/SECURITY_REVIEW.md

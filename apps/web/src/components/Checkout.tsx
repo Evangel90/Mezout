@@ -109,8 +109,10 @@ function CheckoutInner({
   invoiceSig: SignedInvoice["signature"];
   router: Address;
 } & Display) {
-  // Links signed for the first router can only be paid with MUSD or by borrowing.
-  const supportsSwaps = isAddressEqual(router, currentRouter);
+  // Links signed for an earlier router can only be paid with MUSD. Swaps need v2 or later, and v1/v2 borrows expect
+  // the router as the borrow recipient, which this checkout no longer signs.
+  const isCurrentRouter = isAddressEqual(router, currentRouter);
+  const supportsSwaps = isCurrentRouter;
   const { address } = useAccount();
   const client = usePublicClient();
   const { signTypedDataAsync } = useSignTypedData();
@@ -213,7 +215,7 @@ function CheckoutInner({
   });
 
   const canPayMusd = balance >= invoice.amount;
-  const canBorrow = !isSmartAccount && !!quote.data?.canBorrow;
+  const canBorrow = isCurrentRouter && !isSmartAccount && !!quote.data?.canBorrow;
   // This starts only after the borrow payment has been confirmed. It is advisory
   // monitoring, never an authorization to move collateral or repay debt.
   const followUp = useQuery({
@@ -542,7 +544,7 @@ function CheckoutInner({
               <p className="text-sm text-stone-600">
                 This wallet has no way to pay {fmt(invoice.amount)} MUSD yet. You can pay with MUSD, BTC or MEZO, or by
                 borrowing against a Mezo BTC loan.
-                {!supportsSwaps && " This link was made before BTC and MEZO payments, so only MUSD and borrowing work."}
+                {!supportsSwaps && " This link was made for an earlier version of Mezout, so only MUSD payments work."}
               </p>
             )
           )}

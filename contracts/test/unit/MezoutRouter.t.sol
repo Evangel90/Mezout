@@ -431,4 +431,87 @@ contract MezoutRouterTest is Test {
         assertEq(troveManager.debt(payer), 10_000e18 + borrowed);
         _assertRouterEmpty();
     }
+
+    // ---------------------------------------------------------------- security self-review regressions
+
+    /// SR-1: the `Payment` signature does not name the method. Whoever holds a borrow checkout's signatures can
+    /// submit them to payWithMUSD instead. The invoice is paid correctly from the payer's balance, nothing is
+    /// borrowed, and the unused borrow authorization stays live until its deadline. No one but the merchant and
+    /// the fee recipient receives MUSD.
+    function test_review_borrowCheckoutSignaturesCanSettleFromBalance() public {
+        MezoutRouter.Invoice memory inv = _invoice(2_000e18, 20e18, "review-method-swap");
+        bytes memory paySig = _signPayment(payerPk, inv, payer);
+        MezoutRouter.BorrowAuth memory b = _borrowAuth(payerPk, payer, 2_000e18, payer);
+        bytes memory invSig = _signInvoice(inv);
+        MezoutRouter.PermitSig memory p = _permit(payerPk, payer, inv.amount);
+
+        vm.prank(attacker);
+        router.payWithMUSD(inv, invSig, payer, paySig, p);
+
+        assertEq(musd.balanceOf(merchant), 1_980e18);
+        assertEq(musd.balanceOf(feeRecipient), 20e18);
+        assertEq(musd.balanceOf(payer), 8_000e18, "paid from balance");
+        assertEq(troveManager.debt(payer), 10_000e18, "no borrow");
+        _assertRouterEmpty();
+
+        // The relayer's original borrow call now fails cleanly, and the leftover authorization can only ever mint
+        // MUSD into the payer's own wallet.
+        vm.prank(relayer);
+        vm.expectRevert(MezoutRouter.InvoiceAlreadyPaid.selector);
+        router.payWithBorrow(inv, invSig, payer, paySig, 0, p, b);
+
+        vm.prank(attacker);
+        bos.withdrawMUSDWithSignature(2_000e18, address(0), address(0), payer, payer, b.signature, b.deadline);
+        assertEq(musd.balanceOf(payer), 10_000e18);
+        assertEq(troveManager.debt(payer), 12_000e18);
+    }
+
+    /// SR-2: the front-run fallback accepts the payer's most recently used borrow authorization for the same amount
+    /// and deadline, even if a previous checkout used it. A second invoice the payer signed can then settle from
+    /// the payer's balance without a new borrow. It still needs the payer's own Payment signature and allowance.
+    function test_review_previousBorrowSigSettlesNextInvoiceFromBalance() public {
+        MezoutRouter.Invoice memory first = _invoice(1_000e18, 0, "review-reuse-1");
+        MezoutRouter.BorrowAuth memory b = _borrowAuth(payerPk, payer, 1_000e18, payer);
+        vm.prank(relayer);
+        router.payWithBorrow(
+            first, _signInvoice(first), payer, _signPayment(payerPk, first, payer), 0, _permit(payerPk, payer, 1_000e18), b
+        );
+        assertEq(troveManager.debt(payer), 11_000e18);
+
+        MezoutRouter.Invoice memory second = _invoice(1_000e18, 0, "review-reuse-2");
+        bytes memory paySig2 = _signPayment(payerPk, second, payer);
+        vm.prank(relayer);
+        router.payWithBorrow(second, _signInvoice(second), payer, paySig2, 0, _permit(payerPk, payer, 1_000e18), b);
+
+        assertEq(musd.balanceOf(merchant), 2_000e18);
+        assertEq(troveManager.debt(payer), 11_000e18, "second invoice did not borrow");
+        assertEq(musd.balanceOf(payer), 9_000e18, "second invoice paid from balance");
+        _assertRouterEmpty();
+    }
+
+    /// SR-3: Mezo itself only enforces 110%. A third party who submits the borrow authorization directly can push
+    /// the trove below Mezout's 160% floor; checkout then reverts, and the borrowed MUSD stays in the payer's own
+    /// wallet, where they can repay it. Nothing reaches the merchant or the router.
+    function test_review_frontRunBorrowBelowFloorLeavesDebtWithPayer() public {
+        // 1 BTC at 80,000 with 10,000 debt; borrowing 45,000 leaves 55,000 debt: ~145%.
+        MezoutRouter.Invoice memory inv = _invoice(45_000e18, 0, "review-floor");
+        bytes memory paySig = _signPayment(payerPk, inv, payer);
+        MezoutRouter.BorrowAuth memory b = _borrowAuth(payerPk, payer, 45_000e18, payer);
+        bytes memory invSig = _signInvoice(inv);
+        MezoutRouter.PermitSig memory p = _permit(payerPk, payer, inv.amount);
+
+        vm.prank(attacker);
+        bos.withdrawMUSDWithSignature(45_000e18, address(0), address(0), payer, payer, b.signature, b.deadline);
+
+        uint256 icrAfter = uint256(1e18) * 80_000e18 / 55_000e18;
+        vm.prank(relayer);
+        vm.expectRevert(abi.encodeWithSelector(MezoutRouter.TroveBelowSafetyFloor.selector, icrAfter));
+        router.payWithBorrow(inv, invSig, payer, paySig, 0, p, b);
+
+        assertEq(musd.balanceOf(payer), 55_000e18, "borrowed MUSD stays with the payer");
+        assertEq(troveManager.debt(payer), 55_000e18);
+        assertEq(musd.balanceOf(merchant), 0);
+        assertFalse(router.paid(inv.orderId));
+        _assertRouterEmpty();
+    }
 }
