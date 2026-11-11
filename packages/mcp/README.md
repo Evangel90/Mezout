@@ -43,46 +43,37 @@ Names are in `.env.example`.
 
 ## Run it
 
-The step-by-step setup guide for Claude Code, Claude Desktop and Cursor is in the API reference: [usemezout.vercel.app/docs#ai-agents](https://usemezout.vercel.app/docs#ai-agents). In short:
+You need Node.js 20 or later. The step-by-step guide for Claude Code, Claude Desktop and Cursor is at [usemezout.vercel.app/docs#ai-agents](https://usemezout.vercel.app/docs#ai-agents). For the merchant tools, create an API key on the dashboard's **Developers** tab. For the payer tools, use a new wallet used only for testing, funded with test BTC and MUSD from [faucet.test.mezo.org](https://faucet.test.mezo.org).
 
-You need Node 20+, pnpm 9 and Git. For the payer tools, use a new wallet used only for testing and fund it with test BTC and MUSD from [faucet.test.mezo.org](https://faucet.test.mezo.org). For the merchant tools, create an API key on the dashboard's **Developers** tab.
-
-Build once, in a terminal:
-
-```bash
-git clone https://github.com/Evangel90/Mezout.git
-cd Mezout
-pnpm install
-pnpm --filter @mezout/mcp build     # writes packages/mcp/dist/index.js
-```
-
-Add it to Claude Code (any terminal, replace the path and values):
+Claude Code:
 
 ```bash
 claude mcp add mezout \
   -e MEZOUT_API_KEY=mzk_test_YOUR_KEY \
   -e MEZOUT_PAYER_PRIVATE_KEY=0xYOUR_TESTNET_KEY \
   -e MEZOUT_MAX_PAYMENT_MUSD=1 -e MEZOUT_MAX_SESSION_MUSD=5 \
-  -- node /absolute/path/to/Mezout/packages/mcp/dist/index.js
+  -- npx -y @mezout/mcp
 ```
 
-Or in a client's JSON config (Claude Desktop, Cursor):
+Claude Desktop, Cursor and other clients (MCP config JSON):
 
 ```json
 {
   "mcpServers": {
     "mezout": {
-      "command": "node",
-      "args": ["/absolute/path/to/Mezout/packages/mcp/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "@mezout/mcp"],
       "env": { "MEZOUT_API_KEY": "mzk_test_…", "MEZOUT_PAYER_PRIVATE_KEY": "0x…", "MEZOUT_MAX_PAYMENT_MUSD": "1" }
     }
   }
 }
 ```
 
-`npx /absolute/path/to/Mezout/packages/mcp` also starts it, once `dist/` is built. The server prints one status line to stderr (payer address and limits, never the key).
+The server prints one status line to stderr (payer address and limits, never the key).
 
 ## Develop
+
+To run it from source, build it with `pnpm --filter @mezout/mcp build` and point your client at `node packages/mcp/dist/index.js`.
 
 In a terminal at the repository root:
 

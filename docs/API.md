@@ -450,25 +450,14 @@ The MCP server gives Claude, Cursor or any other MCP client these tools:
 | `fetch_paid_resource` | Payer key | Fetch a URL, paying its HTTP 402 Mezout paywall on the way |
 | `get_budget` | Payer key | Show the payer address and how much of the spending limit is left |
 
-You need Node 20 or later, pnpm 9 and Git. Give it an API key, a payer key or both, depending on which tools you want.
+You need [Node.js](https://nodejs.org) 20 or later. The server is published on npm as [`@mezout/mcp`](https://www.npmjs.com/package/@mezout/mcp), and your agent starts it with `npx`, so there is nothing to download or build. Give it an API key, a payer key or both, depending on which tools you want.
 
 **1. Get your keys.**
 
 - **API key** (to take payments): on the [dashboard](https://usemezout.vercel.app/dashboard), open **Developers** and create a key. It starts with `mzk_test_`.
 - **Payer key** (to make payments): create a new wallet used only for testing, for example a fresh account in MetaMask, and export its private key. Get test BTC and MUSD for it from [faucet.test.mezo.org](https://faucet.test.mezo.org). Never use a wallet that holds real funds.
 
-**2. Download and build the server.** In a terminal:
-
-```bash
-git clone https://github.com/Evangel90/Mezout.git
-cd Mezout
-pnpm install
-pnpm --filter @mezout/mcp build
-```
-
-This writes `packages/mcp/dist/index.js`. Run `pwd` to get the folder's full path for the next step.
-
-**3. Add it to your agent.** In Claude Code, run this in any terminal, replacing the path and keys:
+**2. Add it to your agent.** In Claude Code, run this in any terminal, replacing the keys:
 
 ```bash
 claude mcp add mezout \
@@ -476,7 +465,7 @@ claude mcp add mezout \
   -e MEZOUT_PAYER_PRIVATE_KEY=0xYOUR_TEST_WALLET_KEY \
   -e MEZOUT_MAX_PAYMENT_MUSD=1 \
   -e MEZOUT_MAX_SESSION_MUSD=5 \
-  -- node /full/path/to/Mezout/packages/mcp/dist/index.js
+  -- npx -y @mezout/mcp
 ```
 
 For Claude Desktop, Cursor and other clients, add this to the client's MCP settings file (in Claude Desktop: **Settings → Developer → Edit Config**), then restart the client:
@@ -485,8 +474,8 @@ For Claude Desktop, Cursor and other clients, add this to the client's MCP setti
 {
   "mcpServers": {
     "mezout": {
-      "command": "node",
-      "args": ["/full/path/to/Mezout/packages/mcp/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "@mezout/mcp"],
       "env": {
         "MEZOUT_API_KEY": "mzk_test_YOUR_KEY",
         "MEZOUT_PAYER_PRIVATE_KEY": "0xYOUR_TEST_WALLET_KEY",
@@ -498,7 +487,7 @@ For Claude Desktop, Cursor and other clients, add this to the client's MCP setti
 }
 ```
 
-**4. Try it.** Ask your agent:
+**3. Try it.** Ask your agent:
 
 > Create a Mezout invoice for 0.5 MUSD for "Test order", then pay it and tell me the transaction.
 
