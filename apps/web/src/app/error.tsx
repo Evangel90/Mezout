@@ -9,7 +9,7 @@ export default function ErrorPage({ error, reset }: { error: Error & { digest?: 
           !
         </span>
         <h1 className="display-3">Something went wrong</h1>
-        <p className="text-lg text-stone-600">The page could not load. Your funds are not affected. Please try again.</p>
+        <p className="text-lg text-stone-600">This page didn’t load. Your money isn’t affected. Try again.</p>
         <button onClick={reset} className="pill-ink">
           Try again
         </button>

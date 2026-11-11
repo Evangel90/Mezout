@@ -611,8 +611,8 @@ function CheckoutInner({
                 {!address ? (
                   <div className="space-y-4 rounded-xl border border-stone-200 p-4">
                     <p className="text-sm leading-relaxed text-stone-600">
-                      Use a Bitcoin wallet (Xverse, Unisat, OKX) or an EVM wallet. You&apos;ll only see the payment options
-                      your wallet can use.
+                      Connect a Bitcoin wallet (Xverse, Unisat, OKX) or one like MetaMask. You&apos;ll only see the ways it
+                      can pay.
                     </p>
                     <ConnectButton />
                   </div>
@@ -714,14 +714,14 @@ function CheckoutInner({
                       <div className="space-y-1 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3.5 text-sm">
                         <p className="font-medium text-stone-900">This wallet can&apos;t pay {fmt(invoice.amount)} MUSD yet</p>
                         <p className="text-stone-600">
-                          You can pay with MUSD, BTC or MEZO, or by borrowing against a Mezo BTC loan.
+                          Add MUSD, BTC or MEZO to this wallet, or borrow against a Mezo BTC loan. Then come back to this page.
                           {!supportsSwaps && " This link was made for an earlier version of Mezout, so only MUSD payments work."}
                         </p>
                       </div>
                     )
                   )}
                   {isSmartAccount && (
-                    <p className="text-xs text-stone-500">Borrow-to-pay needs an EVM wallet for now; Bitcoin-wallet support is coming.</p>
+                    <p className="text-xs text-stone-500">Borrowing to pay needs a wallet like MetaMask for now.</p>
                   )}
                 </section>
               )}
@@ -765,13 +765,13 @@ function CheckoutInner({
           )}
 
           <div className="space-y-2 border-t border-stone-200 pt-5 text-xs text-stone-500">
-            <p>Paid straight to {merchantName} through a verified Mezo contract. Mezout never holds your funds.</p>
+            <p>Your payment goes straight to {merchantName} through a verified Mezo contract. Mezout never holds your money.</p>
             <p>
               Powered by{" "}
-              <a href="/" className="font-medium text-stone-700 underline underline-offset-2 hover:text-stone-900">
-                Mezout
+              <a href="/" target="_blank" rel="noopener noreferrer" className="font-medium text-stone-700 underline underline-offset-2 hover:text-stone-900">
+                Mezout<span className="sr-only"> (opens in a new tab)</span>
               </a>
-              , checkout for Mezo.
+              .
             </p>
           </div>
         </div>
