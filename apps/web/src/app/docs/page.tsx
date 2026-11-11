@@ -12,6 +12,13 @@ export const metadata: Metadata = {
 
 const REPO_DOC = "https://github.com/Evangel90/Mezout/blob/main/docs/API.md";
 
+const START = [
+  { href: "#quickstart", title: "Quickstart", body: "Your first invoice and payment in five minutes." },
+  { href: "#webhooks", title: "Webhooks", body: "Get told the moment a customer pays." },
+  { href: "#embedded-checkout", title: "Embedded checkout", body: "Open checkout in a modal on your site." },
+  { href: "#errors", title: "Errors and limits", body: "Status codes, retries and rate limits." },
+];
+
 const LANGUAGE_LABEL: Record<string, string> = { bash: "Terminal", json: "JSON", js: "JavaScript", php: "PHP", python: "Python" };
 
 const escapeHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -58,21 +65,33 @@ export default function DocsPage() {
   const { html, toc } = loadApiDoc();
   return (
     <div className="space-y-10">
-      <header className="space-y-4">
-        <p className="text-sm font-medium text-stone-500">Developers</p>
-        <h1 className="text-3xl font-semibold tracking-tight">API reference</h1>
-        <p className="max-w-2xl text-lg text-stone-600">
-          Create invoices from your store, follow payments and refunds, and get signed webhooks when something happens.
-          Everything runs on Mezo testnet with test MUSD.
-        </p>
+      <header className="space-y-6">
+        <div className="space-y-3">
+          <p className="text-sm font-medium text-stone-500">Developers</p>
+          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">API reference</h1>
+          <p className="max-w-2xl text-lg text-stone-600">
+            Create invoices from your server, send customers to checkout, and fulfil orders when a signed webhook arrives.
+            Everything runs on Mezo testnet with test MUSD.
+          </p>
+        </div>
         <div className="flex flex-wrap gap-3">
-          <Link href="/dashboard/developers" className="rounded-lg bg-stone-900 px-4 py-2 text-white hover:bg-stone-700">
+          <Link href="/dashboard/developers" className="rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700">
             Get an API key
           </Link>
-          <a href={REPO_DOC} className="rounded-lg border border-stone-300 bg-white px-4 py-2 hover:bg-stone-100">
+          <a href={REPO_DOC} className="rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium hover:bg-stone-100">
             View on GitHub
           </a>
         </div>
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {START.map((s) => (
+            <li key={s.href}>
+              <a href={s.href} className="flex h-full flex-col gap-1 rounded-xl border border-stone-200 bg-white p-4 hover:border-stone-300 hover:bg-stone-50">
+                <span className="text-sm font-medium text-stone-900">{s.title}</span>
+                <span className="text-xs text-stone-600">{s.body}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
       </header>
 
       <div className="lg:grid lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-12">

@@ -13,83 +13,83 @@ const contracts = [
 const builtOn = ["MUSD", "Mezo Passport", "Tigris", "ERC-4337", "EIP-712", "Sourcify"];
 
 const methods = [
-  { color: "bg-green-600", name: "Pay with MUSD", body: "Straight from their balance, with a signed permit." },
-  { color: "bg-[#f7931a]", name: "Pay with BTC", body: "Swapped to exact MUSD on Tigris at a live quote." },
-  { color: "bg-rose-600", name: "Pay with MEZO", body: "Swapped the same way, capped by the price they signed." },
-  { color: "bg-orange-600", name: "Borrow against BTC", body: "MUSD borrowed against their Bitcoin, inside the payment." },
+  { color: "bg-green-600", name: "Pay with MUSD", body: "Straight from their balance." },
+  { color: "bg-[#f7931a]", name: "Pay with BTC", body: "Converted to MUSD at a live price, never above the price they approve." },
+  { color: "bg-rose-600", name: "Pay with MEZO", body: "Converted the same way, with the same price cap." },
+  { color: "bg-orange-600", name: "Borrow against BTC", body: "They keep their Bitcoin and borrow the MUSD inside the payment." },
 ];
 
 const guarantees = [
   {
     icon: "equal",
-    title: "Clear MUSD settlement",
-    body: "The customer pays the listed amount; the signed platform fee is deducted from your MUSD settlement in the same transaction.",
+    title: "Clear settlement",
+    body: "The customer pays the listed amount. You see the fee and your net payout before you share a link, and both settle in the same transaction.",
   },
   {
     icon: "shield",
     title: "160% borrow floor",
-    body: "A borrow that would leave the customer’s loan under 160% collateral is refused on-chain, so checkout can’t push anyone toward liquidation.",
+    body: "A borrow that would leave the customer’s loan under 160% collateral is refused, so checkout never pushes anyone toward liquidation.",
   },
   {
     icon: "receipt",
     title: "One invoice, one payment",
-    body: "Every signature names a single invoice, and each invoice can be paid once. A copied signature can’t pay anything else.",
+    body: "Each invoice can be paid once, and every approval names a single invoice, so it can’t be reused for anything else.",
   },
   {
     icon: "arrow",
     title: "Non-custodial",
-    body: "Money moves from the customer to your payout address directly. Mezout never holds funds or keys.",
+    body: "Money goes from the customer straight to your payout account. Mezout never holds funds or keys.",
   },
   {
     icon: "blocks",
     title: "Paid means on-chain",
-    body: "Orders are marked paid only from the router’s Paid events, never from what a browser reports.",
+    body: "Orders are marked paid only once the payment is confirmed on Mezo, never on a browser’s word.",
   },
   {
     icon: "check",
     title: "No admin keys",
-    body: "No upgrades, no pause switch, no owner. The contract source is verified on Sourcify as an exact match.",
+    body: "No owner, no pause switch, no upgrades. The contract source is published and verified as an exact match.",
   },
 ];
 
 const devPoints = [
   "REST API with API keys, idempotency keys and rate limits",
-  "Signed webhooks, retried with backoff for 24 hours",
-  "WooCommerce plugin for classic and block checkouts",
-  "Signature verification code for Node, PHP and Python",
+  "Signed webhooks, retried for 24 hours, with a delivery log",
+  "WooCommerce plugin and Shopify app",
+  "Embedded checkout with a drop-in script or React component",
 ];
 
 const stats = [
   { value: "4", label: "ways for customers to pay" },
   { value: "0", label: "funds held by Mezout" },
   { value: "160%", label: "minimum collateral on any borrow" },
-  { value: "75", label: "contract tests, including fork tests against Mezo" },
+  { value: "0", label: "admin keys, pause switches or upgrades" },
 ];
 
 const faqs = [
   {
     q: "What can my customers pay with?",
-    a: "MUSD, BTC or MEZO, or MUSD borrowed against the BTC in their Mezo loan. The checkout only shows the options their wallet can actually use, and you receive MUSD settlement whichever they choose.",
+    a: "MUSD, BTC or MEZO, or MUSD borrowed against the Bitcoin in their Mezo loan. Checkout only shows the options their wallet can use, and you are paid in MUSD whichever they choose.",
   },
   {
     q: "Do I need a crypto wallet to get paid?",
-    a: "No. Create an account with a passkey (Face ID, Touch ID, Windows Hello or your phone) and Mezout gives you your own smart account, with gasless withdrawals. If you already use Mezo, you can be paid straight into your wallet instead.",
+    a: "No. Sign up with a passkey (Face ID, Touch ID, Windows Hello or your phone) and Mezout creates a payout account only you control, with free withdrawals. If you already use Mezo, you can be paid straight into your wallet instead.",
   },
   {
     q: "Does Mezout ever hold my money?",
-    a: "No. Each payment goes from the customer to your payout address in a single transaction. Mezout signs invoices and pays gas, but it has no way to move your funds.",
+    a: "No. Each payment goes from the customer to your payout account in a single transaction. Mezout issues invoices and pays network fees, but it has no way to move your funds.",
   },
   {
     q: "How do I know an order has been paid?",
-    a: "Mezout reads the router’s Paid events on Mezo and marks the invoice paid only from those. Your dashboard updates, and your server gets a signed invoice.paid webhook.",
+    a: "Mezout marks an invoice paid only once the payment is confirmed on Mezo. Your dashboard updates within seconds, and your store gets a signed invoice.paid webhook.",
   },
   {
     q: "What does it cost?",
-    a: "New testnet invoices carry a 1% merchant-paid platform fee. The customer always pays the listed invoice total; the signed fee is deducted from the merchant settlement and shown as gross, fee and net before the link is shared.",
+    a: "On testnet, a 1% platform fee paid by the merchant. The customer always pays the listed total; the fee comes out of your payout, and the dashboard shows gross, fee and net before you share a link.",
   },
   {
     q: "Can I use it with my store?",
-    a: "Yes. Install the WooCommerce plugin, create invoices from any backend with the REST API, or embed checkout with `mezout.js` or the React component. Shopify is planned next.",
+    a: "Yes. Install the WooCommerce plugin or the Shopify app, create invoices from any backend with the REST API, or embed checkout on your own site.",
   },
   {
     q: "Is Mezout live on mainnet?",
@@ -189,8 +189,8 @@ export default function Home() {
             </span>
           </h1>
           <p className="max-w-xl text-lg leading-relaxed text-stone-600">
-            Mezout is checkout for Mezo. Customers pay with MUSD, BTC or MEZO, or borrow against their Bitcoin, and you
-            always receive the invoiced amount in MUSD, enforced on-chain.
+            Mezout is checkout for Mezo. Customers pay with MUSD, BTC or MEZO, or borrow against their Bitcoin. You are
+            paid in stable MUSD, with the fee shown before you share a link.
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <Link href="/dashboard" className="inline-flex items-center gap-2 rounded-full bg-stone-900 px-5 py-3 font-medium text-white hover:bg-stone-700">
@@ -200,7 +200,7 @@ export default function Home() {
               Read the docs
             </Link>
           </div>
-          <p className="text-sm text-stone-500">No wallet needed. Sign up with a passkey in under a minute.</p>
+          <p className="text-sm text-stone-500">No wallet or seed phrase. Sign up with a passkey in under a minute.</p>
         </div>
         <div className="relative mx-auto w-full max-w-[500px]">
           <div
@@ -240,9 +240,9 @@ export default function Home() {
             <span className="block text-stone-400">Merchants don’t want a wallet.</span>
           </h2>
           <p className="text-lg leading-relaxed text-stone-600">
-            Crypto checkouts usually fail one side. Customers have to swap before they can pay, or merchants end up
-            holding a volatile asset, a seed phrase and a supply of gas tokens.{" "}
-            <span className="font-medium text-stone-900">Mezout fixes both sides in a single transaction.</span>
+            Most crypto checkouts fail one side. Customers have to convert before they can pay, or merchants end up
+            holding a volatile asset, a seed phrase and gas tokens.{" "}
+            <span className="font-medium text-stone-900">Mezout works for both, in a single payment.</span>
           </p>
         </div>
       </Band>
@@ -254,7 +254,7 @@ export default function Home() {
             <Eyebrow>How it works</Eyebrow>
           </div>
           <h2 className="text-3xl font-semibold tracking-tight sm:text-5xl">
-            One checkout. <span className="text-stone-400">Exact MUSD out.</span>
+            One checkout. <span className="text-stone-400">Paid in MUSD.</span>
           </h2>
         </div>
         <Showcase />
@@ -266,8 +266,8 @@ export default function Home() {
           <Eyebrow>Hosted checkout</Eyebrow>
           <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">A checkout your customers already understand</h2>
           <p className="text-lg leading-relaxed text-stone-600">
-            Send a link, show a QR code, or redirect from your store. Customers connect a Mezo wallet, see only the
-            options they can use, and sign once.
+            Send a link, show a QR code, or redirect from your store. Customers connect a wallet, see only the options
+            they can use, and confirm once.
           </p>
           <ul className="divide-y divide-stone-200 border-y border-stone-200">
             {methods.map((m) => (
@@ -319,7 +319,7 @@ export default function Home() {
           <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">Integrate in an afternoon.</h2>
           <p className="text-lg leading-relaxed text-stone-600">
             Create an invoice from your server, send the customer to its checkout link, and fulfil the order when the
-            signed webhook arrives.
+            signed webhook arrives. Or install a plugin and skip the code.
           </p>
           <ul className="space-y-3">
             {devPoints.map((p) => (
@@ -463,7 +463,7 @@ export default function Home() {
             Start accepting <span className="whitespace-nowrap">Bitcoin-backed</span> payments.
           </h2>
           <p className="text-lg text-stone-400">
-            Create a merchant account with a passkey, share your first payment link, and get paid in exact MUSD.
+            Create a merchant account with a passkey, share your first payment link, and get paid in MUSD.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link href="/dashboard" className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 font-medium text-stone-900 hover:bg-stone-200">
