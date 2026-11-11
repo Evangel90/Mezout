@@ -18,8 +18,20 @@ export const mezoTestnetAddresses = {
   mezoutRouterV1: "0xAF79AB1cdB38c0C3944bB9440614B58871Ba6199",
   /** Second MezoutRouter (adds MEZO and BTC swaps), current from 25 Oct until the hardened v3 router. */
   mezoutRouterV2: "0xe132f9a1c8dbc31015C3Cf4eE8706c9031bFa431",
+  /** Third MezoutRouter (hardened borrow), current from M6; deployed at block 16,619,135. */
+  mezoutRouterV3: "0x7151473F1300c2529A2eEFaA517684e974A9b3E6",
   /** Canonical ERC-4337 EntryPoint v0.7; bytecode identical to Ethereum mainnet. */
   entryPoint07: "0x0000000071727De22E5E9d8BAf0edAc6f37da032",
   /** Mezout passkey account factory, deployed at block 16,343,339. */
   mezoutAccountFactory: "0xeE85EE32488FF2D63eFe48159ddB59e6863cdF79",
 } as const satisfies Record<string, Address>;
+
+/**
+ * Every MezoutRouter deployed on testnet. A payer signs a permit whose spender is the router named in the payment
+ * link, so code that pays links it did not create (agents) should refuse any router outside this list.
+ */
+export const knownMezoutRouters: readonly Address[] = [
+  mezoTestnetAddresses.mezoutRouterV1,
+  mezoTestnetAddresses.mezoutRouterV2,
+  mezoTestnetAddresses.mezoutRouterV3,
+];

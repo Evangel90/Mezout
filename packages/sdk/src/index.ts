@@ -1,5 +1,5 @@
 export { mezoTestnet } from "./chains";
-export { mezoTestnetAddresses } from "./addresses";
+export { knownMezoutRouters, mezoTestnetAddresses } from "./addresses";
 export * from "./typedData";
 export * from "./link";
 export { mezoutRouterAbi } from "./abi/mezoutRouter";
@@ -9,3 +9,5 @@ export * from "./apiKey";
 export * from "./account";
 export { mezoutAccountAbi } from "./abi/mezoutAccount";
 export { mezoutAccountFactoryAbi } from "./abi/mezoutAccountFactory";
+export * from "./pay";
+export * from "./x402";

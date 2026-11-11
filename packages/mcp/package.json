@@ -1,0 +1,29 @@
+{
+  "name": "@mezout/mcp",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Mezout MCP server: create, read, list and refund invoices, pay Mezout invoices in MUSD, and pay HTTP 402 Mezout paywalls, on Mezo testnet.",
+  "type": "module",
+  "bin": { "mezout-mcp": "./dist/index.js" },
+  "main": "./src/server.ts",
+  "types": "./src/server.ts",
+  "scripts": {
+    "build": "tsup",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "viem": "^2.22.8",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@mezout/paywall": "workspace:^",
+    "@mezout/sdk": "workspace:^",
+    "@types/node": "^20",
+    "tsup": "8.5.0",
+    "typescript": "^5",
+    "vitest": "^3"
+  }
+}
