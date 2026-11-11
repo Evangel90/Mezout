@@ -57,6 +57,26 @@ const devPoints = [
   "Signed webhooks, retried for 24 hours, with a delivery log",
   "WooCommerce plugin and Shopify app",
   "Embedded checkout with a drop-in script or React component",
+  "MCP server and HTTP 402 paywall for AI agents",
+];
+
+const agentPoints = [
+  {
+    title: "Agents that pay",
+    body: "The Mezout MCP server gives Claude, Cursor or any MCP client tools to pay invoices in MUSD, with no gas and no wallet pop-ups.",
+  },
+  {
+    title: "APIs that charge per request",
+    body: "Add one middleware to an Express or Next.js route. Unpaid requests get a 402 with a Mezout invoice, in the x402 v2 format; the agent pays and retries.",
+  },
+  {
+    title: "Limits you set",
+    body: "Caps per payment and per session, Mezo testnet only, Mezout’s own contracts only. An agent can’t be talked into paying anyone else.",
+  },
+  {
+    title: "Same guarantees as checkout",
+    body: "You receive exact MUSD, each invoice pays once, and every payment is confirmed on Mezo before your API serves the request.",
+  },
 ];
 
 const stats = [
@@ -90,6 +110,10 @@ const faqs = [
   {
     q: "Can I use it with my store?",
     a: "Yes. Install the WooCommerce plugin or the Shopify app, create invoices from any backend with the REST API, or embed checkout on your own site.",
+  },
+  {
+    q: "Can AI agents pay with Mezout?",
+    a: "Yes. The Mezout MCP server lets an agent create, check and pay invoices within spending limits you set, and the HTTP 402 paywall lets your API charge agents per request. Payments settle in MUSD through the same contract as checkout.",
   },
   {
     q: "Is Mezout live on mainnet?",
@@ -189,8 +213,8 @@ export default function Home() {
             </span>
           </h1>
           <p className="max-w-xl text-lg leading-relaxed text-stone-600">
-            Mezout is checkout for Mezo. Customers pay with MUSD, BTC or MEZO, or borrow against their Bitcoin. You are
-            paid in stable MUSD, with the fee shown before you share a link.
+            Mezout is checkout for Mezo. Customers pay with MUSD, BTC or MEZO, or borrow against their Bitcoin, and AI
+            agents can pay too. You are paid in stable MUSD, with the fee shown before you share a link.
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <Link href="/dashboard" className="inline-flex items-center gap-2 rounded-full bg-stone-900 px-5 py-3 font-medium text-white hover:bg-stone-700">
@@ -381,6 +405,73 @@ export default function Home() {
                 {'    "id": "inv_3bf9a158b706b1412e77528f",\n'}
                 {'    "status": "paid", "amount": "25", "reference": "Order 1001"\n'}
                 {"  } }\n}"}
+              </code>
+            </pre>
+          </div>
+        </div>
+      </Band>
+
+      {/* AI agents */}
+      <Band id="agents" tone="dark" className="grid gap-14 py-20 sm:py-24 lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="reveal space-y-6">
+          <Eyebrow dark>For AI agents</Eyebrow>
+          <h2 className="text-3xl font-semibold tracking-tight [text-wrap:balance] sm:text-4xl">
+            Let AI agents pay, and get paid. <span className="text-stone-400">Within limits you set.</span>
+          </h2>
+          <p className="text-lg leading-relaxed text-stone-300">
+            Agents are becoming customers. Mezout lets them pay for goods, data and API calls in MUSD, settled on Mezo in
+            seconds, with the same guarantees your human customers get.
+          </p>
+          <ul className="grid gap-px overflow-hidden rounded-2xl border border-stone-800 bg-stone-800 sm:grid-cols-2">
+            {agentPoints.map((a) => (
+              <li key={a.title} className="space-y-2 bg-stone-950 p-5">
+                <h3 className="font-semibold text-white">{a.title}</h3>
+                <p className="text-sm leading-relaxed text-stone-400">{a.body}</p>
+              </li>
+            ))}
+          </ul>
+          <div className="flex flex-wrap gap-3 pt-2">
+            <a href={`${REPO}/tree/main/packages/mcp`} className="rounded-full bg-white px-5 py-2.5 font-medium text-stone-900 hover:bg-stone-200">
+              MCP server
+            </a>
+            <a href={`${REPO}/tree/main/packages/paywall`} className="rounded-full border border-stone-700 px-5 py-2.5 font-medium text-white hover:bg-stone-900">
+              HTTP 402 paywall
+            </a>
+          </div>
+        </div>
+        <div className="reveal min-w-0 space-y-4">
+          <div className="overflow-hidden rounded-2xl border border-stone-800 bg-stone-900">
+            <div className="border-b border-stone-800 px-4 py-2.5 font-mono text-xs text-stone-400">app/api/report/route.ts</div>
+            <pre className="overflow-x-auto p-5 font-mono text-[13px] leading-relaxed text-stone-300">
+              <code>
+                <span className="text-stone-500">{"// Charge agents 0.05 MUSD per request"}</span>
+                {"\n"}
+                <span className="text-rose-300">import</span> {"{ withMezout402 }"} <span className="text-rose-300">from</span>{" "}
+                <span className="text-green-300">&quot;@mezout/paywall/next&quot;</span>;{"\n\n"}
+                <span className="text-rose-300">export const</span> GET = withMezout402({"\n"}
+                {"  { apiKey: process.env.MEZOUT_API_KEY, price: "}
+                <span className="text-green-300">&quot;0.05&quot;</span>
+                {" },\n"}
+                {"  async (req, ctx, payment) => Response.json({ report, paidBy: payment.payer }),\n"});
+              </code>
+            </pre>
+          </div>
+          <div className="overflow-hidden rounded-2xl border border-stone-800 bg-stone-900">
+            <div className="flex items-center justify-between border-b border-stone-800 px-4 py-2.5 text-xs">
+              <span className="font-mono text-stone-400">Agent</span>
+              <span className="rounded-full bg-green-950 px-2 py-0.5 font-medium text-green-400">Paid on Mezo</span>
+            </div>
+            <pre className="overflow-x-auto p-5 font-mono text-[13px] leading-relaxed text-stone-300">
+              <code>
+                <span className="text-stone-500">GET /api/report</span>
+                {"\n"}
+                <span className="text-amber-300">402 Payment Required</span>
+                {"  0.05 MUSD · invoice inv_7c1e…\n"}
+                <span className="text-stone-500">pay_invoice → 0x9a4f…e21b</span>
+                {"\n"}
+                <span className="text-stone-500">GET /api/report  PAYMENT-SIGNATURE: …</span>
+                {"\n"}
+                <span className="font-semibold text-green-400">200 OK</span>
               </code>
             </pre>
           </div>

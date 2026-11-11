@@ -7,7 +7,7 @@ const geistSans = localFont({ src: "./fonts/GeistVF.woff", variable: "--font-gei
 const geistMono = localFont({ src: "./fonts/GeistMonoVF.woff", variable: "--font-geist-mono", weight: "100 900" });
 
 const description =
-  "Checkout for Mezo. Customers pay with MUSD, BTC or MEZO, or borrow against their Bitcoin; merchants are paid in MUSD with the fee shown up front.";
+  "Checkout for Mezo. Customers and AI agents pay with MUSD, BTC or MEZO, or borrow against their Bitcoin; merchants are paid in MUSD with the fee shown up front.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(
