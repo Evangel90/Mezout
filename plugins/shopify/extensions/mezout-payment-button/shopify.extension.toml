@@ -1,0 +1,35 @@
+# The "Complete payment" button on the thank-you and order status pages.
+# https://shopify.dev/docs/api/checkout-ui-extensions/latest/configuration
+api_version = "2026-10"
+
+[[extensions]]
+name = "Mezout payment button"
+handle = "mezout-payment-button"
+type = "ui_extension"
+
+[[extensions.targeting]]
+module = "./src/ThankYou.tsx"
+target = "purchase.thank-you.block.render"
+
+[[extensions.targeting]]
+module = "./src/OrderStatus.tsx"
+target = "customer-account.order-status.block.render"
+
+[extensions.capabilities]
+# The button asks the app for the order's Mezout payment link. Network access must also be allowed for the app in
+# the Partner Dashboard (App → API access → "Allow network access in checkout and account UI extensions").
+network_access = true
+
+# The app writes its current URL here (it changes on every `shopify app dev` run), so the extension knows where to ask.
+[[extensions.metafields]]
+namespace = "mezout"
+key = "app_url"
+
+# On the order status page the order's own payment link is also readable directly, as a fallback.
+[[extensions.metafields]]
+namespace = "mezout"
+key = "checkout_url"
+
+[[extensions.metafields]]
+namespace = "mezout"
+key = "status"

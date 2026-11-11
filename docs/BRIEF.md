@@ -287,8 +287,8 @@ M0 and M1 must be done by Sunday 26 Oct for the Wave 1 submission. M2–M6 fill 
 
 ### M5 — Shopify app (12 Nov)
 
-- [ ] Installs on a Shopify development store; manual payment method plus "Complete payment" button
-- [ ] Order is marked paid in Shopify after `invoice.paid`
+- [x] Installs on a Shopify development store; manual payment method plus "Complete payment" button
+- [x] Order is marked paid in Shopify after `invoice.paid` (verified 11 Nov 2026 on a development store: storefront order #1006, Complete payment on the thank-you page, paid with BTC in tx [`0x7e93…c7f6`](https://explorer.test.mezo.org/tx/0x7e93416facb8b74abfaa508733465358fad9872e2774ee76a9c93bb0b369c7f6), order marked Paid and tagged `mezout-paid`)
 
 ### M6 — Wave 2 submission (15 Nov)
 

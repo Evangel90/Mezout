@@ -1,0 +1,45 @@
+# Mezout for Shopify. The first `shopify app dev` asks you to create or pick an app in your Partner account and
+# fills in client_id (and the app URLs). Leave client_id empty in the repository.
+client_id = ""
+name = "Mezout"
+# Placeholders: `shopify app dev` replaces these with its tunnel URL on every run.
+application_url = "https://example.com"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+
+[auth]
+redirect_urls = ["https://example.com/api/auth"]
+
+[access_scopes]
+# read_orders/write_orders: read new orders, mark them paid, tag them, add notes and metafields.
+scopes = "read_orders,write_orders"
+
+[webhooks]
+api_version = "2026-10"
+
+  # Handled by: /app/routes/webhooks.app.uninstalled.tsx
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/app/uninstalled"
+  topics = ["app/uninstalled"]
+
+  # Handled by: /app/routes/webhooks.app.scopes_update.tsx
+  [[webhooks.subscriptions]]
+  topics = [ "app/scopes_update" ]
+  uri = "/webhooks/app/scopes_update"
+
+  # Handled by: /app/routes/webhooks.orders.create.tsx — creates the Mezout invoice.
+  [[webhooks.subscriptions]]
+  topics = ["orders/create"]
+  uri = "/webhooks/orders/create"
+
+  # Handled by: /app/routes/webhooks.refunds.create.tsx — requests the refund in Mezout.
+  [[webhooks.subscriptions]]
+  topics = ["refunds/create"]
+  uri = "/webhooks/refunds/create"
+
+  # Mandatory privacy topics. Handled by: /app/routes/webhooks.compliance.tsx
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/compliance"
+  compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
