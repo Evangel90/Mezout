@@ -60,10 +60,10 @@ export function PaymentLinkForm({ onCreated }: { onCreated?: () => void }) {
         />
         <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-start">
           <div className="shrink-0 rounded-xl border border-stone-200 bg-white p-3">
-            <QRCodeSVG value={created.url} size={152} aria-label="QR code for the payment link" role="img" />
+            <QRCodeSVG value={created.url} size={144} aria-label="QR code for the payment link" role="img" />
           </div>
-          <div className="w-full min-w-0 space-y-4">
-            <AmountBreakdown gross={created.amount} fee={created.fee} net={created.net} compact />
+          <div className="w-full min-w-0 space-y-3">
+            <p className="text-sm text-stone-600">Show the QR code at the till, or send the link to your customer.</p>
             <input
               readOnly
               value={created.url}
@@ -79,7 +79,9 @@ export function PaymentLinkForm({ onCreated }: { onCreated?: () => void }) {
             </div>
           </div>
         </div>
-        <p className="text-xs text-stone-500">Show the QR code at the till, or send the link to your customer. It appears under Payments straight away.</p>
+        <div className="rounded-lg bg-stone-50 px-4 py-2">
+          <AmountBreakdown gross={created.amount} fee={created.fee} net={created.net} compact />
+        </div>
       </Card>
     );
   }

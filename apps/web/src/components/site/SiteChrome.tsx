@@ -64,10 +64,11 @@ export function SiteFooter() {
     return (
       <footer className="border-t border-stone-200 bg-white">
         <p className="mx-auto max-w-5xl px-4 py-5 text-center text-xs text-stone-500">
-          Payments settle on Mezo through a verified contract. Mezout never holds your funds.{" "}
-          <Link href="/" className="underline hover:text-stone-900">
-            About Mezout
+          Powered by{" "}
+          <Link href="/" className="font-medium underline hover:text-stone-900">
+            Mezout
           </Link>
+          , checkout for Mezo.
         </p>
       </footer>
     );
