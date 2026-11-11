@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createPublicClient, formatUnits, getAddress, http, isAddress, parseUnits, type Hex } from "viem";
 import { mezoTestnet } from "@mezout/sdk";
-import { Alert, Button, CardHeader, Dialog, ExternalIcon, Field, UnitInput, cardClass, formatAmount, inputClass } from "@/components/ui";
+import { Alert, Button, CardHeader, Dialog, ExternalLink, Field, UnitInput, cardClass, formatAmount, inputClass } from "@/components/ui";
 import { txUrl } from "@/lib/config";
 import { passkeySendMusd, type PasskeySession } from "@/lib/passkey";
 import { useMusdBalance } from "@/lib/useMusdBalance";
@@ -65,7 +65,7 @@ export function WithdrawCard({ session }: { session: PasskeySession }) {
       <CardHeader
         id="withdraw-title"
         title="Withdraw MUSD"
-        description="Send MUSD from your passkey account to any Mezo address, such as an exchange or your own wallet. Mezout pays the network fee."
+        description="Send MUSD to any Mezo address, such as an exchange or your own wallet. Mezout pays the network fee."
       />
       <div className="rounded-lg bg-stone-50 px-4 py-3">
         <p className="text-xs text-stone-500">Available</p>
@@ -111,9 +111,9 @@ export function WithdrawCard({ session }: { session: PasskeySession }) {
           tone="success"
           title={`Sent ${formatAmount(done.amount)} MUSD`}
           action={
-            <a href={txUrl(done.hash)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm font-medium underline">
-              View transaction <ExternalIcon className="h-3.5 w-3.5" />
-            </a>
+            <ExternalLink href={txUrl(done.hash)} className="text-sm font-medium underline">
+              View transaction
+            </ExternalLink>
           }
         />
       )}

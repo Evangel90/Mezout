@@ -10,7 +10,7 @@ export default function PaymentsPage() {
     <>
       <PageHeader
         title="Payments"
-        description="Every payment link and invoice, with the fee and what you received. Open a payment to see its details or refund it."
+        description="Every payment, its fee and what you received. Open one to see details or send a refund."
         action={
           <>
             <Button variant="secondary" size="sm" onClick={orders.reload} loading={orders.refreshing && orders.orders !== null}>
@@ -26,8 +26,8 @@ export default function PaymentsPage() {
       />
       <OrdersPanel state={orders} />
       <p className="text-xs text-stone-500">
-        Payments show here once they are confirmed on Mezo, usually within seconds. Refunds go from your payout account
-        straight back to the customer; Mezout never holds the funds.
+        Payments appear once Mezo confirms them, usually within seconds, and this page updates on its own. Refunds go from
+        your payout account straight back to the customer. Mezout never holds the funds.
       </p>
     </>
   );

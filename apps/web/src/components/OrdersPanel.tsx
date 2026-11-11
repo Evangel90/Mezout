@@ -14,15 +14,18 @@ import {
   CopyButton,
   Dialog,
   EmptyState,
-  ExternalIcon,
+  ExternalLink,
   Field,
   ReceiptIcon,
   SearchIcon,
   Skeleton,
   Spinner,
   UnitInput,
+  PlusIcon,
+  buttonClass,
   formatAmount,
   inputClass,
+  relativeTime,
   useConfirm,
 } from "@/components/ui";
 import { api, errorText } from "@/lib/api";
@@ -77,7 +80,7 @@ export function OrdersPanel({ state, limit }: { state: OrdersState; limit?: numb
         <CardHeader
           title="Recent payments"
           action={
-            <Link href="/dashboard/payments" className="text-sm font-medium text-stone-700 underline underline-offset-2 hover:text-stone-900">
+            <Link href="/dashboard/payments" className="inline-flex min-h-[40px] items-center text-sm font-medium text-stone-700 underline underline-offset-2 hover:text-stone-900">
               View all
             </Link>
           }
@@ -87,7 +90,7 @@ export function OrdersPanel({ state, limit }: { state: OrdersState; limit?: numb
           <ListSkeleton rows={4} />
         ) : orders.length === 0 ? (
           <EmptyState icon={<ReceiptIcon />} title="No payments yet">
-            Payments to your links and invoices appear here within seconds of confirming on-chain.
+            Share a payment link. Payments show up here within seconds.
           </EmptyState>
         ) : (
           <ul className="divide-y divide-stone-100">
@@ -96,7 +99,9 @@ export function OrdersPanel({ state, limit }: { state: OrdersState; limit?: numb
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-stone-900">{describe(o)}</p>
                   <p className="text-xs text-stone-500">
-                    {dateFmt(when(o))} · {timeFmt(when(o))}
+                    <time dateTime={when(o).toISOString()} title={when(o).toLocaleString()}>
+                      {relativeTime(when(o))}
+                    </time>
                   </p>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1">
@@ -149,7 +154,7 @@ function PaymentsList({ orders, error, refreshing, reload }: OrdersState) {
                 key={f.id}
                 onClick={() => setFilter(f.id)}
                 aria-pressed={filter === f.id}
-                className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-sm transition-colors ${
+                className={`min-h-[40px] whitespace-nowrap rounded-lg px-3 text-sm sm:min-h-[34px] transition-colors ${
                   filter === f.id ? "bg-stone-200/80 font-medium text-stone-900" : "text-stone-600 hover:bg-stone-100 hover:text-stone-900"
                 }`}
               >
@@ -165,7 +170,7 @@ function PaymentsList({ orders, error, refreshing, reload }: OrdersState) {
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Reference, address or ID"
+              placeholder="Search reference, address or ID"
               className={`${inputClass} pl-9`}
             />
           </label>
@@ -194,16 +199,29 @@ function PaymentsList({ orders, error, refreshing, reload }: OrdersState) {
             icon={<ReceiptIcon />}
             title="No payments yet"
             action={
-              <Link href="/dashboard#new-link" className="text-sm font-medium text-stone-900 underline underline-offset-2">
+              <Link href="/dashboard#new-link" className={buttonClass("primary", "sm")}>
+                <PlusIcon className="h-4 w-4" />
                 Create a payment link
               </Link>
             }
           >
-            Create a payment link on the Overview, or an invoice with the API. Payments appear here within seconds.
+            Create a link on the Overview and share it. Payments show up here within seconds.
           </EmptyState>
         </div>
       ) : shown.length === 0 ? (
-        <p className="p-8 text-center text-sm text-stone-500">No payments match this filter.</p>
+        <div className="space-y-3 p-8 text-center text-sm text-stone-500">
+          <p>No payments match{query.trim() ? ` “${query.trim()}”` : " this filter"}.</p>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setFilter("all");
+              setQuery("");
+            }}
+          >
+            Show all payments
+          </Button>
+        </div>
       ) : (
         <>
           <div className="hidden grid-cols-[7.5rem_minmax(0,1fr)_8rem_7rem_7rem_9.5rem_1.25rem] gap-4 border-b border-stone-200 bg-stone-50 px-5 py-2 text-xs font-medium uppercase tracking-wide text-stone-500 md:grid">
@@ -413,9 +431,9 @@ function OrderRow({
               )}
               {o.txHash && (
                 <Detail label="Transaction">
-                  <a href={txUrl(o.txHash)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 underline underline-offset-2">
-                    {short(o.txHash)} <ExternalIcon className="h-3.5 w-3.5" />
-                  </a>
+                  <ExternalLink href={txUrl(o.txHash)} className="underline underline-offset-2">
+                    {short(o.txHash)}
+                  </ExternalLink>
                 </Detail>
               )}
             </dl>

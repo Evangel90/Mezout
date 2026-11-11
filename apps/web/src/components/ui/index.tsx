@@ -6,7 +6,7 @@
  * state, so the dashboard and checkout read as one calm product. Tokens live in tailwind.config.ts.
  */
 
-import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { createContext, forwardRef, useCallback, useContext, useEffect, useId, useRef, useState, type ReactNode } from "react";
 
 /* Buttons ------------------------------------------------------------------------------------------------------- */
 
@@ -23,9 +23,10 @@ const VARIANT: Record<Variant, string> = {
   danger: "bg-red-700 text-white hover:bg-red-600 disabled:hover:bg-red-700",
   "danger-outline": "border border-red-200 bg-white text-red-700 hover:bg-red-50",
 };
+// On phones every button is at least 40–44px tall, so it is easy to tap; from `sm` up they get their compact desktop sizes.
 const SIZE: Record<Size, string> = {
-  sm: "h-8 gap-1.5 px-3 text-[13px]",
-  md: "h-10 gap-2 px-4 text-sm",
+  sm: "h-10 gap-1.5 px-3.5 text-sm sm:h-8 sm:px-3 sm:text-[13px]",
+  md: "h-11 gap-2 px-4 text-sm sm:h-10",
   lg: "h-12 gap-2 px-5 text-base",
 };
 
@@ -105,7 +106,7 @@ export function PageHeader({ title, description, action }: { title: string; desc
 /* Forms --------------------------------------------------------------------------------------------------------- */
 
 export const inputClass =
-  "block w-full min-w-0 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 shadow-[inset_0_1px_1px_rgb(12_10_9/0.04)] placeholder:text-stone-400 transition-colors hover:border-stone-400 focus:border-ink focus:ring-1 focus:ring-ink disabled:bg-stone-50 disabled:text-stone-500 aria-[invalid=true]:border-red-500";
+  "block w-full min-w-0 rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-base text-stone-900 sm:py-2 sm:text-sm shadow-[inset_0_1px_1px_rgb(12_10_9/0.04)] placeholder:text-stone-400 transition-colors hover:border-stone-400 focus:border-ink focus:ring-1 focus:ring-ink disabled:bg-stone-50 disabled:text-stone-500 aria-[invalid=true]:border-red-500";
 
 /**
  * A labelled form control. `children` receives the ids to wire up, so the label, hint and error are always announced
@@ -150,14 +151,17 @@ export function Field({
 }
 
 /** A text input with a unit shown inside its right edge, such as "MUSD". */
-export function UnitInput({ unit, className = "", ...props }: React.InputHTMLAttributes<HTMLInputElement> & { unit: string }) {
+export const UnitInput = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement> & { unit: string }>(function UnitInput(
+  { unit, className = "", ...props },
+  ref,
+) {
   return (
     <div className="relative">
-      <input {...props} className={`${inputClass} pr-16 tabular-nums ${className}`} />
+      <input ref={ref} {...props} className={`${inputClass} pr-16 tabular-nums ${className}`} />
       <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-stone-500">{unit}</span>
     </div>
   );
-}
+});
 
 /* Status -------------------------------------------------------------------------------------------------------- */
 
@@ -521,3 +525,59 @@ export function ExternalLink({
     </a>
   );
 }
+
+/* Times --------------------------------------------------------------------------------------------------------- */
+
+const RELATIVE_UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
+  ["year", 365 * 86_400_000],
+  ["month", 30 * 86_400_000],
+  ["week", 7 * 86_400_000],
+  ["day", 86_400_000],
+  ["hour", 3_600_000],
+  ["minute", 60_000],
+];
+
+/** "5 minutes ago", "in 3 days", or "just now", for times close enough that the exact date matters less. */
+export function relativeTime(date: Date | string | number, now = Date.now()) {
+  const diff = new Date(date).getTime() - now;
+  if (Math.abs(diff) < 45_000) return "just now";
+  const fmt = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
+  for (const [unit, ms] of RELATIVE_UNITS) {
+    if (Math.abs(diff) >= ms || unit === "minute") return fmt.format(Math.round(diff / ms), unit);
+  }
+  return "";
+}
+
+/* Toasts -------------------------------------------------------------------------------------------------------- */
+
+type Toast = { id: number; text: string; tone: "success" | "neutral" };
+const ToastContext = createContext<(text: string, tone?: Toast["tone"]) => void>(() => {});
+
+/**
+ * Short confirmations ("Link copied", "Saved") that appear at the bottom of the screen for a few seconds and are read
+ * out by screen readers. Wrap an area in ToastProvider and call `useToast()(text)`.
+ */
+export function ToastProvider({ children }: { children: ReactNode }) {
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const next = useRef(0);
+  const show = useCallback((text: string, tone: Toast["tone"] = "success") => {
+    const id = ++next.current;
+    setToasts((t) => [...t.slice(-2), { id, text, tone }]);
+    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 4000);
+  }, []);
+  return (
+    <ToastContext.Provider value={show}>
+      {children}
+      <div role="status" aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-4 z-[60] flex flex-col items-center gap-2 px-4">
+        {toasts.map((t) => (
+          <p key={t.id} className="pop-in flex items-center gap-2 rounded-full bg-ink px-4 py-2.5 text-sm font-medium text-white shadow-lift">
+            {t.tone === "success" && <CheckIcon className="h-4 w-4 text-musd-300" />}
+            {t.text}
+          </p>
+        ))}
+      </div>
+    </ToastContext.Provider>
+  );
+}
+
+export const useToast = () => useContext(ToastContext);

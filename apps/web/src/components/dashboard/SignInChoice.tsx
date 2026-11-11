@@ -34,8 +34,8 @@ export function SignInChoice(props: Props) {
         <LogoMark className="mx-auto h-12 w-12 text-ink" />
         <h1 className="text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">Sign in to Mezout</h1>
         <p className="mx-auto max-w-xl text-stone-600">
-          Create a merchant account or sign back in. Each option below is a separate account with its own payout
-          address, so use the same one every time.
+          New here? Create your account in seconds. Each option is a separate account, so sign in the same way every
+          time.
         </p>
       </div>
 
@@ -47,7 +47,7 @@ export function SignInChoice(props: Props) {
       </div>
 
       <p className="text-center text-xs text-stone-500">
-        Mezout runs on Mezo testnet. Signing in never costs gas and never gives Mezout access to your funds.
+        Testnet only. Signing in is free and never gives Mezout access to your money.
       </p>
     </div>
   );
@@ -123,7 +123,7 @@ function PasskeyCard({
       session = await get();
     } catch (err) {
       const message = err instanceof Error ? err.message : "";
-      onError(/not registered/.test(message) ? message : "The passkey request was cancelled or failed. Please try again.");
+      onError(/not registered/.test(message) ? message : "The passkey didn’t go through. Try again.");
       return;
     } finally {
       setWaiting(null);
@@ -137,11 +137,11 @@ function PasskeyCard({
       title="Passkey account"
       tag="Recommended · no wallet"
       recommended
-      intro="Mezout creates a payout account for you, secured by Face ID, Touch ID, Windows Hello or your phone."
-      points={["Nothing to install or back up", "Gasless withdrawals, any time", "Only your passkey can move funds"]}
+      intro="Use Face ID, Touch ID, Windows Hello or your phone. Mezout sets up your payout account."
+      points={["Nothing to install or back up", "Free withdrawals, any time", "Only your passkey can move money"]}
     >
       {!supported ? (
-        <Alert tone="warning">This browser does not support passkeys. Use a Mezo wallet instead.</Alert>
+        <Alert tone="warning">This browser doesn’t support passkeys. Try another browser, or use a Mezo wallet.</Alert>
       ) : savedPasskey && !creating ? (
         <>
           <Button size="lg" className="w-full" loading={!!status} onClick={() => run("Confirm with your passkey", async () => savedPasskey)}>
@@ -206,8 +206,8 @@ function WalletCard({ walletAddress, busy, onStart, onWalletSignIn, onWalletDisc
       icon={<WalletIcon />}
       title="Mezo wallet"
       tag="Bring your own"
-      intro="Get paid straight into a wallet you already use, such as MetaMask, or a Bitcoin wallet through Mezo Passport."
-      points={["Payments land directly in your wallet", "You approve refunds in your wallet", "Your wallet pays gas for refunds"]}
+      intro="Get paid straight into a wallet you already use, like MetaMask, or a Bitcoin wallet via Mezo Passport."
+      points={["Payments land in your wallet", "You approve refunds in your wallet", "Your wallet pays gas for refunds"]}
     >
       {walletAddress ? (
         <>
@@ -231,14 +231,14 @@ function WalletCard({ walletAddress, busy, onStart, onWalletSignIn, onWalletDisc
           >
             {busy ?? "Sign in with this wallet"}
           </Button>
-          <p className="text-xs text-stone-500">You sign a message to prove you own the wallet. It costs no gas.</p>
+          <p className="text-xs text-stone-500">You sign a message to prove it’s yours. It’s free.</p>
         </>
       ) : (
         <>
           <Button variant="secondary" size="lg" className="w-full" onClick={() => openConnectModal?.()}>
             Connect wallet
           </Button>
-          <p className="text-xs text-stone-500">Then sign one message to sign in. It costs no gas.</p>
+          <p className="text-xs text-stone-500">Then sign one message. It’s free.</p>
         </>
       )}
     </Card>

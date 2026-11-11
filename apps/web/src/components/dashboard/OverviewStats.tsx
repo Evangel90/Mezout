@@ -8,7 +8,7 @@ import { useMusdBalance } from "@/lib/useMusdBalance";
 import type { Order } from "@/lib/useOrders";
 
 const DAY = 24 * 60 * 60 * 1000;
-const show = (v: bigint) => Number(formatUnits(v, 18)).toLocaleString(undefined, { maximumFractionDigits: 2 });
+const show = (v: bigint) => Number(formatUnits(v, 18)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 /** Three numbers a merchant checks first: what they hold, what they took in lately, and what is still unpaid. */
 export function OverviewStats({ orders }: { orders: Order[] | null }) {
@@ -32,12 +32,12 @@ export function OverviewStats({ orders }: { orders: Order[] | null }) {
               Withdraw
             </Link>
           ) : (
-            "Payments arrive in your wallet directly"
+            "Payments go straight to your wallet"
           )
         }
       />
       <Stat
-        label="Net received, last 30 days"
+        label="Received, last 30 days"
         value={orders === null ? null : show(netRecent)}
         footer={orders === null ? " " : `${recent.length} payment${recent.length === 1 ? "" : "s"}, after fees and refunds`}
       />

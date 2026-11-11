@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Alert, Button, CardHeader, cardClass, inputClass } from "@/components/ui";
+import { Alert, Button, CardHeader, cardClass, inputClass, useToast } from "@/components/ui";
 import { errorText } from "@/lib/api";
 import { useMerchant } from "@/lib/merchant";
 
@@ -14,16 +14,15 @@ export function BusinessNameForm({ variant }: { variant: "prompt" | "settings" }
   const [name, setName] = useState(businessName ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
+  const toast = useToast();
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
-    setSaved(false);
     try {
       setName((await setBusinessName(name)) ?? "");
-      setSaved(true);
+      toast("Business name saved");
     } catch (err) {
       setError(errorText(err, "Could not save the name"));
     } finally {
@@ -42,20 +41,17 @@ export function BusinessNameForm({ variant }: { variant: "prompt" | "settings" }
     >
       <CardHeader
         id="business-name-title"
-        title={prompt ? "Add your business name" : "Business name"}
+        title={prompt ? "Name your business" : "Business name"}
         description={
           prompt
-            ? `Customers see it when they pay, instead of your ${method === "passkey" ? "account" : "wallet"} address.`
-            : "Shown to customers at checkout. Leave it empty to show your payout address instead."
+            ? `Customers see it when they pay. Without it, they see your ${method === "passkey" ? "account" : "wallet"} address.`
+            : "Customers see it at checkout. Leave it empty to show your payout address."
         }
       />
       <div className="flex flex-col gap-2 sm:flex-row">
         <input
           value={name}
-          onChange={(e) => {
-            setName(e.target.value);
-            setSaved(false);
-          }}
+          onChange={(e) => setName(e.target.value)}
           required={prompt}
           maxLength={64}
           autoComplete="organization"
@@ -67,7 +63,6 @@ export function BusinessNameForm({ variant }: { variant: "prompt" | "settings" }
           {busy ? "Saving…" : "Save"}
         </Button>
       </div>
-      {saved && !prompt && <p role="status" className="text-sm text-musd-800">Saved.</p>}
       {error && <Alert tone="danger">{error}</Alert>}
     </form>
   );

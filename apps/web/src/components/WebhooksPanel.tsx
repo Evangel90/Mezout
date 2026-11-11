@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { Alert, Badge, Button, Card, CardHeader, CopyButton, EmptyState, Field, Skeleton, WebhookIcon, inputClass, useConfirm } from "@/components/ui";
+import { Alert, Badge, Button, Card, CardHeader, CopyButton, EmptyState, ExternalLink, Field, Skeleton, WebhookIcon, inputClass, relativeTime, useConfirm, useToast } from "@/components/ui";
 import { api, errorText } from "@/lib/api";
 
 type Endpoint = { id: string; url: string; secret?: string; created_at: string };
@@ -64,11 +63,11 @@ export function WebhooksPanel() {
         title="Webhooks"
         description={
           <>
-            Mezout calls your server the moment a customer pays, a link expires or a refund completes, so your store can
-            fulfil orders on its own. Each event is a signed POST, retried for 24 hours until your server answers 2xx.{" "}
-            <Link href={DOCS} className="font-medium text-stone-900 underline underline-offset-2">
-              Webhooks guide
-            </Link>
+            Mezout tells your server the moment a customer pays, a link expires or a refund completes, so your store can
+            fulfil orders on its own. Each message is signed and retried for 24 hours until your server answers 2xx.{" "}
+            <ExternalLink href={DOCS} className="font-medium text-stone-900 underline underline-offset-2">
+              How webhooks work
+            </ExternalLink>
           </>
         }
       />
@@ -95,7 +94,7 @@ export function WebhooksPanel() {
         <Skeleton className="h-20 w-full" />
       ) : endpoints.length === 0 ? (
         <EmptyState icon={<WebhookIcon />} title="No endpoints yet">
-          Add the URL your server listens on. The WooCommerce plugin and Shopify app add theirs automatically.
+          Using Shopify or WooCommerce? Nothing to do: they add theirs when you save your API key. Otherwise, add your server&apos;s URL below.
         </EmptyState>
       ) : (
         <ul className="space-y-3">
@@ -138,6 +137,7 @@ function EndpointRow({ endpoint, onDeleted }: { endpoint: Endpoint; onDeleted: (
   const [note, setNote] = useState<{ tone: "success" | "warning" | "danger"; text: string } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const { confirm, dialog } = useConfirm();
+  const toast = useToast();
 
   const loadLog = useCallback(async () => {
     setAttempts((await api<{ attempts: Attempt[] }>(`/api/dashboard/webhooks/${endpoint.id}/attempts`)).attempts);
@@ -180,6 +180,7 @@ function EndpointRow({ endpoint, onDeleted }: { endpoint: Endpoint; onDeleted: (
     if (!ok) return;
     run("delete", async () => {
       await api(`/v1/webhook_endpoints/${endpoint.id}`, { method: "DELETE" });
+      toast("Endpoint deleted");
       onDeleted();
     });
   }
@@ -194,7 +195,12 @@ function EndpointRow({ endpoint, onDeleted }: { endpoint: Endpoint; onDeleted: (
     <li className="space-y-3 rounded-lg border border-stone-200 p-4">
       <div className="space-y-1">
         <p className="break-all font-mono text-sm text-stone-900">{endpoint.url}</p>
-        <p className="text-xs text-stone-500">Added {new Date(endpoint.created_at).toLocaleDateString()}</p>
+        <p className="text-xs text-stone-500">
+          Added{" "}
+          <time dateTime={endpoint.created_at} title={new Date(endpoint.created_at).toLocaleString()}>
+            {relativeTime(endpoint.created_at)}
+          </time>
+        </p>
       </div>
       <div className="flex flex-wrap gap-2">
         <Button variant="secondary" size="sm" disabled={!!busy} loading={busy === "test"} onClick={test}>
