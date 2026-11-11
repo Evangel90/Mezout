@@ -64,46 +64,59 @@ function loadApiDoc() {
 export default function DocsPage() {
   const { html, toc } = loadApiDoc();
   return (
-    <div className="space-y-10">
-      <header className="space-y-6">
-        <div className="space-y-3">
-          <p className="text-sm font-medium text-stone-500">Developers</p>
-          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">API reference</h1>
-          <p className="max-w-2xl text-lg text-stone-600">
-            Create invoices from your server, send customers to checkout, and fulfil orders when a signed webhook arrives.
-            Everything runs on Mezo testnet with test MUSD.
-          </p>
+    <div>
+      <header className="border-b border-stone-200 bg-canvas">
+        <div className="mx-auto max-w-7xl space-y-8 px-4 py-12 sm:px-6 sm:py-16">
+          <div className="max-w-3xl space-y-4">
+            <p className="eyebrow text-signal-700">Developers</p>
+            <h1 className="display-2">API reference</h1>
+            <p className="text-lg leading-relaxed text-stone-600">
+              Create invoices from your server, send customers to checkout, and fulfil orders when a signed webhook arrives.
+              Let AI agents pay through the MCP server or an HTTP 402 paywall. Everything runs on Mezo testnet with test
+              MUSD.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/dashboard/developers" className="pill-ink px-5 py-2.5 text-sm">
+              Get an API key
+            </Link>
+            <a href={REPO_DOC} className="pill-outline px-5 py-2.5 text-sm">
+              View on GitHub
+            </a>
+          </div>
+          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {START.map((s) => (
+              <li key={s.href}>
+                <a
+                  href={s.href}
+                  className="group flex h-full flex-col gap-1.5 rounded-2xl border border-stone-200 bg-white p-5 transition-all hover:-translate-y-0.5 hover:shadow-lift"
+                >
+                  <span className="flex items-center justify-between font-semibold tracking-tight text-ink">
+                    {s.title}
+                    <span aria-hidden className="text-stone-400 transition-transform group-hover:translate-x-0.5 group-hover:text-ink">
+                      →
+                    </span>
+                  </span>
+                  <span className="text-sm text-stone-600">{s.body}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
         </div>
-        <div className="flex flex-wrap gap-3">
-          <Link href="/dashboard/developers" className="rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-700">
-            Get an API key
-          </Link>
-          <a href={REPO_DOC} className="rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-medium hover:bg-stone-100">
-            View on GitHub
-          </a>
-        </div>
-        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {START.map((s) => (
-            <li key={s.href}>
-              <a href={s.href} className="flex h-full flex-col gap-1 rounded-xl border border-stone-200 bg-white p-4 hover:border-stone-300 hover:bg-stone-50">
-                <span className="text-sm font-medium text-stone-900">{s.title}</span>
-                <span className="text-xs text-stone-600">{s.body}</span>
-              </a>
-            </li>
-          ))}
-        </ul>
       </header>
 
-      <div className="lg:grid lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-12">
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-14">
         <aside className="hidden lg:block">
-          <nav aria-label="On this page" className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto pb-6 text-sm">
-            <p className="mb-3 text-xs font-medium uppercase tracking-wide text-stone-500">On this page</p>
-            <ul className="space-y-1">
+          <nav aria-label="On this page" className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto pb-6 text-sm">
+            <p className="eyebrow mb-4 text-stone-500">On this page</p>
+            <ul className="space-y-1 border-l border-stone-200">
               {toc.map((h) => (
-                <li key={h.id} className={h.depth === 3 ? "pl-3" : "pt-2 first:pt-0"}>
+                <li key={h.id} className={h.depth === 3 ? "pl-6" : "pt-2 first:pt-0"}>
                   <a
                     href={`#${h.id}`}
-                    className={h.depth === 3 ? "text-stone-500 hover:text-stone-900" : "font-medium text-stone-800 hover:text-stone-950"}
+                    className={`-ml-px block border-l-2 border-transparent py-0.5 hover:border-signal-500 ${
+                      h.depth === 3 ? "text-stone-500 hover:text-ink" : "pl-4 font-medium text-stone-800 hover:text-ink"
+                    }`}
                   >
                     {h.text}
                   </a>
@@ -113,8 +126,8 @@ export default function DocsPage() {
           </nav>
         </aside>
 
-        <div className="min-w-0 space-y-8">
-          <details className="rounded-xl border border-stone-200 bg-white p-4 lg:hidden">
+        <div className="min-w-0 max-w-3xl space-y-8">
+          <details className="rounded-2xl border border-stone-200 bg-white p-4 lg:hidden">
             <summary className="cursor-pointer text-sm font-medium">On this page</summary>
             <ul className="mt-3 space-y-1.5 text-sm">
               {toc

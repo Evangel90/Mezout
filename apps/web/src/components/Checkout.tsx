@@ -810,10 +810,9 @@ function RadioCard({
   children?: ReactNode;
 }) {
   return (
-    <div className={`${first ? "" : "border-t border-stone-200"} ${checked ? "bg-stone-50" : "bg-white"} transition-colors`}>
-      <label
-        className={`flex cursor-pointer items-center gap-3 px-4 py-4 ${checked ? "rounded-none ring-1 ring-inset ring-ink" : "hover:bg-stone-50"} ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
-      >
+    <div className={`relative ${first ? "" : "border-t border-stone-200"} ${checked ? "bg-stone-50" : "bg-white"} transition-colors`}>
+      {checked && <span aria-hidden className="pointer-events-none absolute inset-0 z-10 ring-1 ring-inset ring-ink" />}
+      <label className={`flex cursor-pointer items-center gap-3 px-4 py-4 ${checked ? "bg-white" : "hover:bg-stone-50"} ${disabled ? "cursor-not-allowed opacity-60" : ""}`}>
         <input type="radio" name="payment-method" checked={checked} onChange={onSelect} disabled={disabled} className="h-4 w-4 shrink-0 accent-stone-900" />
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-medium text-stone-900">{title}</span>
