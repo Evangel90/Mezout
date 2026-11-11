@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowRightIcon, CheckIcon, ExternalLink } from "@/components/ui";
+import { ArrowRightIcon, CheckIcon, ExternalLink, Skeleton } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useMerchant } from "@/lib/merchant";
 import type { Order } from "@/lib/useOrders";
@@ -18,7 +18,8 @@ type Step = { done: boolean; title: string; body: string; href: string; cta: str
 export function GettingStarted({ orders }: { orders: Order[] | null }) {
   const { businessName, address } = useMerchant();
   const [hasKey, setHasKey] = useState<boolean | null>(null);
-  const [dismissed, setDismissed] = useState(true);
+  // null until localStorage has been read, so nothing flashes for merchants who hid the checklist.
+  const [dismissed, setDismissed] = useState<boolean | null>(null);
 
   useEffect(() => {
     try {
@@ -29,13 +30,15 @@ export function GettingStarted({ orders }: { orders: Order[] | null }) {
   }, [address]);
 
   useEffect(() => {
-    if (dismissed) return;
+    if (dismissed !== false) return;
     api<{ data: unknown[] }>("/api/keys")
       .then((r) => setHasKey(r.data.length > 0))
       .catch(() => setHasKey(false));
   }, [dismissed]);
 
-  if (orders === null || hasKey === null || dismissed) return null;
+  if (dismissed !== false) return null;
+  // Hold the checklist's space while its data loads, so the page below doesn't jump when it appears.
+  if (orders === null || hasKey === null) return <ChecklistSkeleton />;
 
   const paid = orders.some((o) => o.status === "paid" || o.status === "refunded");
   const steps: Step[] = [
@@ -52,16 +55,15 @@ export function GettingStarted({ orders }: { orders: Order[] | null }) {
     },
   ];
   const done = steps.filter((s) => s.done).length;
-  if (done === steps.length) return null;
+  if (done === steps.length) {
+    remember(address);
+    return null;
+  }
   const nextIndex = steps.findIndex((s) => !s.done);
 
   const dismiss = () => {
     setDismissed(true);
-    try {
-      localStorage.setItem(`${DISMISSED}:${address}`, "1");
-    } catch {
-      // Private browsing: the checklist just comes back next visit.
-    }
+    remember(address);
   };
 
   const ctaClass = "inline-flex min-h-[32px] items-center gap-1 text-sm font-medium text-stone-900 underline decoration-stone-300 underline-offset-4 hover:decoration-ink";
@@ -132,5 +134,29 @@ export function GettingStarted({ orders }: { orders: Order[] | null }) {
         })}
       </ol>
     </section>
+  );
+}
+
+/** Hides the checklist on later visits, once it has been dismissed or finished. */
+function remember(address: string) {
+  try {
+    localStorage.setItem(`${DISMISSED}:${address}`, "1");
+  } catch {
+    // Private browsing: the checklist just comes back next visit.
+  }
+}
+
+function ChecklistSkeleton() {
+  return (
+    <div aria-hidden className="rounded-xl border border-stone-200/90 bg-white p-5 shadow-card sm:p-6">
+      <Skeleton className="h-4 w-24" />
+      <Skeleton className="mt-2 h-3.5 w-16" />
+      <Skeleton className="mt-4 h-1.5 w-full" />
+      <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {[0, 1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-[7.5rem] w-full rounded-lg" />
+        ))}
+      </div>
+    </div>
   );
 }
