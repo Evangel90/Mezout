@@ -205,6 +205,26 @@ An invoice's `payment`:
 | `router` | The `MezoutRouter` that took the payment. |
 | `tx_hash`, `block_number`, `paid_at` | The transaction on the [Mezo testnet explorer](https://explorer.test.mezo.org), and its block time. |
 
+### Verify a payment
+
+`POST /v1/verify` tells your server whether one of your invoices is paid, for example before an HTTP 402 paywall releases a response. It is read-only and records nothing, so your server must accept each invoice only once. [`@mezout/paywall`](https://github.com/Evangel90/Mezout/tree/main/packages/paywall) does this for you.
+
+```bash
+curl https://usemezout.vercel.app/v1/verify \
+  -H "Authorization: Bearer $MEZOUT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"invoice": "inv_…", "transaction": "0x…"}'
+```
+
+| Field | Description |
+| --- | --- |
+| `invoice` | Required. One of your invoice IDs. |
+| `transaction` | Optional. The hash the payer says paid it. If the indexer hasn't seen the payment yet, Mezout reads this transaction's receipt and requires the invoice router's `Paid` event for this order, merchant and amount. |
+
+The x402 facilitator form `{"x402Version": 2, "paymentPayload": …, "paymentRequirements": …}` is also accepted; the requirements are then checked against the invoice.
+
+The response is `{"object": "verification", "isValid": true, "payer", "network", "transaction", "payment", "invoice"}`, or `{"object": "verification", "isValid": false, "invalidReason", "message", "network", "invoice"}` where `invalidReason` is one of `invoice_not_paid`, `invoice_expired`, `invoice_refunded`, `requirements_mismatch`, `transaction_not_found`, `transaction_failed` or `transaction_mismatch`. An unknown invoice returns `404`.
+
 ## Refunds
 
 Mezout never holds your funds, so it can't send a refund for you. A refund is MUSD you send from your payout address back to the payment's `payer`; Mezout verifies the transfer on-chain and records it. Either:

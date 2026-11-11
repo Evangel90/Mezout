@@ -35,6 +35,7 @@ Bitcoin holders don't want to sell their BTC to spend it. Merchants won't instal
 - **Merchants without a wallet.** A passkey creates a `MezoutAccount` (OpenZeppelin ERC-4337 with a WebAuthn signer) that receives payments before it is even deployed. Withdrawals are confirmed with the passkey and gasless. Merchants with a Mezo wallet can be paid straight into it instead.
 - **Merchant dashboard.** Overview (balance, recent sales, payment links with QR codes), Payments (gross, fee and net per payment, CSV export, refunds), Developers (API keys, webhooks with test events and a delivery log, embedded checkout sites) and Account (business name, payout address, withdrawals).
 - **Integrations.** A [REST API](docs/API.md) with idempotency keys and rate limits; signed webhooks (`invoice.paid`, `invoice.expired`, `refund.completed`, `refund.canceled`) retried for 24 hours, with [a dependency-free receiver](examples/webhook-receiver); the [WooCommerce plugin](plugins/woocommerce); the [Shopify app](plugins/shopify); and an embedded checkout (`/mezout.js` or [`@mezout/embed-react`](packages/embed-react)).
+- **Agent payments.** A [Mezout MCP server](packages/mcp) lets AI agents create, check, refund and pay invoices within spending caps, and [`@mezout/paywall`](packages/paywall) charges per API request over HTTP 402 in the x402 v2 format, confirmed with `POST /v1/verify`.
 
 Diagrams of every payment path, passkey withdrawals and the invoice lifecycle are in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
@@ -117,7 +118,7 @@ To run it locally (Node 20+, pnpm 9, Foundry, PostgreSQL 14+), see [`docs/DEVELO
 ```
 contracts/       Foundry: MezoutRouter, MezoutAccount and factory, tests, deploy scripts
 apps/web/        Next.js 14: landing page, checkout, dashboard, REST API, relayer, indexer
-packages/        SDK and the React embedded checkout
+packages/        SDK, React embedded checkout, MCP server and HTTP 402 paywall
 plugins/         WooCommerce gateway (PHP) and Shopify app
 examples/        Dependency-free webhook receiver
 docs/            API reference, architecture, development guide, findings, motion graphics
@@ -127,7 +128,7 @@ Built with Solidity 0.8.28, Foundry, OpenZeppelin 5.6, Next.js 14, React 18, Typ
 
 ## What's next
 
-- **Agent payments:** a Mezout MCP server and pay-per-request APIs over HTTP 402, then agent wallets with passkey-approved spending limits
+- **Agent wallets** with passkey-approved spending limits, building on the MCP server and HTTP 402 paywall
 - **Mainnet readiness:** passkey account recovery, an external security review, deployment on Mezo mainnet
 - **Gasless payments for Bitcoin-wallet accounts**, and deeper MEZO liquidity than the current test pool
 - **Fee calibration** from measured relayer gas costs ([`docs/RELAYER_GAS_COST.md`](docs/RELAYER_GAS_COST.md))
