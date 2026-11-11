@@ -2,7 +2,9 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { AgentFlow } from "@/components/site/motion/AgentFlow";
 import { CheckoutDuo } from "@/components/site/motion/CheckoutDuo";
+import { InteractiveBackdrop } from "@/components/site/motion/InteractiveBackdrop";
 import { Showcase } from "@/components/site/Showcase";
+import { AGENT_BRANDS, BrandRow, STORE_BRANDS, WorksWithStrip } from "@/components/site/WorksWith";
 
 const REPO = "https://github.com/Evangel90/Mezout";
 const EXPLORER = "https://explorer.test.mezo.org/address";
@@ -91,10 +93,12 @@ function Section({
   tone = "white",
   className = "",
   children,
-}: Readonly<{ id?: string; tone?: "white" | "canvas" | "dark"; className?: string; children: ReactNode }>) {
+  backdrop,
+}: Readonly<{ id?: string; tone?: "white" | "canvas" | "dark"; className?: string; children: ReactNode; backdrop?: ReactNode }>) {
   const bg = { white: "bg-white", canvas: "bg-canvas", dark: "on-dark bg-ink text-white" }[tone];
   return (
-    <section id={id} className={`${bg} scroll-mt-16`}>
+    <section id={id} className={`${bg} relative isolate scroll-mt-16 overflow-hidden`}>
+      {backdrop}
       <div className={`mx-auto max-w-7xl px-4 sm:px-6 ${className}`}>{children}</div>
     </section>
   );
@@ -167,12 +171,8 @@ export default function Home() {
   return (
     <div className="overflow-x-clip">
       {/* Hero */}
-      <section className="on-dark relative isolate overflow-hidden bg-ink text-white">
-        <div
-          aria-hidden
-          className="absolute inset-0 -z-10 bg-[radial-gradient(40%_50%_at_12%_20%,rgba(255,107,20,0.22),transparent_70%),radial-gradient(40%_50%_at_88%_30%,rgba(127,92,255,0.25),transparent_70%),radial-gradient(50%_40%_at_50%_100%,rgba(20,171,100,0.16),transparent_70%)]"
-        />
-        <div aria-hidden className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(70%_60%_at_50%_30%,black,transparent)]" />
+      <section id="hero" className="on-dark relative isolate -mt-[4.5rem] overflow-hidden bg-ink pt-[4.5rem] text-white">
+        <InteractiveBackdrop />
         <div className="mx-auto max-w-7xl px-4 pb-16 pt-14 sm:px-6 sm:pb-24 sm:pt-20">
           <div className="mx-auto max-w-4xl space-y-8 text-center">
             <Link
@@ -207,6 +207,16 @@ export default function Home() {
           <div className="mx-auto mt-14 max-w-6xl rounded-4xl border border-white/10 bg-white/[0.03] p-3 shadow-[0_40px_120px_-40px_rgba(0,0,0,0.8)] backdrop-blur-sm sm:mt-20 sm:p-6 lg:p-8">
             <CheckoutDuo />
           </div>
+        </div>
+      </section>
+
+      {/* Works with */}
+      <section aria-label="Works with" className="border-b border-stone-200 bg-white">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+          <WorksWithStrip />
+          <p className="mt-4 text-center text-xs text-stone-500">
+            Compatibility, not partnership: Mezout ships its own Shopify app and WooCommerce plugin, and its MCP server runs in any client that supports local MCP servers.
+          </p>
         </div>
       </section>
 
@@ -253,6 +263,7 @@ export default function Home() {
                 A clean hosted checkout: choose MUSD, BTC or MEZO, or borrow MUSD against BTC, and confirm once. EVM wallets
                 pay no gas; Bitcoin wallets connect through Mezo Passport.
               </p>
+              <BrandRow label="Plugs into" brands={STORE_BRANDS} />
               <ArrowLink href="#humans">See the checkout</ArrowLink>
             </div>
             <div aria-hidden className="mt-auto border-t border-stone-200 bg-canvas p-5 sm:p-8">
@@ -284,6 +295,7 @@ export default function Home() {
                 Give an agent the Mezout MCP server and it can pay invoices in MUSD, with no gas or wallet pop-ups. Put the
                 402 paywall in front of an API and agents pay per request.
               </p>
+              <BrandRow label="Runs in" brands={AGENT_BRANDS} dark />
               <ArrowLink href="#agents" dark>
                 See agent payments
               </ArrowLink>
@@ -353,7 +365,7 @@ export default function Home() {
       </Section>
 
       {/* AI agents */}
-      <Section id="agents" tone="dark" className="relative py-20 sm:py-28">
+      <Section id="agents" tone="dark" className="py-20 sm:py-28" backdrop={<InteractiveBackdrop variant="agents" />}>
         <div className="grid gap-12 lg:grid-cols-[1fr_1fr] lg:items-end">
           <Heading
             dark
@@ -380,7 +392,11 @@ export default function Home() {
           <div className="reveal space-y-5 rounded-4xl border border-white/10 bg-white/[0.03] p-7 sm:p-8">
             <p className="eyebrow text-agent-300">MCP server</p>
             <h3 className="display-3">Tools any MCP client can call.</h3>
-            <p className="text-stone-400">Claude, Cursor or any MCP client gets tools to take and make payments, with caps on every payment and every session.</p>
+            <p className="text-stone-400">
+              Run <code className="rounded-md bg-white/10 px-1.5 py-0.5 font-mono text-[0.85em] text-stone-200">npx -y @mezout/mcp</code> in any MCP client
+              that supports local servers, and the agent gets tools to take and make payments, with caps on every payment and every session.
+            </p>
+            <BrandRow label="Works with" brands={AGENT_BRANDS} dark />
             <ul className="flex flex-wrap gap-2">
               {mcpTools.map((t) => (
                 <li key={t} className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 font-mono text-xs text-stone-200">
