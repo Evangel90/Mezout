@@ -214,7 +214,7 @@ async function init(argv: string[], io: InitIO): Promise<number> {
   if (manual.length) {
     say();
     say("Do by hand:");
-    for (const o of manual) say(`  ${CLIENT_NAMES[o.client]}: ${o.manual!.replace(/\n/g, "\n    ")}`);
+    for (const o of manual) say(`  ${CLIENT_NAMES[o.client]}: ${o.manual!.trimEnd().replace(/\n/g, "\n    ")}`);
   }
   const ready = outcomes.filter((o) => o.status === "added").map((o) => o.client);
   say();
