@@ -43,7 +43,7 @@ Names are in `.env.example`.
 
 ## Run it
 
-You need Node.js 20 or later. The step-by-step guide for Claude Code, Claude Desktop and Cursor is at [usemezout.vercel.app/docs#ai-agents](https://usemezout.vercel.app/docs#ai-agents). For the merchant tools, create an API key on the dashboard's **Developers** tab. For the payer tools, use a new wallet used only for testing, funded with test BTC and MUSD from [faucet.test.mezo.org](https://faucet.test.mezo.org).
+You need Node.js 20 or later. The step-by-step guide for Claude Code, Claude Desktop, Cursor, Codex and Hermes Agent is at [usemezout.vercel.app/docs#ai-agents](https://usemezout.vercel.app/docs#ai-agents). For the merchant tools, create an API key on the dashboard's **Developers** tab. For the payer tools, use a new wallet used only for testing, funded with test BTC and MUSD from [faucet.test.mezo.org](https://faucet.test.mezo.org).
 
 Claude Code:
 

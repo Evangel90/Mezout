@@ -19,7 +19,7 @@ const START = [
   { href: "#ai-agents", title: "AI agents", body: "Let agents pay with the MCP server, or charge them per request." },
 ];
 
-const LANGUAGE_LABEL: Record<string, string> = { bash: "Terminal", json: "JSON", js: "JavaScript", ts: "TypeScript", php: "PHP", python: "Python" };
+const LANGUAGE_LABEL: Record<string, string> = { bash: "Terminal", json: "JSON", js: "JavaScript", ts: "TypeScript", toml: "TOML", yaml: "YAML", php: "PHP", python: "Python" };
 
 const escapeHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
