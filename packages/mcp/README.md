@@ -43,9 +43,15 @@ Names are in `.env.example`.
 
 ## Run it
 
-Build once, in a terminal at the repository root:
+The step-by-step setup guide for Claude Code, Claude Desktop and Cursor is in the API reference: [usemezout.vercel.app/docs#ai-agents](https://usemezout.vercel.app/docs#ai-agents). In short:
+
+You need Node 20+, pnpm 9 and Git. For the payer tools, use a new wallet used only for testing and fund it with test BTC and MUSD from [faucet.test.mezo.org](https://faucet.test.mezo.org). For the merchant tools, create an API key on the dashboard's **Developers** tab.
+
+Build once, in a terminal:
 
 ```bash
+git clone https://github.com/Evangel90/Mezout.git
+cd Mezout
 pnpm install
 pnpm --filter @mezout/mcp build     # writes packages/mcp/dist/index.js
 ```

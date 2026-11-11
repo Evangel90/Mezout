@@ -16,10 +16,10 @@ const START = [
   { href: "#quickstart", title: "Quickstart", body: "Your first invoice and payment in five minutes." },
   { href: "#webhooks", title: "Webhooks", body: "Get told the moment a customer pays." },
   { href: "#embedded-checkout", title: "Embedded checkout", body: "Open checkout in a modal on your site." },
-  { href: "#errors", title: "Errors and limits", body: "Status codes, retries and rate limits." },
+  { href: "#ai-agents", title: "AI agents", body: "Let agents pay with the MCP server, or charge them per request." },
 ];
 
-const LANGUAGE_LABEL: Record<string, string> = { bash: "Terminal", json: "JSON", js: "JavaScript", php: "PHP", python: "Python" };
+const LANGUAGE_LABEL: Record<string, string> = { bash: "Terminal", json: "JSON", js: "JavaScript", ts: "TypeScript", php: "PHP", python: "Python" };
 
 const escapeHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 

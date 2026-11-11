@@ -431,9 +431,9 @@ export default function Home() {
             ))}
           </ul>
           <div className="flex flex-wrap gap-3 pt-2">
-            <a href={`${REPO}/tree/main/packages/mcp`} className="rounded-full bg-white px-5 py-2.5 font-medium text-stone-900 hover:bg-stone-200">
-              MCP server
-            </a>
+            <Link href="/docs#ai-agents" className="rounded-full bg-white px-5 py-2.5 font-medium text-stone-900 hover:bg-stone-200">
+              Set up the MCP server
+            </Link>
             <a href={`${REPO}/tree/main/packages/paywall`} className="rounded-full border border-stone-700 px-5 py-2.5 font-medium text-white hover:bg-stone-900">
               HTTP 402 paywall
             </a>

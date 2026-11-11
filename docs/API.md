@@ -434,6 +434,118 @@ Manage endpoints on the dashboard or with the API; up to 3 per account.
 - `GET /v1/webhook_endpoints` lists your endpoints.
 - `DELETE /v1/webhook_endpoints/:id` stops deliveries at once; queued deliveries are marked failed.
 
+## AI agents
+
+AI agents can use Mezout in two ways: an agent pays invoices and runs your Mezout account through the **MCP server**, and your API charges agents per request with an **HTTP 402 paywall**. Both run on Mezo testnet.
+
+### Set up the MCP server
+
+The MCP server gives Claude, Cursor or any other MCP client these tools:
+
+| Tool | Needs | What it does |
+| --- | --- | --- |
+| `create_invoice`, `get_invoice`, `list_invoices` | API key | Create a payment link, check its status, list invoices |
+| `refund`, `verify_payment` | API key | Request a refund; check whether an invoice is paid |
+| `pay_invoice` | Payer key | Pay a Mezout payment link in MUSD, with no gas |
+| `fetch_paid_resource` | Payer key | Fetch a URL, paying its HTTP 402 Mezout paywall on the way |
+| `get_budget` | Payer key | Show the payer address and how much of the spending limit is left |
+
+You need Node 20 or later, pnpm 9 and Git. Give it an API key, a payer key or both, depending on which tools you want.
+
+**1. Get your keys.**
+
+- **API key** (to take payments): on the [dashboard](https://usemezout.vercel.app/dashboard), open **Developers** and create a key. It starts with `mzk_test_`.
+- **Payer key** (to make payments): create a new wallet used only for testing, for example a fresh account in MetaMask, and export its private key. Get test BTC and MUSD for it from [faucet.test.mezo.org](https://faucet.test.mezo.org). Never use a wallet that holds real funds.
+
+**2. Download and build the server.** In a terminal:
+
+```bash
+git clone https://github.com/Evangel90/Mezout.git
+cd Mezout
+pnpm install
+pnpm --filter @mezout/mcp build
+```
+
+This writes `packages/mcp/dist/index.js`. Run `pwd` to get the folder's full path for the next step.
+
+**3. Add it to your agent.** In Claude Code, run this in any terminal, replacing the path and keys:
+
+```bash
+claude mcp add mezout \
+  -e MEZOUT_API_KEY=mzk_test_YOUR_KEY \
+  -e MEZOUT_PAYER_PRIVATE_KEY=0xYOUR_TEST_WALLET_KEY \
+  -e MEZOUT_MAX_PAYMENT_MUSD=1 \
+  -e MEZOUT_MAX_SESSION_MUSD=5 \
+  -- node /full/path/to/Mezout/packages/mcp/dist/index.js
+```
+
+For Claude Desktop, Cursor and other clients, add this to the client's MCP settings file (in Claude Desktop: **Settings → Developer → Edit Config**), then restart the client:
+
+```json
+{
+  "mcpServers": {
+    "mezout": {
+      "command": "node",
+      "args": ["/full/path/to/Mezout/packages/mcp/dist/index.js"],
+      "env": {
+        "MEZOUT_API_KEY": "mzk_test_YOUR_KEY",
+        "MEZOUT_PAYER_PRIVATE_KEY": "0xYOUR_TEST_WALLET_KEY",
+        "MEZOUT_MAX_PAYMENT_MUSD": "1",
+        "MEZOUT_MAX_SESSION_MUSD": "5"
+      }
+    }
+  }
+}
+```
+
+**4. Try it.** Ask your agent:
+
+> Create a Mezout invoice for 0.5 MUSD for "Test order", then pay it and tell me the transaction.
+
+The agent creates the invoice, pays it from the test wallet and returns a link to the transaction on the Mezo explorer. The invoice appears as paid on your dashboard.
+
+**Settings**
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `MEZOUT_API_KEY` | none | Your `mzk_test_` key, for the merchant tools |
+| `MEZOUT_PAYER_PRIVATE_KEY` | none | The test wallet's private key, for the payer tools |
+| `MEZOUT_MAX_PAYMENT_MUSD` | `1` | Largest single payment the agent may make |
+| `MEZOUT_MAX_SESSION_MUSD` | `10` | Total the agent may spend until the server restarts |
+| `MEZOUT_API_URL` | `https://usemezout.vercel.app` | The Mezout app to use |
+| `MEZO_RPC_URL` | `https://rpc.test.mezo.org` | Mezo testnet RPC |
+
+**Safety.**
+- **Where it pays:** the agent pays only on Mezo testnet, only through Mezout's own contracts, and only within the limits above.
+- **What leaves your machine:** the private key never does. Each payment sends two signatures, and only to Mezout's relay.
+- **What it refuses:** expired or already-paid invoices, and payments the wallet can't cover.
+
+### Charge agents per request
+
+[`@mezout/paywall`](https://github.com/Evangel90/Mezout/tree/main/packages/paywall) puts a price on an API route. A request without payment gets `402 Payment Required` with a Mezout invoice in the [x402 v2](https://github.com/x402-foundation/x402/tree/main/specs) format. The agent pays it, for example with `fetch_paid_resource`, and retries with proof. The paywall confirms the payment with [`POST /v1/verify`](#verify-a-payment) and serves the request once per invoice.
+
+Next.js (App Router):
+
+```ts
+import { withMezout402 } from "@mezout/paywall/next";
+
+export const GET = withMezout402({ apiKey: process.env.MEZOUT_API_KEY!, price: "0.05" }, async (req, ctx, payment) =>
+  Response.json({ report, paidBy: payment.payer }),
+);
+```
+
+Express:
+
+```ts
+import { mezout402 } from "@mezout/paywall/express";
+
+app.get("/report", mezout402({ apiKey: process.env.MEZOUT_API_KEY!, price: "0.05" }), (req, res) => {
+  res.json({ report, paidBy: req.mezout!.payer });
+});
+```
+
+The paywall uses its own `mezout` payment scheme inside the x402 format, because Mezout pays merchants through its router against a signed invoice. Agents that only support x402's `exact` scheme can't pay it. The package README has the details.
+
 ## Testing
 
 Everything is on testnet, so create and pay as many invoices as you like. **Send test event** on the dashboard sends a `ping`; `"expires_in": 300` makes a link expire after 5 minutes, followed by `invoice.expired`; refund a paid test invoice from **Payments**.
