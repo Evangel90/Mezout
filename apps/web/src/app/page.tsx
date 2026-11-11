@@ -481,16 +481,16 @@ export default function Home() {
               title="Works with how you sell."
               body="Install the Shopify app or WooCommerce plugin, no code needed. Or create payment links from your own server."
             />
-            <div className="reveal flex flex-wrap gap-3">
+            <div className="reveal flex flex-wrap items-center gap-3">
               <Link href="/guides" className="pill-ink">
                 Browse the guides
               </Link>
               <Link href="/docs" className="pill-outline">
                 API reference
               </Link>
-              <a href={REPO} target="_blank" rel="noopener noreferrer" className="pill-outline">
-                View on GitHub<span className="sr-only"> (opens in a new tab)</span>
-              </a>
+            </div>
+            <div className="reveal">
+              <ArrowLink href={REPO}>View on GitHub</ArrowLink>
             </div>
           </div>
           <div className="reveal min-w-0 self-start overflow-hidden rounded-3xl bg-ink shadow-lift">

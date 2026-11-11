@@ -215,8 +215,8 @@ function LinkReady({ created, onNew }: { created: Created & { reference: string 
             aria-label="Payment link"
             className={`${inputClass} truncate bg-stone-50 font-mono`}
           />
-          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-            <CopyButton text={created.url} label="Copy link" variant="primary" size="md" className="col-span-2 sm:col-span-1" />
+          <div className="grid grid-cols-2 gap-2">
+            <CopyButton text={created.url} label="Copy link" variant="primary" size="md" className="col-span-2" />
             {canShare && (
               <Button variant="secondary" onClick={share}>
                 <ShareIcon className="h-4 w-4" />
@@ -227,7 +227,7 @@ function LinkReady({ created, onNew }: { created: Created & { reference: string 
               <DownloadIcon className="h-4 w-4" />
               QR code
             </Button>
-            <ExternalLink href={created.url} className={buttonClass("secondary", "md", canShare ? "col-span-2 sm:col-span-1" : "")} iconClassName="h-4 w-4">
+            <ExternalLink href={created.url} className={buttonClass("secondary", "md", canShare ? "col-span-2" : "")} iconClassName="h-4 w-4">
               Preview checkout
             </ExternalLink>
           </div>
