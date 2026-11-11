@@ -1,9 +1,7 @@
-import { existsSync, readFileSync } from "node:fs";
-import path from "node:path";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Marked, type Tokens } from "marked";
 import { CopyButtons } from "@/components/docs/CopyButtons";
+import { readRepoFile, renderMarkdown } from "@/lib/markdown";
 
 export const metadata: Metadata = {
   title: "API reference",
@@ -13,52 +11,19 @@ export const metadata: Metadata = {
 const REPO_DOC = "https://github.com/Evangel90/Mezout/blob/main/docs/API.md";
 
 const START = [
-  { href: "#quickstart", title: "Quickstart", body: "Your first invoice and payment in five minutes." },
-  { href: "#webhooks", title: "Webhooks", body: "Get told the moment a customer pays." },
-  { href: "#embedded-checkout", title: "Embedded checkout", body: "Open checkout in a modal on your site." },
-  { href: "#ai-agents", title: "AI agents", body: "Let agents pay with the MCP server, or charge them per request." },
+  { href: "#quickstart", title: "Quickstart", body: "Your first payment link, paid, in five minutes." },
+  { href: "#webhooks", title: "Webhooks", body: "Know the moment an order is paid." },
+  { href: "#embedded-checkout", title: "Embedded checkout", body: "Open checkout in a pop-up on your site." },
+  { href: "#ai-agents", title: "AI agents", body: "Let agents pay you, or charge them per request." },
 ];
-
-const LANGUAGE_LABEL: Record<string, string> = { bash: "Terminal", json: "JSON", js: "JavaScript", ts: "TypeScript", toml: "TOML", yaml: "YAML", php: "PHP", python: "Python" };
-
-const escapeHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-
-/** GitHub's heading anchors, so links like /docs#webhooks match the same doc on GitHub. */
-const slug = (text: string) =>
-  text
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, "")
-    .trim()
-    .replace(/\s+/g, "-");
 
 /**
  * docs/API.md is the single source for the API reference: it is read and rendered when the site is built, so the
- * page and the file on GitHub never drift apart. The build runs from the repo root or from apps/web.
+ * page and the file on GitHub never drift apart.
  */
 function loadApiDoc() {
-  const file = [path.join(process.cwd(), "docs/API.md"), path.join(process.cwd(), "../../docs/API.md")].find(existsSync);
-  if (!file) throw new Error("docs/API.md not found");
   // The page has its own title, so drop the file's.
-  const markdown = readFileSync(file, "utf8").replace(/^# .*\n/, "");
-
-  const toc: { id: string; text: string; depth: number }[] = [];
-  const marked = new Marked({
-    gfm: true,
-    renderer: {
-      heading({ tokens, depth, text }: Tokens.Heading) {
-        const id = slug(text);
-        if (depth <= 3) toc.push({ id, text, depth });
-        return `<h${depth} id="${id}"><a href="#${id}">${this.parser.parseInline(tokens)}</a></h${depth}>\n`;
-      },
-      // Each code block gets a label and a copy button; CopyButtons wires up the buttons in the browser.
-      code({ text, lang }: Tokens.Code) {
-        const label = LANGUAGE_LABEL[lang ?? ""] ?? "";
-        return `<div class="code-block"><div class="code-block-bar"><span>${label}</span><button type="button" data-copy>Copy</button></div><pre><code>${escapeHtml(text)}</code></pre></div>\n`;
-      },
-    },
-  });
-  const html = marked.parse(markdown, { async: false });
-  return { html, toc };
+  return renderMarkdown(readRepoFile("docs/API.md").replace(/^# .*\n/, ""));
 }
 
 export default function DocsPage() {
@@ -71,17 +36,23 @@ export default function DocsPage() {
             <p className="eyebrow text-signal-700">Developers</p>
             <h1 className="display-2">API reference</h1>
             <p className="text-lg leading-relaxed text-stone-600">
-              Create invoices from your server, send customers to checkout, and fulfil orders when a signed webhook arrives.
-              Let AI agents pay through the MCP server or an HTTP 402 paywall. Everything runs on Mezo testnet with test
-              MUSD.
+              Create payment links from your server and fulfil orders when a signed webhook arrives. Everything runs on Mezo
+              testnet with test MUSD. Setting up a store? Start with the{" "}
+              <Link href="/guides" className="font-medium text-ink underline decoration-signal-400 decoration-2 underline-offset-2 hover:decoration-signal-600">
+                guides
+              </Link>
+              .
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
             <Link href="/dashboard/developers" className="pill-ink px-5 py-2.5 text-sm">
               Get an API key
             </Link>
-            <a href={REPO_DOC} className="pill-outline px-5 py-2.5 text-sm">
-              View on GitHub
+            <Link href="/guides" className="pill-outline px-5 py-2.5 text-sm">
+              Browse guides
+            </Link>
+            <a href={REPO_DOC} target="_blank" rel="noopener noreferrer" className="pill-outline px-5 py-2.5 text-sm">
+              View on GitHub<span className="sr-only"> (opens in a new tab)</span>
             </a>
           </div>
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

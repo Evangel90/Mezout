@@ -496,3 +496,28 @@ export const StoreIcon = icon("M4 9l1.5-5h13L20 9M4 9h16M4 9a2.7 2.7 0 0 0 5.3 0
 export const BoltIcon = icon("M13 3L5 13.5h6L10 21l8-10.5h-6z");
 export const BookIcon = icon("M5 4.5h9.5A3.5 3.5 0 0 1 18 8v11.5H8.5A3.5 3.5 0 0 1 5 16zM5 16a3.5 3.5 0 0 1 3.5-3.5H18");
 export const AlertIcon = icon("M12 9v4M12 17h.01M10.3 4.3L2.6 18a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 4.3a2 2 0 0 0-3.4 0z");
+export const QrIcon = icon("M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2M14 18h2v2M18 18h2v2h-2");
+export const ShareIcon = icon("M12 3v12M7 8l5-5 5 5M5 13v7h14v-7");
+
+/* Links --------------------------------------------------------------------------------------------------------- */
+
+/**
+ * A link that leaves the current app: it opens in a new tab, ends with a small arrow icon, and tells screen readers
+ * so. Pass `icon={false}` when the link already carries its own icon.
+ */
+export function ExternalLink({
+  href,
+  children,
+  className = "",
+  icon = true,
+  iconClassName = "ml-1 h-3.5 w-3.5 align-[-2px] opacity-60",
+  ...props
+}: Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, "target" | "rel" | "href"> & { href: string; icon?: boolean; iconClassName?: string }) {
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer" className={className} {...props}>
+      {children}
+      {icon && <ExternalIcon className={`inline-block ${iconClassName}`} />}
+      <span className="sr-only"> (opens in a new tab)</span>
+    </a>
+  );
+}

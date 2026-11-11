@@ -207,7 +207,7 @@ An invoice's `payment`:
 
 ### Verify a payment
 
-`POST /v1/verify` tells your server whether one of your invoices is paid, for example before an HTTP 402 paywall releases a response. It is read-only and records nothing, so your server must accept each invoice only once. [`@mezout/paywall`](https://github.com/Evangel90/Mezout/tree/main/packages/paywall) does this for you.
+`POST /v1/verify` tells your server whether one of your invoices is paid, for example before an HTTP 402 paywall releases a response. It is read-only and records nothing, so your server must accept each invoice only once. [`@mezout/paywall`](https://usemezout.vercel.app/guides/paywall) does this for you.
 
 ```bash
 curl https://usemezout.vercel.app/v1/verify \
