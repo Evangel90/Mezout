@@ -8,7 +8,7 @@ Five looping animations that explain Mezout, in the site's own palette and Geist
 | `02-borrow-dont-sell` | 10 s | A 150 MUSD borrow moves the loan from 198% to 184% and is paid; a 600 MUSD borrow would fall to 143% and is refused at the 160% floor |
 | `03-passkey-merchant` | 9 s | Passkey sign-up creates a smart account; payouts arrive with no wallet, seed phrase or gas |
 | `04-gasless` | 8 s | Customer signs, the relayer pays the gas, the router settles on Mezo, the merchant gets 25.00 MUSD |
-| `05-plug-in` | 9 s | Payment links, QR, REST API and WooCommerce create invoices; a signed `invoice.paid` webhook marks the order paid; embedded checkout marked "Soon" |
+| `05-plug-in` | 9 s | Payment links, QR, REST API, WooCommerce, Shopify, embedded checkout and AI agents create invoices; a signed `invoice.paid` webhook marks the order paid |
 | `06-receipt` | 13 s | Portrait, landing page hero: a receipt prints, a PAID stamp lands, and the payment method cycles while the merchant always receives 25.00 MUSD |
 | `07-checkout` | 11 s | Portrait: the hosted checkout; the customer picks Pay with BTC, signs one message with no network fee and sees Payment complete |
 

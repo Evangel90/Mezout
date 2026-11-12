@@ -13,7 +13,7 @@ const geistMono = fs.readFileSync(path.join(here, "fonts/GeistMonoVF-subset.woff
 
 const W = 1200;
 const H = 675;
-const C = {
+const LIGHT = {
   bg: "#fafaf9",
   card: "#ffffff",
   line: "#e7e5e4",
@@ -32,7 +32,10 @@ const C = {
   amberInk: "#92400e",
   red: "#dc2626",
   redSoft: "#fee2e2",
+  solid: "#1c1917", // filled shapes that carry white text or icons
+  code: "#1c1917", // the code card
 };
+const C = { ...LIGHT };
 const EASE = "0.4 0 0.2 1";
 
 // ---------- animation helpers (every animation in a scene shares one duration, so loops stay in sync)
@@ -116,7 +119,7 @@ const card = (x, y, w, h, r = 18) =>
   `${rect(x, y + 3, w, h, r, "#1c1917", "none", 0, 'opacity="0.05"')}${rect(x, y, w, h, r, C.card, C.line, 1.5)}`;
 
 /** The Mezout mark: rounded square with a check, `s` px wide, top-left at (x, y). */
-function mark(x, y, s, fill = C.ink) {
+function mark(x, y, s, fill = C.solid) {
   const k = s / 32;
   return `<g transform="translate(${x} ${y}) scale(${k})"><rect width="32" height="32" rx="8" fill="${fill}"/><path d="M10 16.5l4 4 8-9" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></g>`;
 }
@@ -202,7 +205,7 @@ function payAnyWay() {
   });
 
   // Router
-  body += `<g>${pop(cx, cy, `${rect(-70, -70, 140, 140, 32, C.ink)}`, [0, 1, 2, 3].flatMap((i) => [[i * 2 + 0.85, "1"], [i * 2 + 1.0, "1.06"], [i * 2 + 1.25, "1"]]), dur)}</g>`;
+  body += `<g>${pop(cx, cy, `${rect(-70, -70, 140, 140, 32, C.solid)}`, [0, 1, 2, 3].flatMap((i) => [[i * 2 + 0.85, "1"], [i * 2 + 1.0, "1.06"], [i * 2 + 1.25, "1"]]), dur)}</g>`;
   body += `<g transform="translate(${cx - 70} ${cy - 70}) scale(4.375)"><path d="M10 16.5l4 4 8-9" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></g>`;
   body += text(cx, cy + 100, "Mezout router", { size: 16, weight: 600, anchor: "middle" });
   body += text(cx, cy + 121, "Settles on-chain", { size: 14, fill: C.muted, anchor: "middle" });
@@ -225,7 +228,7 @@ function payAnyWay() {
   const mx = 820;
   const my = 249;
   body += card(mx, my, 284, 220, 20);
-  body += text(mx + 28, my + 46, "Satoshi’s Coffee Store", { size: 20, weight: 600 });
+  body += text(mx + 28, my + 46, "Merchant Store", { size: 20, weight: 600 });
   body += text(mx + 28, my + 70, "Order 1001", { size: 15, fill: C.muted });
   body += `<line x1="${mx + 28}" y1="${my + 92}" x2="${mx + 256}" y2="${my + 92}" stroke="${C.line}" stroke-width="1.5"/>`;
   body += text(mx + 28, my + 124, "Received", { size: 14, fill: C.muted });
@@ -264,7 +267,7 @@ function borrowDontSell() {
   body += card(96, 190, 320, 350, 22);
   body += text(128, 232, "Customer’s Bitcoin", { size: 15, fill: C.muted });
   body += `<g transform="translate(256 318)">${coin("BTC", 56)}</g>`;
-  body += `<g transform="translate(300 274)"><circle r="18" fill="${C.ink}" stroke="#fff" stroke-width="3"/>${lock("#fff", 0.85)}</g>`;
+  body += `<g transform="translate(300 274)"><circle r="18" fill="${C.solid}" stroke="#fff" stroke-width="3"/>${lock("#fff", 0.85)}</g>`;
   body += text(256, 412, "0.05 BTC", { size: 28, weight: 650, anchor: "middle", ls: -0.5 });
   body += text(256, 436, "locked as collateral", { size: 15, fill: C.muted, anchor: "middle" });
   body += `<line x1="128" y1="468" x2="384" y2="468" stroke="${C.line}" stroke-width="1.5"/>`;
@@ -297,7 +300,7 @@ function borrowDontSell() {
     `<line x1="0" y1="242" x2="0" y2="276" stroke="${fill}" stroke-width="3" stroke-linecap="round"/>${rect(-34, 212, 68, 26, 13, fill)}${labelGroups}`;
   const label = (s) => text(0, 230, s, { size: 14, weight: 600, fill: "#fff", anchor: "middle" });
   const realLabels = `<g>${vis([[-1, 1.8], [9.2, dur + 1]], dur, 0.2)}${label("198%")}</g><g>${vis([[1.8, 9.2]], dur, 0.2)}${label("184%")}</g>`;
-  body += `<g transform="translate(${x(198)} 0)"><g>${xform("translate", markerMoves, dur)}${markerPill(C.ink, realLabels)}</g></g>`;
+  body += `<g transform="translate(${x(198)} 0)"><g>${xform("translate", markerMoves, dur)}${markerPill(C.solid, realLabels)}</g></g>`;
 
   // Ghost marker for the refused borrow: projects to 143% then vanishes
   const dGhost = (x(143) - x(184)).toFixed(1);
@@ -310,14 +313,14 @@ function borrowDontSell() {
     `<clipPath id="p${y}"><rect x="480" y="${y}" width="624" height="70" rx="16"/></clipPath><g clip-path="url(#p${y})"><g transform="translate(480 ${y + 67})"><rect width="${endX - 480}" height="3" fill="${color}">${xform("scale", [[t0, "0.0001 1"], [t1, "1 1"]], dur)}</rect></g></g>`;
 
   body += slideIn(
-    `${row(330, "Borrow 150 MUSD", "Pay Satoshi’s Coffee Store")}${progress(330, 1.0, 2.2, C.green)}` +
+    `${row(330, "Borrow 150 MUSD", "Pay Merchant Store")}${progress(330, 1.0, 2.2, C.green)}` +
       popIn(1040, 365, pill(0, 0, "Paid", { fill: C.greenSoft, color: C.greenInk, w: 88, icon: `<g transform="translate(-24 0)">${check(0.7, C.green, 2.2)}</g>` }), 2.3, 8.6, dur),
     0.5,
     8.6,
     dur,
   );
   body += slideIn(
-    `${row(416, "Borrow 600 MUSD", "Pay Satoshi’s Coffee Store")}${progress(416, 4.9, 5.8, C.red)}` +
+    `${row(416, "Borrow 600 MUSD", "Pay Merchant Store")}${progress(416, 4.9, 5.8, C.red)}` +
       popIn(1000, 451, pill(0, 0, "Refused: below 160%", { fill: C.redSoft, color: C.red, w: 172, icon: `<g transform="translate(-72 0)">${cross(0.7, C.red, 2.2)}</g>` }), 6.1, 8.6, dur),
     4.3,
     8.6,
@@ -349,8 +352,8 @@ function passkey() {
   body += text(128, 262, "Business name", { size: 13, fill: C.muted });
   body += rect(128, 272, 376, 48, 10, C.card, C.line, 1.5);
   body += `<clipPath id="type"><rect x="140" y="276" height="40" width="0">${anim("width", [[0.3, 0], [1.2, 270], [8.5, 270], [8.85, 0]], dur)}</rect></clipPath>`;
-  body += `<g clip-path="url(#type)">${text(146, 302, "Satoshi’s Coffee Store", { size: 17 })}</g>`;
-  body += rect(128, 340, 376, 54, 12, C.ink);
+  body += `<g clip-path="url(#type)">${text(146, 302, "Merchant Store", { size: 17 })}</g>`;
+  body += rect(128, 340, 376, 54, 12, C.solid);
   body += `<g transform="translate(176 367)">${lock("#fff", 0.75)}</g>`;
   body += text(326, 373, "Create account with passkey", { size: 16, weight: 600, fill: "#fff", anchor: "middle" });
   body += `<g>${anim("opacity", [[1.4, 0], [1.5, 0.25], [1.75, 0]], dur)}${rect(128, 340, 376, 54, 12, "#fff")}</g>`;
@@ -367,7 +370,7 @@ function passkey() {
   const finger = arcs
     .map((d, i) => `<path d="${d}" fill="none" stroke="${C.ink}" stroke-width="3.2" stroke-linecap="round" pathLength="1" stroke-dasharray="1 2">${drawOn(1.95 + i * 0.15, 2.6 + i * 0.15, dur)}</path>`)
     .join("");
-  let sheet = `<path d="M97 221h438v318a20 20 0 0 1 -20 20h-398a20 20 0 0 1 -20 -20z" fill="#fff" opacity="0.96"/>`;
+  let sheet = `<path d="M97 221h438v318a20 20 0 0 1 -20 20h-398a20 20 0 0 1 -20 -20z" fill="${C.card}" opacity="0.96"/>`;
   sheet += `<g transform="translate(316 360)"><circle r="56" fill="${C.wash}"/><g transform="translate(0 -4)">${finger}</g></g>`;
   sheet += `<g>${vis([[3.05, dur]], dur, 0.15)}${pop(316, 360, `<circle r="56" fill="${C.green}"/>${check(3, "#fff", 5)}`, [[3.05, "0.7"], [3.3, "1.06"], [3.45, "1"]], dur)}</g>`;
   sheet += `<g>${vis([[1.85, 3.05]], dur, 0.15)}${text(316, 456, "Confirm with Touch ID", { size: 16, weight: 600, anchor: "middle" })}</g>`;
@@ -424,7 +427,7 @@ function gasless() {
     { x: 180, label: "Customer", sub: "Signs one message" },
     { x: 460, label: "Mezout relayer", sub: "Pays the gas" },
     { x: 740, label: "Mezo", sub: "Router settles" },
-    { x: 1020, label: "Satoshi’s Coffee Store", sub: "Gets 25.00 MUSD" },
+    { x: 1020, label: "Merchant Store", sub: "Gets 25.00 MUSD" },
   ];
   let body = "";
   for (let i = 0; i < 3; i++) {
@@ -490,22 +493,23 @@ function plugIn() {
     },
     { label: "REST API", icon: text(0, 5, "{ }", { size: 15, weight: 700, family: mono, anchor: "middle" }) },
     { label: "WooCommerce", icon: `<path d="M-12 -8h3l3 12h13l3 -9h-17" fill="none" stroke="${C.ink}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="-4" cy="9" r="2" fill="${C.ink}"/><circle cx="6" cy="9" r="2" fill="${C.ink}"/>` },
-    { label: "Embedded checkout", soon: true, icon: `<rect x="-11" y="-9" width="22" height="18" rx="3" fill="none" stroke="${C.faint}" stroke-width="2.2"/><rect x="-5" y="-3" width="10" height="7" rx="1.5" fill="${C.faint}"/>` },
+    { label: "Shopify", icon: `<path d="M-10 -4h20l-2 14h-16z" fill="none" stroke="${C.ink}" stroke-width="2.4" stroke-linejoin="round"/><path d="M-5 -4v-3a5 5 0 0 1 10 0v3" fill="none" stroke="${C.ink}" stroke-width="2.4" stroke-linecap="round"/>` },
+    { label: "Embedded checkout", icon: `<rect x="-11" y="-9" width="22" height="18" rx="3" fill="none" stroke="${C.ink}" stroke-width="2.2"/><rect x="-5" y="-3" width="10" height="7" rx="1.5" fill="${C.ink}"/>` },
+    { label: "AI agents", icon: `<rect x="-10" y="-6" width="20" height="15" rx="4" fill="none" stroke="${C.ink}" stroke-width="2.2"/><path d="M0 -6v-4" stroke="${C.ink}" stroke-width="2.2" stroke-linecap="round"/><circle cx="0" cy="-11" r="1.8" fill="${C.ink}"/><circle cx="-4" cy="1.5" r="1.8" fill="${C.ink}"/><circle cx="4" cy="1.5" r="1.8" fill="${C.ink}"/>` },
   ];
+  // Seven chips in one column, centred on the code card (y 190 to 530).
   chips.forEach((c, i) => {
-    const y = 188 + i * 72;
-    const cyy = y + 28;
-    body += `<path d="M360 ${cyy} C 382 ${cyy}, 382 355, 400 355" fill="none" stroke="${c.soon ? C.line : C.faint}" stroke-width="1.6" pathLength="1" stroke-dasharray="1 2">${drawOn(1.1 + i * 0.06, 1.6 + i * 0.06, dur)}${vis([[1.1, 8.4]], dur, 0.2)}</path>`;
-    const chip = c.soon
-      ? `${rect(80, y, 280, 56, 14, C.bg, C.faint, 1.5, 'stroke-dasharray="5 5"')}<g transform="translate(110 ${cyy})">${c.icon}</g>${text(134, cyy + 5, c.label, { size: 16, weight: 600, fill: C.muted })}${pill(322, cyy, "Soon", { fill: C.wash, color: C.muted, w: 52 })}`
-      : `${card(80, y, 280, 56, 14)}<g transform="translate(110 ${cyy})">${c.icon}</g>${text(134, cyy + 5, c.label, { size: 16, weight: 600 })}`;
-    body += slideIn(chip, 0.2 + i * 0.15, 8.4, dur, -16, 0);
+    const y = 177 + i * 52;
+    const cyy = y + 22;
+    body += `<path d="M360 ${cyy} C 382 ${cyy}, 382 355, 400 355" fill="none" stroke="${C.faint}" stroke-width="1.6" pathLength="1" stroke-dasharray="1 2">${drawOn(1.1 + i * 0.06, 1.6 + i * 0.06, dur)}${vis([[1.1, 8.4]], dur, 0.2)}</path>`;
+    const chip = `${card(80, y, 280, 44, 12)}<g transform="translate(108 ${cyy}) scale(0.9)">${c.icon}</g>${text(132, cyy + 5, c.label, { size: 15, weight: 600 })}`;
+    body += slideIn(chip, 0.2 + i * 0.12, 8.4, dur, -16, 0);
   });
 
   // Code card
   const cx0 = 400;
   body += slideIn(
-    `${rect(cx0, 190 + 3, 410, 340, 18, "#000", "none", 0, 'opacity="0.08"')}${rect(cx0, 190, 410, 340, 18, C.ink)}${[0, 1, 2].map((i) => `<circle cx="${cx0 + 24 + i * 15}" cy="214" r="4.5" fill="#44403c"/>`).join("")}`,
+    `${rect(cx0, 190 + 3, 410, 340, 18, "#000", "none", 0, 'opacity="0.08"')}${rect(cx0, 190, 410, 340, 18, C.code, C.line, 1)}${[0, 1, 2].map((i) => `<circle cx="${cx0 + 24 + i * 15}" cy="214" r="4.5" fill="#44403c"/>`).join("")}`,
     0.4,
     8.4,
     dur,
@@ -548,7 +552,7 @@ function plugIn() {
     dur,
     box: [56, 168, 1088, 384],
     title: "Plugs into how merchants already sell.",
-    subtitle: "Links, QR codes, a REST API and WooCommerce. A signed webhook tells the store it’s paid.",
+    subtitle: "Links, QR, API, WooCommerce, Shopify, embedded checkout and AI agents. A signed webhook confirms payment.",
     body,
     usesMono: true,
   };
@@ -577,7 +581,7 @@ function receipt() {
   paper += mark(L, 78, 24);
   paper += m(L + 34, 95, "MEZOUT", { weight: 650, fill: C.ink, ls: 2.5 });
   paper += m(R, 95, "26 Oct · 14:22", { size: 12, fill: C.muted, anchor: "end" });
-  paper += text(L, 136, "Satoshi’s Coffee Store", { size: 21, weight: 650, ls: -0.3 });
+  paper += text(L, 136, "Merchant Store", { size: 21, weight: 650, ls: -0.3 });
   paper += m(L, 158, "Order 1001", { size: 12.5, fill: C.muted });
   paper += dashed(178);
   paper += item(208, "2 × Flat white", "11.00") + item(236, "1 × Croissant", "4.50") + item(264, "Beans, 250 g", "9.50");
@@ -638,7 +642,7 @@ function checkoutDemo() {
   body += `${rect(x0, 40, cw, 580, 22, "#000", "none", 0, 'opacity="0.08" filter="url(#lift)"')}${rect(x0, 30, cw, 580, 22, C.card, C.line, 1.5)}`;
   body += text(L, 72, "Pay", { size: 14, fill: C.muted });
   body += text(R, 72, "Link expires in 23 hours", { size: 12, fill: C.muted, anchor: "end" });
-  body += text(L, 100, "Satoshi’s Coffee Store", { size: 22, weight: 650, ls: -0.3 });
+  body += text(L, 100, "Merchant Store", { size: 22, weight: 650, ls: -0.3 });
   body += text(L, 120, "0x36A9…F9E4", { size: 12, fill: C.muted, family: mono });
   body += text(L, 172, `25.00<tspan font-size="22" font-weight="500" fill="${C.muted}" dx="8">MUSD</tspan>`, { size: 42, weight: 650, ls: -1 });
   body += text(L, 198, "Order 1001", { size: 14, fill: C.ink2 });
@@ -688,8 +692,8 @@ function checkoutDemo() {
   let done = `${rect(L - 6, 262, R - L + 12, 300, 14, "#f0fdf4", "#bbf7d0", 1.5)}`;
   done += `<g>${pop(260, 330, `<circle r="28" fill="${C.green}"/>${check(1.7, "#fff", 4)}`, [[5.6, "0.6"], [5.85, "1.08"], [6.0, "1"]], dur)}</g>`;
   done += text(260, 394, "Payment complete", { size: 20, weight: 650, fill: "#14532d", anchor: "middle" });
-  done += text(260, 418, "Satoshi’s Coffee Store received 25.00 MUSD.", { size: 14, fill: C.greenInk, anchor: "middle" });
-  done += `${rect(116, 446, 288, 44, 12, C.greenInk)}${text(260, 474, "Return to Satoshi’s Coffee Store", { size: 14, weight: 600, fill: "#fff", anchor: "middle" })}`;
+  done += text(260, 418, "Merchant Store received 25.00 MUSD.", { size: 14, fill: C.greenInk, anchor: "middle" });
+  done += `${rect(116, 446, 288, 44, 12, C.greenInk)}${text(260, 474, "Return to Merchant Store", { size: 14, weight: 600, fill: "#fff", anchor: "middle" })}`;
   done += text(260, 520, "View transaction", { size: 13, fill: C.greenInk, anchor: "middle" });
   done += `<line x1="211" y1="524" x2="309" y2="524" stroke="${C.greenInk}" stroke-width="1"/>`;
   body += `<g>${vis([[5.55, 10.2]], dur, 0.3)}${done}</g>`;

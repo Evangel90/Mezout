@@ -1,18 +1,16 @@
 "use client";
 
-import Link from "next/link";
 import { ApiKeyPanel } from "@/components/ApiKeyPanel";
 import { EmbedOriginsForm } from "@/components/dashboard/EmbedOriginsForm";
-import { ExternalIcon, PageHeader, buttonClass } from "@/components/ui";
+import { ExternalIcon, ExternalLink, PageHeader, buttonClass } from "@/components/ui";
 import { WebhooksPanel } from "@/components/WebhooksPanel";
 
-const REPO = "https://github.com/Evangel90/Mezout/tree/main/plugins";
-
+/** Setup guides on the main site. They open in a new tab so the merchant can follow along with this page open. */
 const INTEGRATIONS = [
-  { name: "REST API", body: "Create invoices from any backend.", href: "/docs#quickstart" },
-  { name: "WooCommerce", body: "Plugin for classic and block checkouts.", href: `${REPO}/woocommerce` },
-  { name: "Shopify", body: "App that adds a payment step to orders.", href: `${REPO}/shopify` },
-  { name: "Embedded checkout", body: "Open checkout in a modal on your site.", href: "/docs#embedded-checkout" },
+  { name: "Shopify", body: "Add a “Pay with Bitcoin or MUSD” option.", href: "/guides/shopify" },
+  { name: "WooCommerce", body: "Install the plugin. Paste your key.", href: "/guides/woocommerce" },
+  { name: "Your own site", body: "Open checkout in a pop-up.", href: "/guides/embedded-checkout" },
+  { name: "AI agents", body: "Get paid by agents, per request.", href: "/guides/ai-agents" },
 ];
 
 export default function DevelopersPage() {
@@ -20,33 +18,35 @@ export default function DevelopersPage() {
     <>
       <PageHeader
         title="Developers"
-        description="Connect your store: API keys for your server, webhooks for paid orders, and the sites allowed to embed checkout."
+        description="Connect your store. Create an API key, then follow the guide for your platform."
         action={
-          <Link href="/docs" className={buttonClass("secondary", "sm")}>
+          <ExternalLink href="/docs" className={buttonClass("secondary", "sm")} iconClassName="h-4 w-4">
             API reference
-          </Link>
+          </ExternalLink>
         }
       />
-      <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {INTEGRATIONS.map((i) => {
-          const external = i.href.startsWith("http");
-          return (
+      <section aria-labelledby="guides-title" className="space-y-3">
+        <h2 id="guides-title" className="text-sm font-medium text-stone-600">
+          Setup guides
+        </h2>
+        <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {INTEGRATIONS.map((i) => (
             <li key={i.name}>
-              <a
+              <ExternalLink
                 href={i.href}
-                {...(external ? { target: "_blank", rel: "noreferrer" } : {})}
+                icon={false}
                 className="group flex h-full flex-col gap-1 rounded-xl border border-stone-200 bg-white p-4 transition-colors hover:border-stone-300 hover:bg-stone-50"
               >
                 <span className="flex items-center justify-between text-sm font-medium text-stone-900">
                   {i.name}
                   <ExternalIcon className="h-4 w-4 text-stone-400 group-hover:text-stone-700" />
                 </span>
-                <span className="text-xs text-stone-600">{i.body}</span>
-              </a>
+                <span className="text-[13px] text-stone-600">{i.body}</span>
+              </ExternalLink>
             </li>
-          );
-        })}
-      </ul>
+          ))}
+        </ul>
+      </section>
       <ApiKeyPanel />
       <WebhooksPanel />
       <EmbedOriginsForm />

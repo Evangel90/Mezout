@@ -1,7 +1,14 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
+import { AgentFlow } from "@/components/site/motion/AgentFlow";
+import { CheckoutDuo } from "@/components/site/motion/CheckoutDuo";
+import { InteractiveBackdrop } from "@/components/site/motion/InteractiveBackdrop";
+import { CommandLine } from "@/components/site/CommandLine";
+import { ScrollReveal } from "@/components/site/ScrollReveal";
 import { Showcase } from "@/components/site/Showcase";
+import { AGENT_BRANDS, BrandRow, STORE_BRANDS, WorksWithStrip } from "@/components/site/WorksWith";
 
-const REPO = "https://github.com/Evangel90/Mezout";
+const REPO = "https://github.com/Evangel90/Mezout"; // Only for the explicit "View on GitHub" links.
 const EXPLORER = "https://explorer.test.mezo.org/address";
 const SOURCIFY = "https://repo.sourcify.dev/31611";
 
@@ -10,159 +17,115 @@ const contracts = [
   { name: "MezoutAccountFactory", address: "0xeE85EE32488FF2D63eFe48159ddB59e6863cdF79" },
 ];
 
-const builtOn = ["MUSD", "Mezo Passport", "Tigris", "ERC-4337", "EIP-712", "Sourcify"];
+const builtOn = ["MUSD", "Mezo Passport", "Tigris", "Model Context Protocol", "x402", "Sourcify"];
+
+const facts = [
+  { value: "4", label: "ways customers can pay: MUSD, BTC, MEZO or a loan against BTC" },
+  { value: "1%", label: "fee on testnet, taken from your payout. Customers pay your price." },
+  { value: "0", label: "funds Mezout holds. Payments go straight to you." },
+  { value: "160%", label: "minimum collateral when a customer borrows to pay" },
+];
 
 const methods = [
-  { color: "bg-green-600", name: "Pay with MUSD", body: "Straight from their balance." },
-  { color: "bg-[#f7931a]", name: "Pay with BTC", body: "Converted to MUSD at a live price, never above the price they approve." },
-  { color: "bg-rose-600", name: "Pay with MEZO", body: "Converted the same way, with the same price cap." },
-  { color: "bg-orange-600", name: "Borrow against BTC", body: "They keep their Bitcoin and borrow the MUSD inside the payment." },
+  { dot: "bg-musd-500", name: "Pay with MUSD", body: "Straight from their balance." },
+  { dot: "bg-[#f7931a]", name: "Pay with BTC", body: "Converted at a live price, capped at the price they approve." },
+  { dot: "bg-rose-600", name: "Pay with MEZO", body: "Converted the same way, with the same cap." },
+  { dot: "bg-signal-600", name: "Borrow against BTC", body: "They keep their Bitcoin and borrow the MUSD." },
 ];
 
 const guarantees = [
-  {
-    icon: "equal",
-    title: "Clear settlement",
-    body: "The customer pays the listed amount. You see the fee and your net payout before you share a link, and both settle in the same transaction.",
-  },
-  {
-    icon: "shield",
-    title: "160% borrow floor",
-    body: "A borrow that would leave the customer’s loan under 160% collateral is refused, so checkout never pushes anyone toward liquidation.",
-  },
-  {
-    icon: "receipt",
-    title: "One invoice, one payment",
-    body: "Each invoice can be paid once, and every approval names a single invoice, so it can’t be reused for anything else.",
-  },
-  {
-    icon: "arrow",
-    title: "Non-custodial",
-    body: "Money goes from the customer straight to your payout account. Mezout never holds funds or keys.",
-  },
-  {
-    icon: "blocks",
-    title: "Paid means on-chain",
-    body: "Orders are marked paid only once the payment is confirmed on Mezo, never on a browser’s word.",
-  },
-  {
-    icon: "check",
-    title: "No admin keys",
-    body: "No owner, no pause switch, no upgrades. The contract source is published and verified as an exact match.",
-  },
+  { icon: "equal", title: "The exact amount", body: "Customers pay your price. You see the fee and your payout before you share a link." },
+  { icon: "arrow", title: "Your money, your account", body: "Payments go straight to you. Mezout never holds your funds or keys." },
+  { icon: "check", title: "No one can change the rules", body: "No owner, no pause switch, no upgrades. The contract code is public and verified." },
+  { icon: "shield", title: "Safe borrowing", body: "Checkout refuses any loan that would drop below 160% collateral." },
+  { icon: "receipt", title: "Paid once, never twice", body: "Each payment link can be paid once. Each approval covers one link only." },
+  { icon: "blocks", title: "Paid means confirmed", body: "An order counts as paid only once Mezo confirms it. Never on a browser’s word." },
 ];
 
-const devPoints = [
-  "REST API with API keys, idempotency keys and rate limits",
-  "Signed webhooks, retried for 24 hours, with a delivery log",
-  "WooCommerce plugin and Shopify app",
-  "Embedded checkout with a drop-in script or React component",
-  "MCP server and HTTP 402 paywall for AI agents",
-];
-
-const agentPoints = [
-  {
-    title: "Agents that pay",
-    body: "The Mezout MCP server gives Claude, Cursor or any MCP client tools to pay invoices in MUSD, with no gas and no wallet pop-ups.",
-  },
-  {
-    title: "APIs that charge per request",
-    body: "Add one middleware to an Express or Next.js route. Unpaid requests get a 402 with a Mezout invoice, in the x402 v2 format; the agent pays and retries.",
-  },
-  {
-    title: "Limits you set",
-    body: "Caps per payment and per session, Mezo testnet only, Mezout’s own contracts only. An agent can’t be talked into paying anyone else.",
-  },
-  {
-    title: "Same guarantees as checkout",
-    body: "You receive exact MUSD, each invoice pays once, and every payment is confirmed on Mezo before your API serves the request.",
-  },
-];
-
-const stats = [
-  { value: "4", label: "ways for customers to pay" },
-  { value: "0", label: "funds held by Mezout" },
-  { value: "160%", label: "minimum collateral on any borrow" },
-  { value: "0", label: "admin keys, pause switches or upgrades" },
+const integrations = [
+  { name: "Shopify app", body: "Adds a “Pay with Bitcoin or MUSD” option to your store.", href: "/guides/shopify", tag: "Stores" },
+  { name: "WooCommerce plugin", body: "Adds Mezout to classic and block checkouts.", href: "/guides/woocommerce", tag: "Stores" },
+  { name: "Embedded checkout", body: "Open checkout in a pop-up on your own site.", href: "/guides/embedded-checkout", tag: "Your site" },
+  { name: "AI agents", body: "Let agents pay you, and charge them per request.", href: "/guides/ai-agents", tag: "Agents" },
+  { name: "REST API", body: "Create payment links from any backend.", href: "/docs#quickstart", tag: "Developers" },
+  { name: "Webhooks", body: "Know the moment an order is paid. Signed and retried for 24 hours.", href: "/docs#webhooks", tag: "Developers" },
 ];
 
 const faqs = [
   {
     q: "What can my customers pay with?",
-    a: "MUSD, BTC or MEZO, or MUSD borrowed against the Bitcoin in their Mezo loan. Checkout only shows the options their wallet can use, and you are paid in MUSD whichever they choose.",
+    a: "MUSD, BTC or MEZO, or MUSD borrowed against their Bitcoin. They only see what their wallet can use. You get MUSD every time.",
   },
   {
-    q: "Do I need a crypto wallet to get paid?",
-    a: "No. Sign up with a passkey (Face ID, Touch ID, Windows Hello or your phone) and Mezout creates a payout account only you control, with free withdrawals. If you already use Mezo, you can be paid straight into your wallet instead.",
+    q: "Do I need a crypto wallet?",
+    a: "No. Sign up with a passkey: Face ID, Touch ID, Windows Hello or your phone. You get a payout account only you control, with free withdrawals. Already on Mezo? Get paid to your wallet instead.",
   },
   {
-    q: "Does Mezout ever hold my money?",
-    a: "No. Each payment goes from the customer to your payout account in a single transaction. Mezout issues invoices and pays network fees, but it has no way to move your funds.",
+    q: "Does Mezout hold my money?",
+    a: "Never. Each payment goes straight from the customer to you, in one transaction. Mezout has no way to move your funds.",
   },
   {
-    q: "How do I know an order has been paid?",
-    a: "Mezout marks an invoice paid only once the payment is confirmed on Mezo. Your dashboard updates within seconds, and your store gets a signed invoice.paid webhook.",
+    q: "How do I know an order is paid?",
+    a: "Your dashboard updates within seconds of Mezo confirming the payment. Your store also gets a signed notification (a webhook).",
   },
   {
     q: "What does it cost?",
-    a: "On testnet, a 1% platform fee paid by the merchant. The customer always pays the listed total; the fee comes out of your payout, and the dashboard shows gross, fee and net before you share a link.",
+    a: "1% per payment on testnet, taken from your payout. Customers pay your listed price. You see the fee before you share a link.",
   },
   {
-    q: "Can I use it with my store?",
-    a: "Yes. Install the WooCommerce plugin or the Shopify app, create invoices from any backend with the REST API, or embed checkout on your own site.",
+    q: "Does it work with my store?",
+    a: "Yes. Install the Shopify app or the WooCommerce plugin, embed checkout on your own site, or use the API. The guides walk you through each.",
   },
   {
-    q: "Can AI agents pay with Mezout?",
-    a: "Yes. The Mezout MCP server lets an agent create, check and pay invoices within spending limits you set, and the HTTP 402 paywall lets your API charge agents per request. Payments settle in MUSD through the same contract as checkout.",
+    q: "How do AI agents pay me?",
+    a: "Two ways. An agent with the Mezout MCP server can pay your payment links, within limits its owner sets. Or you put a price on your API and agents pay per request.",
   },
   {
-    q: "Is Mezout live on mainnet?",
-    a: "Not yet. Mezout runs on Mezo testnet with test tokens that have no value. Mainnet follows a security review and passkey account recovery.",
+    q: "Is it live on mainnet?",
+    a: "Not yet. Mezout runs on Mezo testnet with test tokens that have no value. Mainnet comes after a security review and passkey account recovery.",
   },
 ];
 
-/** A full-width band with the page column's guide lines down both sides. */
-function Band({
+/* Building blocks ------------------------------------------------------------------------------------------------ */
+
+function Section({
   id,
   tone = "white",
   className = "",
   children,
-}: Readonly<{ id?: string; tone?: "white" | "stone" | "dark"; className?: string; children: React.ReactNode }>) {
-  const bg = { white: "bg-white", stone: "bg-stone-50", dark: "bg-stone-950 text-white" }[tone];
-  const line = tone === "dark" ? "border-stone-800" : "border-stone-200";
+  backdrop,
+}: Readonly<{ id?: string; tone?: "white" | "canvas" | "dark"; className?: string; children: ReactNode; backdrop?: ReactNode }>) {
+  const bg = { white: "bg-white", canvas: "bg-canvas", dark: "on-dark bg-ink text-white" }[tone];
   return (
-    <section id={id} className={`border-b ${line} ${bg}`}>
-      <div className={`mx-auto max-w-6xl px-5 sm:border-x sm:px-10 ${line} ${className}`}>{children}</div>
+    <section id={id} className={`${bg} relative isolate scroll-mt-16 overflow-hidden`}>
+      {backdrop}
+      <div className={`mx-auto max-w-7xl px-4 sm:px-6 ${className}`}>{children}</div>
     </section>
   );
 }
 
-function Eyebrow({ children, dark = false }: Readonly<{ children: React.ReactNode; dark?: boolean }>) {
+function Eyebrow({ children, tone = "ink" }: Readonly<{ children: ReactNode; tone?: "ink" | "signal" | "agent" | "light" }>) {
+  const color = { ink: "text-stone-500", signal: "text-signal-700", agent: "text-agent-300", light: "text-stone-400" }[tone];
+  return <p className={`eyebrow ${color}`}>{children}</p>;
+}
+
+function Heading({ eyebrow, title, body, center = false, dark = false, eyebrowTone }: Readonly<{ eyebrow: string; title: ReactNode; body?: ReactNode; center?: boolean; dark?: boolean; eyebrowTone?: "ink" | "signal" | "agent" | "light" }>) {
   return (
-    <p className={`flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] ${dark ? "text-stone-400" : "text-stone-500"}`}>
-      <span className={`h-1.5 w-1.5 ${dark ? "bg-stone-400" : "bg-stone-900"}`} />
-      {children}
-    </p>
+    <div className={`reveal-group max-w-3xl space-y-5 ${center ? "mx-auto text-center" : ""}`}>
+      <Eyebrow tone={eyebrowTone ?? (dark ? "light" : "ink")}>{eyebrow}</Eyebrow>
+      <h2 className="display-2 [text-wrap:balance]">{title}</h2>
+      {body && <p className={`text-lg leading-relaxed sm:text-xl ${dark ? "text-stone-400" : "text-stone-600"}`}>{body}</p>}
+    </div>
   );
 }
 
 /** An animation from public/motion (generated by docs/motion/generate.mjs). */
-function Motion({ src, alt, width, height, priority = false }: Readonly<{ src: string; alt: string; width: number; height: number; priority?: boolean }>) {
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={src}
-      alt={alt}
-      width={width}
-      height={height}
-      loading={priority ? "eager" : "lazy"}
-      fetchPriority={priority ? "high" : "auto"}
-      className="relative h-auto w-full"
-    />
-  );
+function Motion({ src, alt, width, height }: Readonly<{ src: string; alt: string; width: number; height: number }>) {
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={src} alt={alt} width={width} height={height} loading="lazy" className="relative h-auto w-full" />;
 }
 
-function Icon({ name }: Readonly<{ name: string }>) {
+function Icon({ name, className = "h-5 w-5" }: Readonly<{ name: string; className?: string }>) {
   const paths: Record<string, string> = {
     equal: "M5 9h14M5 15h14",
     shield: "M12 3l7 3v6c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9V6z",
@@ -170,217 +133,363 @@ function Icon({ name }: Readonly<{ name: string }>) {
     arrow: "M4 12h15M13 6l6 6-6 6",
     blocks: "M4 4h7v7H4zM13 13h7v7h-7zM13 4h7v7h-7z",
     check: "M8.5 12.5l2.5 2.5 5-5.5M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z",
+    person: "M12 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM5 20c.8-3.6 3.6-6 7-6s6.2 2.4 7 6",
+    bot: "M12 4v3M7 7h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2zM9.5 12.5h.01M14.5 12.5h.01M9.5 16h5",
+    tick: "M5 12.5l4.5 4.5L19 7.5",
   };
   return (
-    <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-stone-200 bg-white shadow-sm">
-      <svg viewBox="0 0 24 24" className="h-5 w-5 text-stone-800" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <path d={paths[name]} />
-      </svg>
-    </span>
-  );
-}
-
-function Tick() {
-  return (
-    <svg viewBox="0 0 20 20" className="mt-0.5 h-5 w-5 shrink-0 text-green-600" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
-      <circle cx="10" cy="10" r="8.2" />
-      <path d="M6.6 10.3l2.2 2.2 4.6-5" strokeLinecap="round" strokeLinejoin="round" />
+    <svg viewBox="0 0 24 24" className={`shrink-0 ${className}`} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d={paths[name]} />
     </svg>
   );
 }
 
+function ArrowLink({ href, children, dark = false }: Readonly<{ href: string; children: ReactNode; dark?: boolean }>) {
+  const cls = `group inline-flex items-center gap-1.5 font-medium ${dark ? "text-white" : "text-ink"}`;
+  const inner = (
+    <>
+      <span className="underline decoration-transparent decoration-2 underline-offset-4 transition-colors group-hover:decoration-signal-500">{children}</span>
+      <span aria-hidden className="transition-transform group-hover:translate-x-0.5">
+        →
+      </span>
+    </>
+  );
+  return href.startsWith("http") ? (
+    <a href={href} target="_blank" rel="noopener noreferrer" className={cls}>
+      {inner}
+      <span className="sr-only">(opens in a new tab)</span>
+    </a>
+  ) : (
+    <Link href={href} className={cls}>
+      {inner}
+    </Link>
+  );
+}
+
+/* Page ----------------------------------------------------------------------------------------------------------- */
+
 export default function Home() {
   return (
     <div className="overflow-x-clip">
+      <ScrollReveal />
       {/* Hero */}
-      <Band className="grid items-center gap-12 py-16 lg:grid-cols-[1.08fr_0.92fr] lg:py-24">
-        <div className="space-y-7">
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-3 py-1 text-xs text-stone-600 shadow-sm hover:border-stone-300"
-          >
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-60 motion-reduce:hidden" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
-            </span>
-            Live on Mezo testnet
-            <span aria-hidden>→</span>
-          </Link>
-          <h1 className="text-[2.6rem] font-semibold leading-[1.04] tracking-tight [text-wrap:balance] sm:text-6xl">
-            Get paid in exact MUSD.
-            <span className="mt-2 block font-mono text-[2.2rem] font-normal tracking-[-0.06em] text-stone-500 sm:text-[3.4rem]">
-              Let customers pay with Bitcoin.
-            </span>
-          </h1>
-          <p className="max-w-xl text-lg leading-relaxed text-stone-600">
-            Mezout is checkout for Mezo. Customers pay with MUSD, BTC or MEZO, or borrow against their Bitcoin, and AI
-            agents can pay too. You are paid in stable MUSD, with the fee shown before you share a link.
-          </p>
-          <div className="flex flex-wrap items-center gap-3">
-            <Link href="/dashboard" className="inline-flex items-center gap-2 rounded-full bg-stone-900 px-5 py-3 font-medium text-white hover:bg-stone-700">
-              Start accepting payments <span aria-hidden>→</span>
-            </Link>
-            <Link href="/docs" className="rounded-full border border-stone-300 bg-white px-5 py-3 font-medium hover:bg-stone-100">
-              Read the docs
-            </Link>
+      <section id="hero" className="on-dark relative isolate -mt-[4.5rem] overflow-hidden bg-ink pt-[4.5rem] text-white">
+        <InteractiveBackdrop />
+        <div className="mx-auto max-w-7xl px-4 pb-16 pt-12 sm:px-6 sm:pb-24 sm:pt-16">
+          <div className="mx-auto max-w-4xl space-y-8 text-center">
+            <h1 className="hero-in display-1 [text-wrap:balance]" style={{ ["--d" as string]: "90ms" }}>
+              Checkout for <span className="text-signal-400">humans</span> and <span className="text-agent-300">AI&nbsp;agents</span>.
+            </h1>
+            <p className="hero-in mx-auto max-w-2xl text-lg leading-relaxed text-stone-300 sm:text-xl" style={{ ["--d" as string]: "180ms" }}>
+              Customers pay with Bitcoin, MUSD or MEZO. AI agents pay over x402. You get the exact amount in MUSD, straight
+              to your account.
+            </p>
+            <div style={{ ["--d" as string]: "270ms" }} className="hero-in flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
+              <Link href="/dashboard" className="pill-signal">
+                Start selling <span aria-hidden>→</span>
+              </Link>
+              <Link href="/guides" className="pill-outline-dark">
+                See the guides
+              </Link>
+            </div>
           </div>
-          <p className="text-sm text-stone-500">No wallet or seed phrase. Sign up with a passkey in under a minute.</p>
-        </div>
-        <div className="relative mx-auto w-full max-w-[500px]">
-          <div
-            aria-hidden
-            className="absolute -inset-10 rounded-[3rem] bg-[radial-gradient(38%_38%_at_72%_28%,rgba(247,147,26,0.26),transparent),radial-gradient(42%_42%_at_22%_72%,rgba(22,163,74,0.18),transparent),radial-gradient(32%_32%_at_82%_82%,rgba(225,29,72,0.14),transparent)] blur-2xl"
-          />
-          <Motion
-            src="/motion/06-receipt.svg"
-            width={560}
-            height={600}
-            priority
-            alt="A Mezout receipt for Satoshi’s Coffee Store: 25.00 MUSD, stamped paid. The payment method changes between BTC, MEZO, MUSD and borrowing against BTC, while the merchant always receives 25.00 MUSD."
-          />
-        </div>
-      </Band>
 
-      {/* Built on */}
-      <Band className="py-8">
-        <p className="mb-5 text-center text-sm text-stone-500">Built on Mezo, with open standards</p>
-        <ul className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3">
-          {builtOn.map((b) => (
-            <li key={b} className="text-lg font-semibold tracking-tight text-stone-400">
-              {b}
-            </li>
+          <div className="hero-in hero-stage mx-auto mt-12 max-w-6xl sm:mt-14" style={{ ["--d" as string]: "420ms" }}>
+            <Showcase dark />
+          </div>
+        </div>
+      </section>
+
+      {/* Works with */}
+      <section aria-label="Works with" className="border-b border-stone-200 bg-white">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+          <WorksWithStrip />
+          <p className="mt-4 text-center text-xs text-stone-500">
+            Compatibility, not partnership. Mezout makes its own Shopify app and WooCommerce plugin, and its MCP server runs in any agent that supports local MCP servers.
+          </p>
+        </div>
+      </section>
+
+      {/* Facts */}
+      <Section className="py-16 sm:py-20">
+        <dl className="reveal-group grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-4">
+          {facts.map((f) => (
+            <div key={f.value} className="space-y-3 border-l-2 border-stone-200 pl-5">
+              <dt className="sr-only">{f.label}</dt>
+              <dd className="text-5xl font-semibold tracking-[-0.05em] sm:text-6xl">{f.value}</dd>
+              <dd className="max-w-[16rem] text-sm leading-relaxed text-stone-600">{f.label}</dd>
+            </div>
           ))}
-        </ul>
-      </Band>
-
-      {/* Problem */}
-      <Band tone="stone" className="reveal py-20 text-center sm:py-28">
-        <div className="mx-auto max-w-3xl space-y-6">
-          <div className="flex justify-center">
-            <Eyebrow>The problem</Eyebrow>
-          </div>
-          <h2 className="text-3xl font-semibold tracking-tight [text-wrap:balance] sm:text-5xl">
-            Bitcoin holders don’t want to sell.
-            <span className="block text-stone-400">Merchants don’t want a wallet.</span>
-          </h2>
-          <p className="text-lg leading-relaxed text-stone-600">
-            Most crypto checkouts fail one side. Customers have to convert before they can pay, or merchants end up
-            holding a volatile asset, a seed phrase and gas tokens.{" "}
-            <span className="font-medium text-stone-900">Mezout works for both, in a single payment.</span>
-          </p>
+        </dl>
+        <div className="mt-16 border-t border-stone-200 pt-8">
+          <p className="mb-5 text-center text-sm text-stone-500">Built on Mezo and open standards</p>
+          <ul className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3">
+            {builtOn.map((b) => (
+              <li key={b} className="text-lg font-semibold tracking-tight text-stone-400">
+                {b}
+              </li>
+            ))}
+          </ul>
         </div>
-      </Band>
+      </Section>
 
-      {/* How it works */}
-      <Band id="how" className="py-20 sm:py-24">
-        <div className="mb-10 space-y-4 text-center">
-          <div className="flex justify-center">
-            <Eyebrow>How it works</Eyebrow>
-          </div>
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-5xl">
-            One checkout. <span className="text-stone-400">Paid in MUSD.</span>
-          </h2>
+      {/* Two kinds of customer */}
+      <Section tone="canvas" className="py-20 sm:py-28">
+        <Heading
+          center
+          eyebrow="Two kinds of customer"
+          title="Sell to people and AI agents."
+          body="Shoppers pay from a wallet in a few taps. Agents pay from code. Either way, you get MUSD."
+        />
+        <div className="mt-14 grid gap-4 lg:grid-cols-2">
+          <article style={{ ["--i" as string]: 0 }} className="reveal flex flex-col overflow-hidden rounded-4xl border border-stone-200 bg-white shadow-card">
+            <div className="space-y-5 p-7 sm:p-10">
+              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-signal-500 text-ink">
+                <Icon name="person" />
+              </span>
+              <Eyebrow tone="signal">Shoppers</Eyebrow>
+              <h3 className="display-3">Accept Bitcoin at checkout.</h3>
+              <p className="text-stone-600">
+                Customers pay with MUSD, BTC or MEZO, or borrow against their BTC. One tap to confirm.
+              </p>
+              <BrandRow label="Plugs into" brands={STORE_BRANDS} />
+              <ArrowLink href="#humans">See the checkout</ArrowLink>
+            </div>
+            <div aria-hidden className="mt-auto border-t border-stone-200 bg-canvas p-5 sm:p-8">
+              <div className="mx-auto max-w-sm overflow-hidden rounded-xl border border-stone-200 bg-white text-sm shadow-card">
+                {methods.map((m, i) => (
+                  <div key={m.name} className={`flex items-center gap-3 px-4 py-3 ${i ? "border-t border-stone-200" : ""} ${i === 1 ? "bg-signal-50/70" : ""}`}>
+                    <span className={`flex h-4 w-4 items-center justify-center rounded-full border ${i === 1 ? "border-ink" : "border-stone-300"}`}>
+                      {i === 1 && <span className="h-2 w-2 rounded-full bg-ink" />}
+                    </span>
+                    <span className={`h-2.5 w-2.5 rounded-full ${m.dot}`} />
+                    <span className={i === 1 ? "font-medium" : "text-stone-600"}>{m.name}</span>
+                  </div>
+                ))}
+                <div className="border-t border-stone-200 p-3">
+                  <div className="rounded-lg bg-ink py-2.5 text-center font-medium text-white">Pay now</div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article style={{ ["--i" as string]: 1 }} className="on-dark reveal flex flex-col overflow-hidden rounded-4xl bg-ink text-white shadow-card">
+            <div className="space-y-5 p-7 sm:p-10">
+              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-agent-500 text-white">
+                <Icon name="bot" />
+              </span>
+              <Eyebrow tone="agent">AI agents</Eyebrow>
+              <h3 className="display-3">Get paid by software.</h3>
+              <p className="text-stone-400">
+                Agents pay over x402, the open standard for payments over HTTP. In MUSD, with no gas or pop-ups.
+              </p>
+              <BrandRow label="Runs in" brands={AGENT_BRANDS} dark />
+              <ArrowLink href="#agents" dark>
+                See agent payments
+              </ArrowLink>
+            </div>
+            <div aria-hidden className="mt-auto border-t border-white/10 bg-white/[0.03] p-5 sm:p-8">
+              <div className="mx-auto max-w-sm space-y-1.5 rounded-xl border border-white/10 bg-stone-900 p-4 font-mono text-[12.5px]">
+                <p className="text-stone-300">GET /api/report</p>
+                <p className="text-signal-300">← 402 Payment Required · 0.05 MUSD</p>
+                <p className="text-stone-300">pay_invoice inv_7c1e…</p>
+                <p className="font-semibold text-musd-300">← 200 OK</p>
+              </div>
+            </div>
+          </article>
         </div>
-        <Showcase />
-      </Band>
+      </Section>
 
-      {/* Checkout */}
-      <Band tone="stone" className="grid items-center gap-14 py-20 sm:py-24 lg:grid-cols-2">
-        <div className="reveal space-y-6">
-          <Eyebrow>Hosted checkout</Eyebrow>
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">A checkout your customers already understand</h2>
-          <p className="text-lg leading-relaxed text-stone-600">
-            Send a link, show a QR code, or redirect from your store. Customers connect a wallet, see only the options
-            they can use, and confirm once.
-          </p>
-          <ul className="divide-y divide-stone-200 border-y border-stone-200">
-            {methods.map((m) => (
-              <li key={m.name} className="flex items-start gap-3 py-3.5">
-                <span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${m.color}`} />
+      {/* Humans: the checkout */}
+      <Section id="humans" className="grid items-center gap-14 py-20 sm:py-28 lg:grid-cols-[1fr_0.9fr]">
+        <div className="space-y-8">
+          <Heading
+            eyebrow="Hosted checkout"
+            eyebrowTone="signal"
+            title="A checkout shoppers get."
+            body="Share a link or QR code, or send shoppers from your store. They see only the options their wallet can use."
+          />
+          <ul className="reveal overflow-hidden rounded-2xl border border-stone-200 bg-white">
+            {methods.map((m, i) => (
+              <li key={m.name} className={`flex items-start gap-4 px-5 py-4 ${i ? "border-t border-stone-200" : ""}`}>
+                <span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${m.dot}`} />
                 <span>
                   <span className="font-medium">{m.name}.</span> <span className="text-stone-600">{m.body}</span>
                 </span>
               </li>
             ))}
           </ul>
-          <Link href="/docs#quickstart" className="inline-flex items-center gap-1.5 font-medium hover:underline">
-            Create your first invoice <span aria-hidden>→</span>
-          </Link>
+          <div className="reveal flex flex-wrap gap-x-8 gap-y-3 text-sm text-stone-600">
+            <span className="flex items-center gap-2">
+              <Icon name="tick" className="h-4 w-4 text-musd-600" /> No gas for Ethereum-style wallets
+            </span>
+            <span className="flex items-center gap-2">
+              <Icon name="tick" className="h-4 w-4 text-musd-600" /> Bitcoin wallets welcome
+            </span>
+            <span className="flex items-center gap-2">
+              <Icon name="tick" className="h-4 w-4 text-musd-600" /> Loans stay above 160% collateral
+            </span>
+          </div>
         </div>
-        <div className="mx-auto w-full max-w-[460px]">
-          <Motion
-            src="/motion/07-checkout.svg"
-            width={520}
-            height={640}
-            alt="The Mezout checkout for a 25.00 MUSD order: the customer picks Pay with BTC, signs one message with no network fee, and sees Payment complete."
+        <div className="reveal-scale relative mx-auto w-full max-w-[480px]">
+          <div aria-hidden className="absolute -inset-6 -z-0 rounded-[3rem] bg-gradient-to-br from-signal-100 via-canvas to-musd-100" />
+          <div className="relative rounded-4xl border border-stone-200 bg-white p-4 shadow-lift sm:p-6">
+            <Motion
+              src="/motion/07-checkout.svg"
+              width={520}
+              height={640}
+              alt="The Mezout checkout for a 25.00 MUSD order: the customer picks Pay with BTC, signs one message with no network fee, and sees Payment complete."
+            />
+          </div>
+        </div>
+      </Section>
+
+      {/* How it works */}
+      <Section id="how" tone="canvas" className="py-20 sm:py-28">
+        <div className="mb-12">
+          <Heading
+            center
+            eyebrow="How it works"
+            title="Any way they pay. One payout."
+            body="A shopper pays with BTC while an agent pays for an API call. Both land as exact MUSD."
           />
         </div>
-      </Band>
-
-      {/* Guarantees */}
-      <Band className="py-20 sm:py-24">
-        <div className="reveal mb-12 max-w-2xl space-y-4">
-          <Eyebrow>Safe by design</Eyebrow>
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-5xl">
-            Enforced by the contract, <span className="text-stone-400">not by promises.</span>
-          </h2>
+        <div className="reveal-scale rounded-4xl border border-stone-200 bg-white p-3 shadow-lift sm:p-6 lg:p-8">
+          <CheckoutDuo />
         </div>
-        <div className="reveal grid gap-px overflow-hidden rounded-2xl border border-stone-200 bg-stone-200 sm:grid-cols-2 lg:grid-cols-3">
-          {guarantees.map((g) => (
-            <div key={g.title} className="space-y-4 bg-white p-7">
-              <Icon name={g.icon} />
-              <h3 className="font-semibold">{g.title}</h3>
-              <p className="text-sm leading-relaxed text-stone-600">{g.body}</p>
+      </Section>
+
+      {/* AI agents */}
+      <Section id="agents" tone="dark" className="py-20 sm:py-28" backdrop={<InteractiveBackdrop variant="agents" />}>
+        <Heading
+          center
+          dark
+          eyebrow="For AI agents"
+          eyebrowTone="agent"
+          title={
+            <>
+              Agents pay with x402. <span className="text-stone-500">You get MUSD.</span>
+            </>
+          }
+          body="Give your agent a Mezout wallet with one command. It pays your links and x402 APIs in MUSD, within the limits you set."
+        />
+
+        {/* The one thing to do: the setup command. */}
+        <div className="reveal-scale mx-auto mt-12 max-w-3xl">
+          <div className="relative">
+            <div aria-hidden className="absolute -inset-px rounded-[1.4rem] bg-gradient-to-r from-agent-500/60 via-agent-300/30 to-signal-500/50 blur-xl opacity-60" />
+            <CommandLine command="npx -y @mezout/mcp init" size="lg" />
+          </div>
+          <p className="mt-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-stone-400">
+            <span>Works in Claude, Cursor, Codex and Hermes Agent</span>
+            <span aria-hidden className="hidden text-stone-600 sm:inline">·</span>
+            <span>A cap on every payment</span>
+            <span aria-hidden className="hidden text-stone-600 sm:inline">·</span>
+            <ArrowLink href="/guides/ai-agents" dark>
+              Setup guide
+            </ArrowLink>
+          </p>
+        </div>
+
+        <div className="reveal mt-16">
+          <AgentFlow />
+        </div>
+
+        <div className="reveal mt-6 grid gap-8 rounded-4xl border border-white/10 bg-white/[0.03] p-7 sm:p-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
+          <div className="space-y-4">
+            <p className="eyebrow text-agent-300">Selling to agents?</p>
+            <h3 className="display-3">Price any API route.</h3>
+            <p className="text-stone-400">Wrap a route and agents pay per request over x402. Unpaid calls get a 402 with the price.</p>
+            <ArrowLink href="/guides/paywall" dark>
+              Paywall guide
+            </ArrowLink>
+          </div>
+          <div className="min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-stone-900">
+            <pre className="overflow-x-auto p-5 font-mono text-[13px] leading-relaxed text-stone-300">
+              <code>
+                <span className="text-agent-300">export const</span> GET = withMezout402({"\n"}
+                {"  { apiKey, price: "}
+                <span className="text-musd-300">&quot;0.05&quot;</span>
+                {" },\n"}
+                {"  () => Response.json(report),\n"});
+              </code>
+            </pre>
+          </div>
+        </div>
+      </Section>
+
+      {/* Merchants: guarantees */}
+      <Section id="merchants" className="py-20 sm:py-28">
+        <Heading
+          eyebrow="For merchants"
+          eyebrowTone="signal"
+          title={
+            <>
+              You get the exact amount. <span className="text-stone-400">The contract makes sure.</span>
+            </>
+          }
+        />
+        <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {guarantees.map((g, i) => (
+            <div key={g.title} style={{ ["--i" as string]: i % 3 }} className="reveal space-y-4 rounded-3xl border border-stone-200 bg-white p-7 transition-colors hover:border-stone-300">
+              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-canvas text-ink">
+                <Icon name={g.icon} />
+              </span>
+              <h3 className="text-lg font-semibold tracking-tight">{g.title}</h3>
+              <p className="text-[15px] leading-relaxed text-stone-600">{g.body}</p>
             </div>
           ))}
         </div>
-      </Band>
+        <div className="reveal mt-4 flex flex-col justify-between gap-6 rounded-3xl bg-canvas p-7 sm:flex-row sm:items-center sm:p-8">
+          <div className="space-y-1">
+            <p className="text-lg font-semibold tracking-tight">No wallet needed.</p>
+            <p className="text-stone-600">Sign up with a passkey. Only you control your payout account. Withdrawals are free.</p>
+          </div>
+          <Link href="/dashboard" className="pill-ink shrink-0">
+            Create an account
+          </Link>
+        </div>
+      </Section>
 
       {/* Developers */}
-      <Band id="developers" tone="stone" className="grid gap-14 py-20 sm:py-24 lg:grid-cols-[0.9fr_1.1fr]">
-        <div className="reveal space-y-6">
-          <Eyebrow>For developers</Eyebrow>
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">Integrate in an afternoon.</h2>
-          <p className="text-lg leading-relaxed text-stone-600">
-            Create an invoice from your server, send the customer to its checkout link, and fulfil the order when the
-            signed webhook arrives. Or install a plugin and skip the code.
-          </p>
-          <ul className="space-y-3">
-            {devPoints.map((p) => (
-              <li key={p} className="flex gap-3 text-stone-700">
-                <Tick />
-                {p}
-              </li>
-            ))}
-          </ul>
-          <div className="flex flex-wrap gap-3 pt-2">
-            <Link href="/docs" className="rounded-full bg-stone-900 px-5 py-2.5 font-medium text-white hover:bg-stone-700">
-              Read the docs
-            </Link>
-            <a href={REPO} className="rounded-full border border-stone-300 bg-white px-5 py-2.5 font-medium hover:bg-stone-100">
-              View on GitHub
-            </a>
+      <Section id="developers" tone="canvas" className="py-20 sm:py-28">
+        <div className="grid gap-12 lg:grid-cols-[0.85fr_1.15fr]">
+          <div className="space-y-8">
+            <Heading
+              eyebrow="Integrations"
+              title="Works with how you sell."
+              body="Install the Shopify app or WooCommerce plugin, no code needed. Or create payment links from your own server."
+            />
+            <div className="reveal flex flex-wrap items-center gap-3">
+              <Link href="/guides" className="pill-ink">
+                Browse the guides
+              </Link>
+              <Link href="/docs" className="pill-outline">
+                API reference
+              </Link>
+            </div>
+            <div className="reveal">
+              <ArrowLink href={REPO}>View on GitHub</ArrowLink>
+            </div>
           </div>
-        </div>
-        <div className="reveal min-w-0 space-y-4">
-          <div className="overflow-hidden rounded-2xl bg-stone-900 shadow-xl shadow-stone-900/10">
-            <div className="flex items-center justify-between border-b border-stone-700/60 px-4 py-2.5 text-xs text-stone-400">
+          <div className="reveal min-w-0 self-start overflow-hidden rounded-3xl bg-ink shadow-lift">
+            <div className="flex items-center justify-between border-b border-white/10 px-4 py-3 text-xs text-stone-500">
               <span className="flex gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-stone-700" />
-                <span className="h-2.5 w-2.5 rounded-full bg-stone-700" />
-                <span className="h-2.5 w-2.5 rounded-full bg-stone-700" />
+                <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
+                <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
+                <span className="h-2.5 w-2.5 rounded-full bg-white/15" />
               </span>
-              Create an invoice
+              <span className="font-mono">Create an invoice</span>
             </div>
             <pre className="overflow-x-auto p-5 font-mono text-[13px] leading-relaxed text-stone-300">
               <code>
                 <span className="text-stone-500">$</span> curl https://usemezout.vercel.app/v1/invoices \{"\n"}
-                {"    "}-H <span className="text-green-300">&quot;Authorization: Bearer mzk_test_…&quot;</span> \{"\n"}
-                {"    "}-H <span className="text-green-300">&quot;Content-Type: application/json&quot;</span> \{"\n"}
-                {"    "}-H <span className="text-green-300">&quot;Idempotency-Key: order-1001&quot;</span> \{"\n"}
-                {"    "}-d <span className="text-green-300">&apos;{`{"amount": "25.00", "reference": "Order 1001"}`}&apos;</span>
+                {"    "}-H <span className="text-musd-300">&quot;Authorization: Bearer mzk_test_…&quot;</span> \{"\n"}
+                {"    "}-H <span className="text-musd-300">&quot;Content-Type: application/json&quot;</span> \{"\n"}
+                {"    "}-H <span className="text-musd-300">&quot;Idempotency-Key: order-1001&quot;</span> \{"\n"}
+                {"    "}-d <span className="text-musd-300">&apos;{`{"amount": "25.00", "reference": "Order 1001"}`}&apos;</span>
                 {"\n\n"}
-                <span className="font-semibold text-green-400">201 Created</span>
+                <span className="font-semibold text-musd-400">201 Created</span>
                 {"\n"}
                 {`{ "id": "inv_3bf9a158b706b1412e77528f", "status": "pending",`}
                 {"\n"}
@@ -388,185 +497,122 @@ export default function Home() {
               </code>
             </pre>
           </div>
-          <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
-            <div className="flex items-center justify-between border-b border-stone-200 px-4 py-2.5 text-xs">
-              <span className="font-mono text-stone-600">POST /webhooks/mezout</span>
-              <span className="rounded-full bg-green-50 px-2 py-0.5 font-medium text-green-700">Signature verified</span>
-            </div>
-            <pre className="overflow-x-auto p-5 font-mono text-[13px] leading-relaxed text-stone-600">
-              <code>
-                <span className="text-stone-400">Mezout-Signature: t=1761323464,v1=5f2a…</span>
-                {"\n\n"}
-                {"{\n"}
-                {'  "type": '}
-                <span className="font-semibold text-stone-900">&quot;invoice.paid&quot;</span>
-                {",\n"}
-                {'  "data": { "object": {\n'}
-                {'    "id": "inv_3bf9a158b706b1412e77528f",\n'}
-                {'    "status": "paid", "amount": "25", "reference": "Order 1001"\n'}
-                {"  } }\n}"}
-              </code>
-            </pre>
-          </div>
         </div>
-      </Band>
-
-      {/* AI agents */}
-      <Band id="agents" tone="dark" className="grid gap-14 py-20 sm:py-24 lg:grid-cols-[1.05fr_0.95fr]">
-        <div className="reveal space-y-6">
-          <Eyebrow dark>For AI agents</Eyebrow>
-          <h2 className="text-3xl font-semibold tracking-tight [text-wrap:balance] sm:text-4xl">
-            Let AI agents pay, and get paid. <span className="text-stone-400">Within limits you set.</span>
-          </h2>
-          <p className="text-lg leading-relaxed text-stone-300">
-            Agents are becoming customers. Mezout lets them pay for goods, data and API calls in MUSD, settled on Mezo in
-            seconds, with the same guarantees your human customers get.
-          </p>
-          <ul className="grid gap-px overflow-hidden rounded-2xl border border-stone-800 bg-stone-800 sm:grid-cols-2">
-            {agentPoints.map((a) => (
-              <li key={a.title} className="space-y-2 bg-stone-950 p-5">
-                <h3 className="font-semibold text-white">{a.title}</h3>
-                <p className="text-sm leading-relaxed text-stone-400">{a.body}</p>
+        <ul className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {integrations.map((i, n) => {
+            const external = i.href.startsWith("http");
+            const body = (
+              <>
+                <span className="flex items-center justify-between">
+                  <span className="eyebrow text-stone-500">{i.tag}</span>
+                  <span aria-hidden className="text-stone-400 transition-transform group-hover:translate-x-0.5 group-hover:text-ink">
+                    →
+                  </span>
+                </span>
+                <span className="block text-lg font-semibold tracking-tight">{i.name}</span>
+                <span className="block text-[15px] leading-relaxed text-stone-600">{i.body}</span>
+              </>
+            );
+            const cls = "group flex h-full flex-col gap-3 rounded-3xl border border-stone-200 bg-white p-6 transition-all hover:-translate-y-0.5 hover:shadow-lift";
+            return (
+              <li key={i.name} className="reveal" style={{ ["--i" as string]: n % 3 }}>
+                {external ? (
+                  <a href={i.href} className={cls}>
+                    {body}
+                  </a>
+                ) : (
+                  <Link href={i.href} className={cls}>
+                    {body}
+                  </Link>
+                )}
               </li>
-            ))}
-          </ul>
-          <div className="flex flex-wrap gap-3 pt-2">
-            <Link href="/docs#ai-agents" className="rounded-full bg-white px-5 py-2.5 font-medium text-stone-900 hover:bg-stone-200">
-              Set up the MCP server
-            </Link>
-            <a href={`${REPO}/tree/main/packages/paywall`} className="rounded-full border border-stone-700 px-5 py-2.5 font-medium text-white hover:bg-stone-900">
-              HTTP 402 paywall
-            </a>
-          </div>
-        </div>
-        <div className="reveal min-w-0 space-y-4">
-          <div className="overflow-hidden rounded-2xl border border-stone-800 bg-stone-900">
-            <div className="border-b border-stone-800 px-4 py-2.5 font-mono text-xs text-stone-400">app/api/report/route.ts</div>
-            <pre className="overflow-x-auto p-5 font-mono text-[13px] leading-relaxed text-stone-300">
-              <code>
-                <span className="text-stone-500">{"// Charge agents 0.05 MUSD per request"}</span>
-                {"\n"}
-                <span className="text-rose-300">import</span> {"{ withMezout402 }"} <span className="text-rose-300">from</span>{" "}
-                <span className="text-green-300">&quot;@mezout/paywall/next&quot;</span>;{"\n\n"}
-                <span className="text-rose-300">export const</span> GET = withMezout402({"\n"}
-                {"  { apiKey: process.env.MEZOUT_API_KEY, price: "}
-                <span className="text-green-300">&quot;0.05&quot;</span>
-                {" },\n"}
-                {"  async (req, ctx, payment) => Response.json({ report, paidBy: payment.payer }),\n"});
-              </code>
-            </pre>
-          </div>
-          <div className="overflow-hidden rounded-2xl border border-stone-800 bg-stone-900">
-            <div className="flex items-center justify-between border-b border-stone-800 px-4 py-2.5 text-xs">
-              <span className="font-mono text-stone-400">Agent</span>
-              <span className="rounded-full bg-green-950 px-2 py-0.5 font-medium text-green-400">Paid on Mezo</span>
-            </div>
-            <pre className="overflow-x-auto p-5 font-mono text-[13px] leading-relaxed text-stone-300">
-              <code>
-                <span className="text-stone-500">GET /api/report</span>
-                {"\n"}
-                <span className="text-amber-300">402 Payment Required</span>
-                {"  0.05 MUSD · invoice inv_7c1e…\n"}
-                <span className="text-stone-500">pay_invoice → 0x9a4f…e21b</span>
-                {"\n"}
-                <span className="text-stone-500">GET /api/report  PAYMENT-SIGNATURE: …</span>
-                {"\n"}
-                <span className="font-semibold text-green-400">200 OK</span>
-              </code>
-            </pre>
-          </div>
-        </div>
-      </Band>
+            );
+          })}
+        </ul>
+      </Section>
 
       {/* Open and verifiable */}
-      <Band id="contracts" className="py-20 sm:py-24">
-        <div className="reveal grid gap-12 lg:grid-cols-[1fr_1fr]">
-          <div className="space-y-5">
-            <Eyebrow>Open and verifiable</Eyebrow>
-            <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">Check every claim yourself.</h2>
-            <p className="text-lg leading-relaxed text-stone-600">
-              The code is open source and the contracts are verified on Sourcify, so you can read exactly what runs.
-              Mezout is on Mezo testnet, with test tokens only.
-            </p>
-            <ul className="divide-y divide-stone-200 rounded-2xl border border-stone-200 text-sm">
+      <Section id="contracts" className="py-20 sm:py-28">
+        <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
+          <Heading
+            eyebrow="Open and verifiable"
+            title="Don’t trust us. Check."
+            body="The code is open source and the contracts are verified on Sourcify. Testnet only, with test tokens."
+          />
+          <div className="reveal space-y-4">
+            <ul className="divide-y divide-stone-200 overflow-hidden rounded-3xl border border-stone-200 bg-white">
               {contracts.map((c) => (
-                <li key={c.address} className="space-y-1 p-4">
-                  <p className="font-medium">{c.name}</p>
-                  <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                    <a href={`${EXPLORER}/${c.address}`} className="break-all font-mono text-xs text-stone-600 underline decoration-stone-300 hover:text-stone-900">
-                      {c.address}
-                    </a>
-                    <a href={`${SOURCIFY}/${c.address}`} className="text-xs font-medium text-green-700 hover:underline">
+                <li key={c.address} className="space-y-2 p-6">
+                  <p className="flex items-center justify-between gap-3 font-semibold tracking-tight">
+                    {c.name}
+                    <a href={`${SOURCIFY}/${c.address}`} className="rounded-full bg-musd-50 px-2.5 py-1 text-xs font-medium text-musd-800 ring-1 ring-inset ring-musd-200 hover:bg-musd-100">
                       Verified source
                     </a>
                   </p>
+                  <a href={`${EXPLORER}/${c.address}`} className="block break-all font-mono text-xs text-stone-600 underline decoration-stone-300 underline-offset-2 hover:text-ink">
+                    {c.address}
+                  </a>
                 </li>
               ))}
             </ul>
-            <a href={REPO} className="inline-flex items-center gap-1.5 font-medium hover:underline">
-              Code on GitHub <span aria-hidden>→</span>
-            </a>
+            <ArrowLink href={REPO}>Code on GitHub</ArrowLink>
           </div>
-          <dl className="grid grid-cols-2 gap-px self-start overflow-hidden rounded-2xl border border-stone-200 bg-stone-200">
-            {stats.map((s) => (
-              <div key={s.label} className="space-y-2 bg-white p-6 sm:p-8">
-                <dt className="sr-only">{s.label}</dt>
-                <dd className="text-4xl font-semibold tracking-tight sm:text-5xl">{s.value}</dd>
-                <dd className="text-sm text-stone-600">{s.label}</dd>
-              </div>
-            ))}
-          </dl>
         </div>
-      </Band>
+      </Section>
 
       {/* FAQ */}
-      <Band tone="stone" className="grid gap-10 py-20 sm:py-24 lg:grid-cols-[0.6fr_1.4fr]">
-        <div className="space-y-4">
+      <Section tone="canvas" className="grid gap-10 py-20 sm:py-28 lg:grid-cols-[0.7fr_1.3fr]">
+        <div className="space-y-5">
           <Eyebrow>FAQ</Eyebrow>
-          <h2 className="text-4xl font-semibold tracking-tight sm:text-5xl">Questions</h2>
+          <h2 className="display-2">Questions</h2>
           <p className="text-stone-600">
             Something else? The{" "}
-            <Link href="/docs" className="text-stone-900 underline">
+            <Link href="/docs" className="font-medium text-ink underline decoration-signal-400 decoration-2 underline-offset-2">
               API reference
             </Link>{" "}
             covers the details.
           </p>
         </div>
-        <div className="divide-y divide-stone-200 overflow-hidden rounded-2xl border border-stone-200 bg-white">
+        <div className="reveal divide-y divide-stone-200 overflow-hidden rounded-3xl border border-stone-200 bg-white">
           {faqs.map((f, i) => (
             <details key={f.q} className="group" open={i === 0}>
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 font-medium hover:bg-stone-50 [&::-webkit-details-marker]:hidden">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-[17px] font-medium tracking-tight hover:bg-stone-50 [&::-webkit-details-marker]:hidden">
                 {f.q}
-                <svg viewBox="0 0 20 20" className="h-4 w-4 shrink-0 text-stone-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                  <path d="M5 8l5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-stone-200 text-stone-500 transition-transform group-open:rotate-45">
+                  <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                    <path d="M10 4v12M4 10h12" strokeLinecap="round" />
+                  </svg>
+                </span>
               </summary>
               <p className="px-6 pb-6 leading-relaxed text-stone-600">{f.a}</p>
             </details>
           ))}
         </div>
-      </Band>
+      </Section>
 
       {/* Closing call to action */}
-      <Band tone="dark" className="py-24 text-center sm:py-28">
-        <div className="mx-auto max-w-2xl space-y-6">
-          <h2 className="text-3xl font-semibold tracking-tight [text-wrap:balance] sm:text-5xl">
-            Start accepting <span className="whitespace-nowrap">Bitcoin-backed</span> payments.
-          </h2>
-          <p className="text-lg text-stone-400">
-            Create a merchant account with a passkey, share your first payment link, and get paid in MUSD.
-          </p>
-          <div className="flex flex-wrap justify-center gap-3">
-            <Link href="/dashboard" className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 font-medium text-stone-900 hover:bg-stone-200">
+      <section className="on-dark relative isolate overflow-hidden bg-ink text-white">
+        <div
+          aria-hidden
+          className="absolute inset-0 -z-10 overflow-hidden"
+        >
+          <div className="ambient-a absolute -bottom-1/3 -left-[10%] h-[90%] w-[60%] bg-[radial-gradient(closest-side,rgba(255,107,20,0.28),transparent)]" />
+          <div className="ambient-b absolute -right-[10%] -top-1/3 h-[90%] w-[60%] bg-[radial-gradient(closest-side,rgba(127,92,255,0.28),transparent)]" />
+        </div>
+        <div className="reveal-group mx-auto max-w-4xl space-y-8 px-4 py-24 text-center sm:px-6 sm:py-32">
+          <h2 className="display-1 [text-wrap:balance]">Start getting paid.</h2>
+          <p className="mx-auto max-w-xl text-lg text-stone-400">Sign up with a passkey and share your first payment link in minutes.</p>
+          <div className="flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
+            <Link href="/dashboard" className="pill-signal">
               Get started <span aria-hidden>→</span>
             </Link>
-            <Link href="/docs" className="rounded-full border border-stone-700 px-6 py-3 font-medium text-white hover:bg-stone-900">
-              Read the docs
+            <Link href="/guides" className="pill-outline-dark">
+              See the guides
             </Link>
           </div>
-          <p className="text-sm text-stone-500">No wallet, no seed phrase, no gas. Testnet only.</p>
+          <p className="text-sm text-stone-500">No wallet. No seed phrase. Testnet only.</p>
         </div>
-      </Band>
+      </section>
     </div>
   );
 }

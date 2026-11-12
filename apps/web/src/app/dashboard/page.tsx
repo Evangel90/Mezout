@@ -5,7 +5,7 @@ import { GettingStarted } from "@/components/dashboard/GettingStarted";
 import { OverviewStats } from "@/components/dashboard/OverviewStats";
 import { PaymentLinkForm } from "@/components/dashboard/PaymentLinkForm";
 import { OrdersPanel } from "@/components/OrdersPanel";
-import { PageHeader } from "@/components/ui";
+import { PageHeader, PlusIcon, buttonClass } from "@/components/ui";
 import { useMerchant } from "@/lib/merchant";
 import { useOrders } from "@/lib/useOrders";
 
@@ -14,7 +14,16 @@ export default function OverviewPage() {
   const orders = useOrders();
   return (
     <>
-      <PageHeader title="Overview" description="Your balance, a quick payment link and your latest payments." />
+      <PageHeader
+        title="Overview"
+        description="Create a payment link, share it, and see payments arrive."
+        action={
+          <a href="#new-link" className={buttonClass("primary", "sm")}>
+            <PlusIcon className="h-4 w-4" />
+            New payment link
+          </a>
+        }
+      />
       {!businessName && <BusinessNameForm variant="prompt" />}
       <GettingStarted orders={orders.orders} />
       <OverviewStats orders={orders.orders} />

@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { Alert, Button, Card, CardHeader, CopyButton, EmptyState, KeyIcon, PlusIcon, Skeleton, useConfirm } from "@/components/ui";
+import { Alert, Button, Card, CardHeader, CopyButton, EmptyState, ExternalLink, KeyIcon, PlusIcon, Skeleton, relativeTime, useConfirm, useToast } from "@/components/ui";
 import { api, errorText } from "@/lib/api";
 
 type ApiKey = { id: string; prefix: string; created_at: string };
@@ -16,6 +15,7 @@ export function ApiKeyPanel() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const { confirm, dialog } = useConfirm();
+  const toast = useToast();
 
   const load = useCallback(async () => {
     try {
@@ -55,6 +55,7 @@ export function ApiKeyPanel() {
       await api(`/api/keys/${k.id}`, { method: "DELETE" });
       if (created?.startsWith(k.prefix)) setCreated(null);
       await load();
+      toast("Key revoked");
     } catch (err) {
       setError(errorText(err, "Could not revoke the key"));
     } finally {
@@ -70,11 +71,11 @@ export function ApiKeyPanel() {
         title="API keys"
         description={
           <>
-            Your store&apos;s server uses a key to create invoices and request refunds. Keep keys on the server, never in
-            a browser or app. Invoices made with a key always pay this account.{" "}
-            <Link href="/docs#authentication" className="font-medium text-stone-900 underline underline-offset-2">
+            Your store or server uses a key to create payment links. Keep it secret: on your server, never in a browser or
+            app. Payments made with a key always go to this account.{" "}
+            <ExternalLink href="/docs#authentication" className="font-medium text-stone-900 underline underline-offset-2">
               How keys work
-            </Link>
+            </ExternalLink>
           </>
         }
         action={
@@ -88,7 +89,7 @@ export function ApiKeyPanel() {
       {created && (
         <Alert
           tone="warning"
-          title="Copy this key now. It is shown once and can't be recovered."
+          title="Copy this key now. You won't see it again."
           action={
             <Button variant="ghost" size="sm" onClick={() => setCreated(null)}>
               I saved it
@@ -109,7 +110,7 @@ export function ApiKeyPanel() {
         </div>
       ) : keys.length === 0 ? (
         <EmptyState icon={<KeyIcon />} title="No API keys yet">
-          Create one to connect your own backend, the WooCommerce plugin or the Shopify app.
+          Create one to connect Shopify, WooCommerce or your own server.
         </EmptyState>
       ) : (
         <ul className="divide-y divide-stone-100 rounded-lg border border-stone-200">
@@ -117,7 +118,12 @@ export function ApiKeyPanel() {
             <li key={k.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
               <div className="min-w-0">
                 <p className="font-mono text-sm text-stone-900">{k.prefix}…</p>
-                <p className="text-xs text-stone-500">Created {new Date(k.created_at).toLocaleString()}</p>
+                <p className="text-xs text-stone-500">
+                  Created{" "}
+                  <time dateTime={k.created_at} title={new Date(k.created_at).toLocaleString()}>
+                    {relativeTime(k.created_at)}
+                  </time>
+                </p>
               </div>
               <Button variant="danger-outline" size="sm" onClick={() => revoke(k)} disabled={!!busy} loading={busy === k.id}>
                 {busy === k.id ? "Revoking…" : "Revoke"}
