@@ -166,6 +166,30 @@ function ArrowLink({ href, children, dark = false }: Readonly<{ href: string; ch
   );
 }
 
+/**
+ * A decorative photo behind a section: faint, softly desaturated and faded out toward the content, so it sets the
+ * scene without competing with the text. `side` is where the photo shows most.
+ */
+function PhotoBackdrop({ src, side = "right", opacity = 0.14, position = "center" }: Readonly<{ src: string; side?: "left" | "right"; opacity?: number; position?: string }>) {
+  const fade =
+    side === "right"
+      ? "linear-gradient(to left, black 0%, rgba(0,0,0,0.6) 35%, transparent 75%)"
+      : "linear-gradient(to right, black 0%, rgba(0,0,0,0.6) 35%, transparent 75%)";
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        className="photo-drift absolute inset-0 h-full w-full object-cover saturate-[0.6]"
+        style={{ opacity, objectPosition: position, maskImage: fade, WebkitMaskImage: fade }}
+      />
+    </div>
+  );
+}
+
 /* Page ----------------------------------------------------------------------------------------------------------- */
 
 export default function Home() {
@@ -175,7 +199,7 @@ export default function Home() {
       {/* Hero */}
       <section id="hero" className="on-dark relative isolate -mt-[4.5rem] overflow-hidden bg-ink pt-[4.5rem] text-white">
         <InteractiveBackdrop />
-        <div className="mx-auto max-w-7xl px-4 pb-16 pt-12 sm:px-6 sm:pb-24 sm:pt-16">
+        <div className="mx-auto max-w-[90rem] px-4 pb-16 pt-12 sm:px-6 sm:pb-24 sm:pt-16">
           <div className="mx-auto max-w-4xl space-y-8 text-center">
             <h1 className="hero-in display-1 [text-wrap:balance]" style={{ ["--d" as string]: "90ms" }}>
               Checkout for <span className="text-signal-400">humans</span> and <span className="text-agent-300">AI&nbsp;agents</span>.
@@ -194,7 +218,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="hero-in hero-stage mx-auto mt-12 max-w-6xl sm:mt-14" style={{ ["--d" as string]: "420ms" }}>
+          <div className="hero-in hero-stage mx-auto mt-12 max-w-[88rem] sm:mt-14" style={{ ["--d" as string]: "420ms" }}>
             <Showcase dark />
           </div>
         </div>
@@ -301,7 +325,7 @@ export default function Home() {
       </Section>
 
       {/* Humans: the checkout */}
-      <Section id="humans" className="grid items-center gap-14 py-20 sm:py-28 lg:grid-cols-[1fr_0.9fr]">
+      <Section id="humans" backdrop={<PhotoBackdrop src="/photos/merchant-card-reader.jpg" side="left" opacity={0.16} position="30% 50%" />} className="grid items-center gap-14 py-20 sm:py-28 lg:grid-cols-[1fr_0.9fr]">
         <div className="space-y-8">
           <Heading
             eyebrow="Hosted checkout"
@@ -419,7 +443,7 @@ export default function Home() {
       </Section>
 
       {/* Merchants: guarantees */}
-      <Section id="merchants" className="py-20 sm:py-28">
+      <Section id="merchants" backdrop={<PhotoBackdrop src="/photos/merchant-pos.jpg" side="right" opacity={0.24} position="center 35%" />} className="py-20 sm:py-28">
         <Heading
           eyebrow="For merchants"
           eyebrowTone="signal"
@@ -452,7 +476,7 @@ export default function Home() {
       </Section>
 
       {/* Developers */}
-      <Section id="developers" tone="canvas" className="py-20 sm:py-28">
+      <Section id="developers" tone="canvas" backdrop={<PhotoBackdrop src="/photos/online-checkout.jpg" side="left" opacity={0.18} />} className="py-20 sm:py-28">
         <div className="grid gap-12 lg:grid-cols-[0.85fr_1.15fr]">
           <div className="space-y-8">
             <Heading
