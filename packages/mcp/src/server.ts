@@ -8,7 +8,7 @@ import { MezoutApi } from "./api";
 import type { Config } from "./config";
 
 export const SERVER_NAME = "mezout";
-export const SERVER_VERSION = "0.1.0";
+export const SERVER_VERSION = "0.2.0";
 
 const MAX_BODY_CHARS = 50_000;
 
@@ -47,11 +47,19 @@ export function createMezoutServer(config: Config, deps: { fetch?: typeof fetch;
     : null;
 
   const needApi = () => {
-    if (!api) throw new Error("Merchant tools need MEZOUT_API_KEY (a mzk_test_ key from the Mezout dashboard).");
+    if (!api) {
+      throw new Error(
+        "Merchant tools need an API key (mzk_test_… from the Mezout dashboard): run `npx -y @mezout/mcp init`, or set MEZOUT_API_KEY, then restart the server.",
+      );
+    }
     return api;
   };
   const needPayer = () => {
-    if (!payer) throw new Error("Paying needs MEZOUT_PAYER_PRIVATE_KEY (a funded Mezo testnet key).");
+    if (!payer) {
+      throw new Error(
+        "Paying needs a funded Mezo testnet wallet key: run `npx -y @mezout/mcp init`, or set MEZOUT_PAYER_PRIVATE_KEY, then restart the server.",
+      );
+    }
     return payer;
   };
 

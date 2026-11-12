@@ -1,4 +1,5 @@
 import { isHex, parseUnits, type Hex } from "viem";
+import { resolveSettings, SETTING_KEYS, settingsPath, type Env, type ResolvedSettings } from "./settings";
 
 export type Config = {
   apiUrl: string;
@@ -11,14 +12,23 @@ export type Config = {
   maxPerSession: string;
 };
 
-const DECIMAL = /^\d+(\.\d{1,18})?$/;
+export const DECIMAL = /^\d+(\.\d{1,18})?$/;
+
+/** A testnet merchant key. */
+export const isTestApiKey = (key: string) => /^mzk_test_[A-Za-z0-9_-]+$/.test(key);
+
+/** `0x` + 64 hex digits (a missing `0x` is added), or null. Never put the input in a message. */
+export function normalizePayerKey(raw: string): Hex | null {
+  const k = raw.trim().startsWith("0x") ? raw.trim() : `0x${raw.trim()}`;
+  return isHex(k) && k.length === 66 ? (k as Hex) : null;
+}
 
 function decimal(name: string, value: string): string {
   if (!DECIMAL.test(value)) throw new Error(`${name} must be a decimal MUSD amount, e.g. "1.00"`);
   return value;
 }
 
-/** Reads the server's settings from environment variables. Throws with a readable message on bad values. */
+/** Validates the server's settings, given by their environment variable names. Throws with a readable message on bad values. */
 export function loadConfig(env: Record<string, string | undefined>): Config {
   const apiUrl = (env.MEZOUT_API_URL || "https://usemezout.vercel.app").replace(/\/+$/, "");
   const url = new URL(apiUrl);
@@ -53,4 +63,20 @@ export function loadConfig(env: Record<string, string | undefined>): Config {
     maxPerPayment,
     maxPerSession,
   };
+}
+
+/**
+ * Loads the settings the server runs with: environment variables first, then the file `init` saves
+ * (`~/.mezout/mcp.json` or `MEZOUT_CONFIG`). Errors name the setting and where it came from, never its value.
+ */
+export function loadSettings(env: Env = process.env, path = settingsPath(env)): { config: Config; resolved: ResolvedSettings } {
+  const resolved = resolveSettings(env, path);
+  try {
+    // MEZOUT_CHAIN_ID is read from the environment only; the file never sets it.
+    return { config: loadConfig({ ...resolved.values, MEZOUT_CHAIN_ID: env.MEZOUT_CHAIN_ID }), resolved };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    const key = SETTING_KEYS.find((k) => message.startsWith(k));
+    throw new Error(key && resolved.sources[key] === "file" ? `${message} (in ${resolved.file.path})` : message);
+  }
 }

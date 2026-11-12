@@ -1,7 +1,7 @@
 {
   "name": "@mezout/mcp",
-  "version": "0.1.0",
-  "description": "MCP server for Mezout: let AI agents create, check, refund and pay Mezout invoices in MUSD, and pay HTTP 402 Mezout paywalls, on Mezo testnet.",
+  "version": "0.2.0",
+  "description": "MCP server for Mezout: let AI agents create, check, refund and pay Mezout invoices in MUSD, and pay HTTP 402 Mezout paywalls, on Mezo testnet. Set up with `npx -y @mezout/mcp init`.",
   "keywords": [
     "mcp",
     "model-context-protocol",
@@ -10,7 +10,8 @@
     "musd",
     "x402",
     "ai-agents",
-    "payments"
+    "payments",
+    "agent-skills"
   ],
   "license": "MIT",
   "homepage": "https://usemezout.vercel.app/docs#ai-agents",
@@ -46,7 +47,9 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.2",
+    "smol-toml": "1.9.1",
     "viem": "^2.22.8",
+    "yaml": "2.9.1",
     "zod": "3.25.76"
   },
   "devDependencies": {

@@ -1,17 +1,41 @@
 # Mezout MCP server
 
-Lets MCP-capable agents (Claude, Cursor and others) take and make payments with Mezout on Mezo testnet (chain 31611). It runs over stdio.
+Lets MCP-capable agents (Claude, Codex, Cursor, Hermes Agent and others) take and make payments with Mezout on Mezo testnet (chain 31611). It runs over stdio.
+
+## Quick start
+
+You need Node.js 20 or later. In any terminal:
+
+```bash
+npx -y @mezout/mcp init
+```
+
+It asks for your keys (hidden input) and spending limits, saves them to `~/.mezout/mcp.json` (mode 600), adds `npx -y @mezout/mcp` to the MCP clients it finds (Claude Code, Claude Desktop, Cursor, Codex, Hermes Agent) with no keys in their configs, and can install the [Mezout agent skill](https://github.com/Evangel90/Mezout/tree/main/skills/mezout). Restart your agent and ask: *Create a Mezout invoice for 0.5 MUSD for "Test order", then pay it and tell me the transaction.*
+
+- **API key** (merchant tools): `mzk_test_…` from the dashboard's **Developers** tab.
+- **Payer key** (paying tools): a new wallet used only for testing, funded with test BTC and MUSD from [faucet.test.mezo.org](https://faucet.test.mezo.org).
+
+| Command | Does |
+| --- | --- |
+| `npx -y @mezout/mcp` | Starts the server on stdio (what MCP clients run) |
+| `npx -y @mezout/mcp init` | Saves keys, registers with clients, installs the skill. `--help` lists the flags for scripts: `--yes`, `--api-key`, `--payer-key-file`, `--max-payment`, `--max-session`, `--client`, `--skill`, `--config` |
+| `npx -y @mezout/mcp doctor` | Checks the saved settings, the RPC chain, the payer's MUSD balance and the API key, printing no secrets |
+| `npx -y @mezout/mcp --version` | Prints the version |
+
+When `init` edits a client's config file (Claude Desktop, Cursor, Codex without its CLI, Hermes Agent) it parses it, adds only `mezout`, writes a timestamped `.bak` first, and leaves a file it can't parse untouched, printing what to add by hand. For Claude Code and Codex it uses `claude mcp add --scope user` and `codex mcp add`, never replacing an existing `mezout` entry. Manual setup per client: [usemezout.vercel.app/docs#ai-agents](https://usemezout.vercel.app/docs#ai-agents).
+
+## Tools
 
 | Tool | Needs | What it does |
 | --- | --- | --- |
-| `create_invoice` | `MEZOUT_API_KEY` | `POST /v1/invoices`: an exact MUSD amount, returns the `checkout_url` |
-| `get_invoice` | `MEZOUT_API_KEY` | `GET /v1/invoices/:id`: status and payment |
-| `list_invoices` | `MEZOUT_API_KEY` | `GET /v1/invoices`, newest first, paged with `starting_after` |
-| `refund` | `MEZOUT_API_KEY` | `POST /v1/refunds`: a pending refund the merchant sends from the dashboard |
-| `verify_payment` | `MEZOUT_API_KEY` | `POST /v1/verify`: is this invoice paid (by this transaction)? |
-| `pay_invoice` | `MEZOUT_PAYER_PRIVATE_KEY` | Pays a `checkout_url` in MUSD, gasless through Mezout's relay |
-| `fetch_paid_resource` | `MEZOUT_PAYER_PRIVATE_KEY` | Fetches a URL and pays an HTTP 402 Mezout paywall on the way ([`@mezout/paywall`](../paywall)) |
-| `get_budget` | `MEZOUT_PAYER_PRIVATE_KEY` | Payer address, MUSD spent and left under the limits |
+| `create_invoice` | API key | `POST /v1/invoices`: an exact MUSD amount, returns the `checkout_url` |
+| `get_invoice` | API key | `GET /v1/invoices/:id`: status and payment |
+| `list_invoices` | API key | `GET /v1/invoices`, newest first, paged with `starting_after` |
+| `refund` | API key | `POST /v1/refunds`: a pending refund the merchant sends from the dashboard |
+| `verify_payment` | API key | `POST /v1/verify`: is this invoice paid (by this transaction)? |
+| `pay_invoice` | payer key | Pays a `checkout_url` in MUSD, gasless through Mezout's relay |
+| `fetch_paid_resource` | payer key | Fetches a URL and pays an HTTP 402 Mezout paywall on the way ([`@mezout/paywall`](../paywall)) |
+| `get_budget` | payer key | Payer address, MUSD spent and left under the limits |
 
 `create_invoice` and `refund` send an `Idempotency-Key`: pass `idempotency_key` to retry safely, or a random one is used.
 
@@ -30,7 +54,9 @@ Tool results and logs never contain the private key or signatures.
 
 ## Settings
 
-| Variable | Default | |
+The server reads environment variables first, then `~/.mezout/mcp.json` (written by `init`; `MEZOUT_CONFIG` names another file), which uses the same names:
+
+| Name | Default | |
 | --- | --- | --- |
 | `MEZOUT_API_URL` | `https://usemezout.vercel.app` | Mezout app (API and relay). `http://localhost:3000` for local dev. |
 | `MEZOUT_API_KEY` | none | Merchant key, `mzk_test_…`, from the dashboard's **Developers** tab |
@@ -39,45 +65,15 @@ Tool results and logs never contain the private key or signatures.
 | `MEZOUT_MAX_SESSION_MUSD` | `10` | Total per server process |
 | `MEZO_RPC_URL` | `https://rpc.test.mezo.org` | Mezo testnet RPC |
 
-Names are in `.env.example`.
-
-## Run it
-
-You need Node.js 20 or later. The step-by-step guide for Claude Code, Claude Desktop, Cursor, Codex and Hermes Agent is at [usemezout.vercel.app/docs#ai-agents](https://usemezout.vercel.app/docs#ai-agents). For the merchant tools, create an API key on the dashboard's **Developers** tab. For the payer tools, use a new wallet used only for testing, funded with test BTC and MUSD from [faucet.test.mezo.org](https://faucet.test.mezo.org).
-
-Claude Code:
-
-```bash
-claude mcp add mezout \
-  -e MEZOUT_API_KEY=mzk_test_YOUR_KEY \
-  -e MEZOUT_PAYER_PRIVATE_KEY=0xYOUR_TESTNET_KEY \
-  -e MEZOUT_MAX_PAYMENT_MUSD=1 -e MEZOUT_MAX_SESSION_MUSD=5 \
-  -- npx -y @mezout/mcp
-```
-
-Claude Desktop, Cursor and other clients (MCP config JSON):
-
-```json
-{
-  "mcpServers": {
-    "mezout": {
-      "command": "npx",
-      "args": ["-y", "@mezout/mcp"],
-      "env": { "MEZOUT_API_KEY": "mzk_test_…", "MEZOUT_PAYER_PRIVATE_KEY": "0x…", "MEZOUT_MAX_PAYMENT_MUSD": "1" }
-    }
-  }
-}
-```
-
-The server prints one status line to stderr (payer address and limits, never the key).
+Passing keys as environment variables still works (for CI, or `claude mcp add -e …`, or an `env` block in a client config); they override the file. The server prints one status line to stderr (payer address, limits and the settings file, never a key) and warns if the file is readable by other users.
 
 ## Develop
 
-To run it from source, build it with `pnpm --filter @mezout/mcp build` and point your client at `node packages/mcp/dist/index.js`.
+To run it from source, build it with `pnpm --filter @mezout/mcp build` (this also copies `skills/mezout` into `dist/skills`) and point your client at `node packages/mcp/dist/index.js`.
 
 In a terminal at the repository root:
 
 ```bash
-pnpm --filter @mezout/mcp test        # Vitest: in-memory MCP client, fake Mezout API, relay and chain
+pnpm --filter @mezout/mcp test        # Vitest: MCP tools against a fake Mezout; init, config merges and skill install in a temp HOME
 pnpm --filter @mezout/mcp typecheck
 ```
