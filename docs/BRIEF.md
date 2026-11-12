@@ -251,11 +251,11 @@ M0 and M1 must be done by Sunday 26 Oct for the Wave 1 submission. M2–M6 fill 
 
 ### M0 — Setup and verification (24 Oct)
 
-- [ ] Monorepo scaffolded to the layout above; `pnpm install` and `forge build` pass
-- [ ] Every address in the network table confirmed against official Mezo sources, plus the missing ones found
-- [ ] A fork test reads a real testnet trove and its ratio, with the price precompile pinned
-- [ ] The `WithdrawMUSD` typed data and the MUSD permit domain confirmed from contract source
-- [ ] **Gate:** owner reviews the findings
+- [x] Monorepo scaffolded to the layout above; `pnpm install` and `forge build` pass
+- [x] Every address in the network table confirmed against official Mezo sources, plus the missing ones found
+- [x] A fork test reads a real testnet trove and its ratio, with the price precompile pinned
+- [x] The `WithdrawMUSD` typed data and the MUSD permit domain confirmed from contract source
+- [x] **Gate:** owner reviews the findings
 
 ### M1 — Wave 1 MVP (26 Oct)
 
@@ -264,7 +264,7 @@ M0 and M1 must be done by Sunday 26 Oct for the Wave 1 submission. M2–M6 fill 
 - [x] Merchant can create a payment link and QR from a minimal dashboard page
 - [x] README with what it is, the live link, contract address, and how to run it (every command says where it runs)
 - [x] Two reference testnet transactions linked in the README
-- [ ] **Gate:** owner submits Wave 1 on AKINDO
+- [x] **Gate:** owner submits Wave 1 on AKINDO
 
 ### M2 — Swap paths (31 Oct)
 
@@ -295,10 +295,10 @@ M0 and M1 must be done by Sunday 26 Oct for the Wave 1 submission. M2–M6 fill 
 - [x] Self security review of the router, with findings fixed or documented (11 Nov 2026, kept off the public repo: no fund-loss findings; borrow on v1/v2 links fixed, Low router findings documented with `test_review_*` regression tests)
 - [x] Explicitly investigate borrow-signature front-running/griefing; add an attacker-first regression test, bind authorization to the router/caller where supported, or document and test a safe recovery path (hardened router v3 `0x7151…b3E6`: a copied borrow submitted first is recognized and checkout completes from the payer's balance; unit and fork regressions)
 - [x] Exercise borrow-to-pay end to end against router v2, including payer intent, resulting trove debt/ICR, and the front-running case (12 Nov 2026, [BORROW_V2_PROOF.md](BORROW_V2_PROOF.md): live v2 borrow payment [`0x9fe4…911c`](https://explorer.test.mezo.org/tx/0x9fe4332cb10d2c2d57f49069d20a9032f21a7ea8dd26ffbf72019cbaffbb911c), ICR 164.81% → 164.20%; fork tests on the deployed v2 bytecode show a copied borrow strands MUSD in v2 and blocks checkout, while v3 completes)
-- [ ] Add post-checkout borrower safety follow-up: show current debt/ICR and a clear repay/top-up route; define monitoring/alerting and document limits. Do not automate top-ups without explicit borrower authorization
+- [x] Add post-checkout borrower safety follow-up: show current debt/ICR and a clear repay/top-up route; define monitoring/alerting and document limits. Do not automate top-ups without explicit borrower authorization (7 Nov 2026: after a borrow checkout the receipt reads the payer's trove every minute, shows debt, BTC price and ICR with 160%/180%/200% guidance, and links to Mezo to repay or add BTC; no automatic action. Relayer-balance and failed-delivery alerts plus `/api/health` are in [DEVELOPMENT.md](DEVELOPMENT.md))
 - [ ] Run a merchant pilot with outside payers; record completed payments, repeat merchants, methods, and failures as evidence for the submission
-- [ ] Measure relayer gas by payment path and model a merchant fee that covers the observed cost; enable it on testnet after review. The payer pays the invoice total, the fee is deducted from merchant settlement, and invoice/checkout/receipt/dashboard/API views clearly show the gross amount, fee and merchant net
-- [ ] Prepare a pitch deck and complete the Wave 2 track and team fields
+- [x] Measure relayer gas by payment path and model a merchant fee that covers the observed cost; enable it on testnet after review. The payer pays the invoice total, the fee is deducted from merchant settlement, and invoice/checkout/receipt/dashboard/API views clearly show the gross amount, fee and merchant net (7 Nov 2026: receipts per path in [RELAYER_GAS_EVIDENCE.md](RELAYER_GAS_EVIDENCE.md), method in [RELAYER_GAS_COST.md](RELAYER_GAS_COST.md); signed 1% merchant fee live on testnet via `MERCHANT_FEE_BPS`, gross/fee/net shown everywhere)
+- [ ] Prepare a pitch deck and complete the Wave 2 track and team fields (deck drafted 12 Nov 2026; pilot numbers, team line and the AKINDO fields are left for the owner)
 - [ ] Demo video under 3 minutes covering all four paths and both plugins
 - [ ] **Gate:** owner submits Wave 2; demo day is 23 Nov
 
@@ -315,6 +315,8 @@ It builds on what exists. Agents can already create and pay invoices through the
 | 3 | Agent wallets with spending limits | The owner approves an agent's wallet with a passkey and sets limits per payment, per day and by merchant; optional funding by borrowing against BTC | Large | A separate contract with its own review; the router's trust model and the 160% floor stay unchanged |
 
 Target: items 1 and 2 as a demo-day showcase (23 Nov) if M5 and M6 finish early; item 3 after the buildathon.
+
+Status (12 Nov 2026): items 1 and 2 are built. `@mezout/mcp` 0.2.0 is on npm (`npx -y @mezout/mcp init` sets it up in Claude, Cursor, Codex and Hermes Agent) and `@mezout/paywall` speaks x402 with a `mezout` scheme, checked by `/v1/verify`. Item 3 stays after the buildathon.
 
 ## Agent working rules
 
