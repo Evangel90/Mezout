@@ -25,9 +25,6 @@ export default function DashboardLayout({ children }: Readonly<{ children: React
             <span className="hidden text-sm text-stone-400 sm:block">Dashboard</span>
           </div>
           <div className="flex items-center gap-1 text-sm">
-            <span className="mr-1 rounded-full bg-signal-500/15 px-2.5 py-1 font-mono text-[11px] font-medium uppercase tracking-wider text-signal-300 ring-1 ring-inset ring-signal-500/30">
-              Testnet
-            </span>
             <ExternalLink href="/guides" className={`${topLink} hidden sm:inline-flex`}>
               Guides
             </ExternalLink>

@@ -135,8 +135,7 @@ export function SiteFooter() {
         <div className="max-w-sm space-y-4">
           <Wordmark dark />
           <p className="text-sm leading-relaxed">
-            Get paid by people and AI agents, in MUSD. Mezout never holds your funds. Running on Mezo testnet: test
-            tokens have no real value.
+            Get paid by people and AI agents, in MUSD. Mezout never holds your funds.
           </p>
         </div>
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">

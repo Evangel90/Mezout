@@ -119,7 +119,6 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                   ))}
                 </ul>
               </div>
-              <p className="px-3 text-xs leading-relaxed text-stone-500">Mezo testnet. Test tokens have no real value.</p>
             </div>
           </div>
         </aside>

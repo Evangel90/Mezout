@@ -168,7 +168,6 @@ export function MobileMenu({ dark, onOpenChange }: { dark: boolean; onOpenChange
             <Link href="/dashboard" onClick={close} className="pill-outline w-full">
               Sign in
             </Link>
-            <p className="pt-2 text-center text-xs text-stone-500">Mezo testnet. Test tokens have no real value.</p>
           </div>
         </nav>,
           document.body,

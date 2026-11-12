@@ -21,7 +21,7 @@ const builtOn = ["MUSD", "Mezo Passport", "Tigris", "Model Context Protocol", "x
 
 const facts = [
   { value: "4", label: "ways customers can pay: MUSD, BTC, MEZO or a loan against BTC" },
-  { value: "1%", label: "fee on testnet, taken from your payout. Customers pay your price." },
+  { value: "1%", label: "fee per payment, taken from your payout. Customers pay your price." },
   { value: "0", label: "funds Mezout holds. Payments go straight to you." },
   { value: "160%", label: "minimum collateral when a customer borrows to pay" },
 ];
@@ -70,7 +70,7 @@ const faqs = [
   },
   {
     q: "What does it cost?",
-    a: "1% per payment on testnet, taken from your payout. Customers pay your listed price. You see the fee before you share a link.",
+    a: "1% per payment, taken from your payout. Customers pay your listed price. You see the fee before you share a link.",
   },
   {
     q: "Does it work with my store?",
@@ -82,7 +82,7 @@ const faqs = [
   },
   {
     q: "Is it live on mainnet?",
-    a: "Not yet. Mezout runs on Mezo testnet with test tokens that have no value. Mainnet comes after a security review and passkey account recovery.",
+    a: "Not yet. Mezout runs on Mezo testnet today. Mainnet comes after a security review and passkey account recovery.",
   },
 ];
 
@@ -561,7 +561,7 @@ export default function Home() {
           <Heading
             eyebrow="Open and verifiable"
             title="Don’t trust us. Check."
-            body="The code is open source and the contracts are verified on Sourcify. Testnet only, with test tokens."
+            body="The code is open source and the contracts are verified on Sourcify."
           />
           <div className="reveal space-y-4">
             <ul className="divide-y divide-stone-200 overflow-hidden rounded-3xl border border-stone-200 bg-white">
@@ -634,7 +634,7 @@ export default function Home() {
               See the guides
             </Link>
           </div>
-          <p className="text-sm text-stone-500">No wallet. No seed phrase. Testnet only.</p>
+          <p className="text-sm text-stone-500">No wallet. No seed phrase.</p>
         </div>
       </section>
     </div>

@@ -1,6 +1,6 @@
 Charge AI agents for each call to your API, in MUSD. `@mezout/paywall` wraps an API route: unpaid requests get a price, paid ones get the answer. You set the price; Mezout checks every payment.
 
-> **Testnet only.** Payments use test MUSD on Mezo testnet. The package isn't published to npm yet: it's in the Mezout source code under `packages/paywall`.
+> The package isn't published to npm yet: it's in the Mezout source code under `packages/paywall`.
 
 ## How a paid request works
 

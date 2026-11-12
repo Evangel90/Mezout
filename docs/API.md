@@ -2,7 +2,7 @@
 
 Your server creates an invoice for an amount of MUSD. The customer pays it with MUSD, BTC or MEZO, or by borrowing MUSD against their BTC. Your payout address receives the amount less the invoice's platform fee, in one on-chain transaction through the `MezoutRouter` contract. Mezout never holds funds.
 
-> **Testnet.** Mezout runs on Mezo testnet (chain 31611). Amounts are test MUSD with no value. Keys start with `mzk_test_`.
+Network: Mezo testnet (chain 31611). API keys start with `mzk_test_`.
 
 ## Overview
 

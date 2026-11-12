@@ -47,7 +47,7 @@ export function SignInChoice(props: Props) {
       </div>
 
       <p className="text-center text-xs text-stone-500">
-        Testnet only. Signing in is free and never gives Mezout access to your money.
+        Signing in is free and never gives Mezout access to your money.
       </p>
     </div>
   );

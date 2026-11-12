@@ -5,8 +5,6 @@ Mezout adds a payment method to your WooCommerce checkout. Customers pay with Bi
 - Unpaid orders are cancelled when their payment link expires.
 - Refunds start from the WooCommerce order screen.
 
-> **Testnet only.** Mezout runs on Mezo testnet. Payments use test tokens with no value.
-
 ## Before you start
 
 - **WordPress 6.5 or newer**, **PHP 8.1 or newer** and WooCommerce.

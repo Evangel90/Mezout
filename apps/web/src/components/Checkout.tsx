@@ -469,7 +469,6 @@ function CheckoutInner({
           <span className="flex shrink-0 items-center gap-1.5 text-xs text-stone-500">
             <LockIcon />
             <span className="hidden sm:inline">Secure checkout</span>
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-900">Testnet</span>
           </span>
         </div>
       </header>

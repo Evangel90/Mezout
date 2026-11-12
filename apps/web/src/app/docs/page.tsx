@@ -36,8 +36,7 @@ export default function DocsPage() {
             <p className="eyebrow text-signal-700">Developers</p>
             <h1 className="display-2">API reference</h1>
             <p className="text-lg leading-relaxed text-stone-600">
-              Create payment links from your server and fulfil orders when a signed webhook arrives. Everything runs on Mezo
-              testnet with test MUSD. Setting up a store? Start with the{" "}
+              Create payment links from your server and fulfil orders when a signed webhook arrives. Setting up a store? Start with the{" "}
               <Link href="/guides" className="font-medium text-ink underline decoration-signal-400 decoration-2 underline-offset-2 hover:decoration-signal-600">
                 guides
               </Link>

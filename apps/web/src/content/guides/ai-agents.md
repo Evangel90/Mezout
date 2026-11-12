@@ -1,7 +1,5 @@
 AI agents can buy things too. Mezout lets them pay you in MUSD, from code, with the same guarantees as your human customers. You get paid the same way either way.
 
-> **Testnet only.** Agents pay with test MUSD on Mezo testnet.
-
 ## Three ways to use it
 
 ### Get paid by agents per request
@@ -37,6 +35,6 @@ It works with any agent that can run a local MCP server, including **Claude**, *
 ## Built-in limits
 
 - **Spending caps.** By default, 1 MUSD per payment and 10 MUSD until the server restarts. You can change both.
-- **Mezout only.** The agent pays only on Mezo testnet, only through Mezout's own contracts.
+- **Mezout only.** The agent pays only on Mezo, only through Mezout's own contracts.
 - **Your key stays put.** The wallet's private key never leaves your computer. Each payment sends two signatures, and only to Mezout.
 - **No double payments.** Expired and already-paid links are refused, and so are payments the wallet can't cover.

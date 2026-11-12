@@ -44,7 +44,7 @@ export function GettingStarted({ orders }: { orders: Order[] | null }) {
   const steps: Step[] = [
     { done: !!businessName, title: "Name your business", body: "Customers see it when they pay.", href: "#business-name", cta: "Add name" },
     { done: orders.length > 0, title: "Create a payment link", body: "Pick an amount. You see the fee first.", href: "#new-link", cta: "Create link" },
-    { done: paid, title: "Get your first payment", body: "Share the link or QR code. Try it yourself on testnet.", href: "#new-link", cta: "Share a link" },
+    { done: paid, title: "Get your first payment", body: "Share the link or QR code, or try paying it yourself.", href: "#new-link", cta: "Share a link" },
     {
       done: hasKey,
       title: "Connect your store",

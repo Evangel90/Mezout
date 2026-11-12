@@ -2,7 +2,7 @@ Your customers check out as usual and pick **Pay with Bitcoin or MUSD (Mezout)**
 
 ## Before you start
 
-> **Not on the Shopify App Store yet.** Today you run the Mezout app yourself with the Shopify CLI, on a free Shopify development store. Mezout runs on Mezo testnet, so payments use test tokens with no value.
+> **Not on the Shopify App Store yet.** Today you run the Mezout app yourself with the Shopify CLI, on a free Shopify development store.
 
 - **Store currency: US dollar (USD).** Customers pay 1 MUSD per dollar. Orders in any other currency get no payment link.
 - **New customer accounts** for the button on the order status page. They're the default for new stores.
