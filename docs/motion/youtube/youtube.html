@@ -1,0 +1,31 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Mezout YouTube film</title>
+<style>
+  @font-face {
+    font-family: "Geist";
+    src: url("/fonts/GeistVF.woff") format("woff");
+    font-weight: 100 900;
+  }
+  @font-face {
+    font-family: "Geist Mono";
+    src: url("/fonts/GeistMonoVF.woff") format("woff");
+    font-weight: 100 900;
+  }
+  html, body { margin: 0; background: #000; }
+  canvas { display: block; }
+  body.preview canvas { width: 100vw; height: auto; }
+</style>
+<body>
+  <canvas id="c" width="1920" height="1080"></canvas>
+  <script type="importmap">
+    { "imports": { "three": "/three/build/three.module.js", "three/addons/": "/three/examples/jsm/" } }
+  </script>
+  <script>
+    if (!new URLSearchParams(location.search).has("render")) document.body.className = "preview";
+  </script>
+  <script src="/ads/logos.js"></script>
+  <script src="/ads/lib.js"></script>
+  <script src="/ads/ads.js"></script>
+  <script type="module" src="scene.js"></script>
+</body>

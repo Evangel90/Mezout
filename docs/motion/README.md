@@ -28,3 +28,11 @@ node docs/motion/generate.mjs
 ```
 
 That rewrites `svg/` and `apps/web/public/motion/`. The embedded Geist fonts come from `fonts/`, subset to the characters the scenes use; add a character outside that set and it falls back to a system font. The MP4s and GIFs are rendered from the SVGs frame by frame in headless Chrome and encoded with `ffmpeg`, so ask Claude to re-render them after a change.
+
+## Social ads
+
+`ads/` holds ads with sound (three vertical for Instagram Reels and TikTok, one square for X), built with a separate canvas renderer. See `ads/README.md`.
+
+## Billboard spot and YouTube film
+
+`billboard/` holds a 15 s silent 3D spot for digital billboards, and `youtube/` a 30 s 3D film with sound for merchants. Both are built with three.js and rendered by `render3d.mjs`; they share `three-kit.js`. See each folder's README.

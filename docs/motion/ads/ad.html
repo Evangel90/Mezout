@@ -1,0 +1,60 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Mezout ads</title>
+<style>
+  @font-face {
+    font-family: "Geist";
+    src: url("../../../apps/web/src/app/fonts/GeistVF.woff") format("woff");
+    font-weight: 100 900;
+  }
+  @font-face {
+    font-family: "Geist Mono";
+    src: url("../../../apps/web/src/app/fonts/GeistMonoVF.woff") format("woff");
+    font-weight: 100 900;
+  }
+  html, body { margin: 0; background: #0c0a09; color: #a8a29e; font: 14px system-ui, sans-serif; }
+  canvas { display: block; }
+  body.preview { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 16px; }
+  body.preview canvas { height: calc(100vh - 90px); width: auto; border-radius: 18px; }
+  nav a { color: #ff8a3d; margin: 0 8px; }
+</style>
+<body>
+  <canvas id="c" width="1080" height="1920"></canvas>
+  <script src="logos.js"></script>
+  <script src="lib.js"></script>
+  <script src="ads.js"></script>
+  <script>
+    // ad.html?ad=pay-any-way plays an ad live (with its soundtrack once audio.mjs has run).
+    // render.mjs opens ad.html?render=1 and calls frame(id, t) for every frame.
+    const canvas = document.getElementById("c");
+    const scratch = document.createElement("canvas");
+    scratch.width = W;
+    scratch.height = H;
+    const q = new URLSearchParams(location.search);
+    window.ready = Promise.all([document.fonts.load('650 60px "Geist"'), document.fonts.load('500 40px "Geist Mono"')]).then(
+      () => document.fonts.check('650 60px "Geist"') && document.fonts.check('500 40px "Geist Mono"'),
+    );
+    window.frame = (id, t, fps = 30) => renderFrame(canvas, scratch, ADS[id], t, fps);
+
+    if (!q.has("render")) {
+      document.body.className = "preview";
+      const id = q.get("ad") || Object.keys(ADS)[0];
+      const nav = document.createElement("nav");
+      nav.innerHTML = Object.keys(ADS).map((k) => `<a href="?ad=${k}">${k}</a>`).join("") + " · click the video for sound";
+      document.body.append(nav);
+      const audio = new Audio(`out/${id}.wav`);
+      audio.loop = true;
+      const dur = (ADS[id].beats * 60) / (ADS[id].bpm ?? 150);
+      canvas.width = ADS[id].w ?? 1080;
+      canvas.height = ADS[id].h ?? 1920;
+      const t0 = performance.now();
+      let sound = false;
+      canvas.onclick = () => audio.play().then(() => (sound = true), () => {});
+      window.ready.then(function loop() {
+        const t = sound ? audio.currentTime : ((performance.now() - t0) / 1000) % dur;
+        drawAd(canvas.getContext("2d"), ADS[id], Math.min(t, dur - 0.001));
+        requestAnimationFrame(loop);
+      });
+    }
+  </script>
+</body>
