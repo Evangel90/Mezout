@@ -201,15 +201,6 @@ export default function Home() {
         <InteractiveBackdrop />
         <div className="mx-auto max-w-7xl px-4 pb-16 pt-12 sm:px-6 sm:pb-24 sm:pt-16">
           <div className="mx-auto max-w-6xl space-y-7 text-center sm:space-y-9">
-            <p className="hero-in mx-auto flex w-max items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] py-1.5 pl-2.5 pr-3.5 text-[13px] text-stone-300 backdrop-blur" style={{ ["--d" as string]: "0ms" }}>
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inset-0 rounded-full bg-musd-400 opacity-60 motion-safe:animate-ping" />
-                <span className="relative h-2 w-2 rounded-full bg-musd-400" />
-              </span>
-              Live on Mezo testnet
-              <span aria-hidden className="text-stone-600">·</span>
-              <span className="text-stone-400">x402 and MCP ready</span>
-            </p>
             <h1 className="hero-in display-1 [text-wrap:balance] text-[3.1rem] sm:text-[5rem] lg:text-[6.5rem]" style={{ ["--d" as string]: "90ms" }}>
               Checkout for <span className="text-signal-400">humans</span> and <span className="text-agent-300">AI&nbsp;agents</span>.
             </h1>
