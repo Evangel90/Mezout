@@ -201,6 +201,7 @@ export default function Home() {
         <InteractiveBackdrop />
         <div className="mx-auto max-w-7xl px-4 pb-16 pt-12 sm:px-6 sm:pb-24 sm:pt-16">
           <div className="mx-auto max-w-6xl space-y-7 text-center sm:space-y-9">
+            <div aria-hidden className="h-8" />
             <h1 className="hero-in display-1 [text-wrap:balance] text-[3.1rem] sm:text-[5rem] lg:text-[6.5rem]" style={{ ["--d" as string]: "90ms" }}>
               Checkout for <span className="text-signal-400">humans</span> and <span className="text-agent-300">AI&nbsp;agents</span>.
             </h1>
