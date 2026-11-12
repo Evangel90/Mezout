@@ -5,6 +5,7 @@ import { decodeSignedInvoice, getBorrowHints, linkRouter, mezoTestnetAddresses, 
 import { publicClient, relayerClient } from "@/lib/server/clients";
 import { serverEnv } from "@/lib/server/env";
 import { clientIp, rateLimited, tooManyRequests } from "@/lib/server/rateLimit";
+import { RelayerBusyError, sendAsRelayer } from "@/lib/server/relayerQueue";
 
 const hex = z.string().refine((v) => isHex(v), "invalid hex") as unknown as z.ZodType<Hex>;
 const uint = z.string().regex(/^\d+$/).transform(BigInt);
@@ -92,7 +93,7 @@ export async function POST(req: Request) {
       } as const;
       const estimate = await client.estimateContractGas(call).catch(() => 0n);
       const { request } = await client.simulateContract({ ...call, gas: gas(estimate) });
-      hash = await wallet.writeContract(request);
+      hash = await sendAsRelayer((nonce) => wallet.writeContract({ ...request, nonce }));
     } else if (input.method === "BORROW") {
       const hints = await getBorrowHints(client, payer, invoice.amount - input.fromBalance);
       const call = {
@@ -110,7 +111,7 @@ export async function POST(req: Request) {
       } as const;
       const estimate = await client.estimateContractGas(call).catch(() => 0n);
       const { request } = await client.simulateContract({ ...call, gas: gas(estimate) });
-      hash = await wallet.writeContract(request);
+      hash = await sendAsRelayer((nonce) => wallet.writeContract({ ...request, nonce }));
     } else {
       const call = {
         ...base,
@@ -119,10 +120,11 @@ export async function POST(req: Request) {
       } as const;
       const estimate = await client.estimateContractGas(call).catch(() => 0n);
       const { request } = await client.simulateContract({ ...call, gas: gas(estimate) });
-      hash = await wallet.writeContract(request);
+      hash = await sendAsRelayer((nonce) => wallet.writeContract({ ...request, nonce }));
     }
     return NextResponse.json({ hash });
   } catch (err) {
+    if (err instanceof RelayerBusyError) return NextResponse.json({ error: err.message }, { status: 503, headers: { "retry-after": "5" } });
     // Never echo request bodies: they carry signatures.
     if (err instanceof BaseError) {
       console.error("relay failed", { method: input.method, name: err.name, short: err.shortMessage, details: err.details });

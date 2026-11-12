@@ -6,6 +6,7 @@ import { publicClient, relayerClient } from "@/lib/server/clients";
 import { getDb } from "@/lib/server/db/client";
 import { passkeyByAddress, relyingParty, verifyPasskeyAssertion } from "@/lib/server/passkeys";
 import { clientIp, rateLimited, tooManyRequests } from "@/lib/server/rateLimit";
+import { RelayerBusyError, sendAsRelayer } from "@/lib/server/relayerQueue";
 import {
   buildWithdrawalOp,
   checkFee,
@@ -95,13 +96,16 @@ export async function POST(req: Request) {
       args: [accountAddress],
     });
     if (deposit < maxCost) {
-      const topUp = await wallet.writeContract({
-        address: entryPoint07Address,
-        abi: entryPoint07Abi,
-        functionName: "depositTo",
-        args: [accountAddress],
-        value: maxCost - deposit,
-      });
+      const topUp = await sendAsRelayer((nonce) =>
+        wallet.writeContract({
+          address: entryPoint07Address,
+          abi: entryPoint07Abi,
+          functionName: "depositTo",
+          args: [accountAddress],
+          value: maxCost - deposit,
+          nonce,
+        }),
+      );
       await client.waitForTransactionReceipt({ hash: topUp });
     }
 
@@ -115,9 +119,10 @@ export async function POST(req: Request) {
     const estimate = await client.estimateContractGas(call).catch(() => 0n);
     const floor = userOperation.verificationGasLimit + userOperation.callGasLimit + 300_000n;
     const { request } = await client.simulateContract({ ...call, gas: estimate * 13n / 10n > floor ? estimate * 13n / 10n : floor });
-    const hash = await wallet.writeContract(request);
+    const hash = await sendAsRelayer((nonce) => wallet.writeContract({ ...request, nonce }));
     return NextResponse.json({ hash, userOpHash });
   } catch (err) {
+    if (err instanceof RelayerBusyError) return NextResponse.json({ error: err.message }, { status: 503, headers: { "retry-after": "5" } });
     if (err instanceof WithdrawalError) {
       console.warn("withdraw rejected", { step: input.step, reason: err.message, account: accountAddress });
       return NextResponse.json({ error: err.message }, { status: 400 });
