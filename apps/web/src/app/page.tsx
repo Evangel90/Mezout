@@ -199,26 +199,26 @@ export default function Home() {
       {/* Hero */}
       <section id="hero" className="on-dark relative isolate -mt-[4.5rem] overflow-hidden bg-ink pt-[4.5rem] text-white">
         <InteractiveBackdrop />
-        <div className="mx-auto max-w-[90rem] px-4 pb-16 pt-12 sm:px-6 sm:pb-24 sm:pt-16">
-          <div className="mx-auto max-w-4xl space-y-8 text-center">
-            <h1 className="hero-in display-1 [text-wrap:balance]" style={{ ["--d" as string]: "90ms" }}>
+        <div className="mx-auto max-w-7xl px-4 pb-16 pt-12 sm:px-6 sm:pb-24 sm:pt-16">
+          <div className="mx-auto max-w-6xl space-y-9 text-center">
+            <h1 className="hero-in display-1 [text-wrap:balance] text-[3.1rem] sm:text-[5rem] lg:text-[6.5rem]" style={{ ["--d" as string]: "90ms" }}>
               Checkout for <span className="text-signal-400">humans</span> and <span className="text-agent-300">AI&nbsp;agents</span>.
             </h1>
-            <p className="hero-in mx-auto max-w-2xl text-lg leading-relaxed text-stone-300 sm:text-xl" style={{ ["--d" as string]: "180ms" }}>
+            <p className="hero-in mx-auto max-w-3xl text-lg leading-relaxed text-stone-300 sm:text-2xl" style={{ ["--d" as string]: "180ms" }}>
               Customers pay with Bitcoin, MUSD or MEZO. AI agents pay over x402. You get the exact amount in MUSD, straight
               to your account.
             </p>
             <div style={{ ["--d" as string]: "270ms" }} className="hero-in flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
-              <Link href="/dashboard" className="pill-signal">
+              <Link href="/dashboard" className="pill-signal sm:px-8 sm:py-4 sm:text-base">
                 Start selling <span aria-hidden>→</span>
               </Link>
-              <Link href="/guides" className="pill-outline-dark">
+              <Link href="/guides" className="pill-outline-dark sm:px-8 sm:py-4 sm:text-base">
                 See the guides
               </Link>
             </div>
           </div>
 
-          <div className="hero-in hero-stage mx-auto mt-12 max-w-[88rem] sm:mt-14" style={{ ["--d" as string]: "420ms" }}>
+          <div className="hero-in hero-stage mx-auto mt-14 max-w-6xl sm:mt-20" style={{ ["--d" as string]: "420ms" }}>
             <Showcase dark />
           </div>
         </div>

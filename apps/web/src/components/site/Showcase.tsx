@@ -88,7 +88,7 @@ export function Showcase({ dark = false }: { dark?: boolean }) {
         {/* Larger screens: the landscape scenes on their light panel. */}
         <div className="hidden rounded-4xl border border-white/10 bg-white/[0.04] p-2 shadow-[0_40px_120px_-40px_rgba(0,0,0,0.8)] backdrop-blur-sm sm:block">
           <div className="rounded-3xl bg-canvas">
-            <div className="aspect-[1120/440] p-2 lg:p-4">
+            <div className="aspect-[1120/440] p-4 lg:p-8">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img key={run} src={`${tab.src}?run=${run}`} alt="" className="caption-in h-full w-full object-contain" />
             </div>
