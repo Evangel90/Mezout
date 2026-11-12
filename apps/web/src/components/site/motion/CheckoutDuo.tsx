@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useTimeline } from "./useTimeline";
 
 /**
@@ -15,8 +15,19 @@ const STEP_MS = 700;
 // Merchant: 6 the coffee order lands, 9 the API call lands. 10-15 hold.
 const at = (step: number, from: number) => step >= from;
 
+const PERSON_ICON = "M12 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM5 20c.8-3.6 3.6-6 7-6s6.2 2.4 7 6";
+const AGENT_ICON = "M12 4v3M7 7h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2zM9.5 12.5h.01M14.5 12.5h.01";
+// Phones show one payer at a time: the person until their payment lands, then the agent.
+const AGENT_FROM = 6;
+
+type Payer = "person" | "agent";
+
 export function CheckoutDuo() {
   const { ref, step } = useTimeline<HTMLDivElement>(STEPS, STEP_MS);
+  const [picked, setPicked] = useState<Payer | null>(null);
+  const shown: Payer = picked ?? (at(step, AGENT_FROM) ? "agent" : "person");
+  // On phones the payer not shown sits underneath, invisible, so both share one height and nothing jumps.
+  const hide = (p: Payer) => (shown === p ? "" : "max-lg:invisible max-lg:opacity-0");
 
   return (
     <div ref={ref} className="relative">
@@ -25,31 +36,66 @@ export function CheckoutDuo() {
         At the same time an AI agent requests a paid API, gets 402 Payment Required for 0.05 MUSD, pays the invoice
         within its spending cap, retries and gets 200 OK. The merchant receives both payments as exact MUSD.
       </p>
-      <div aria-hidden className="grid items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_5rem_minmax(0,0.92fr)_5rem_minmax(0,1fr)] lg:gap-0">
-        <HumanCheckout step={step} />
-        <Connector active={step === 5} done={at(step, 6)} tone="signal" label="BTC → MUSD" />
-        {/* Phones: the two payers stack, then join on the way to the merchant. */}
-        <div className="order-3 flex flex-col items-center gap-1.5 py-1 lg:hidden">
-          <span className="h-6 w-px bg-gradient-to-b from-signal-400/70 to-agent-400/70" />
-          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-stone-400">Both settle in MUSD</span>
-          <span className="h-6 w-px bg-gradient-to-b from-agent-400/70 to-musd-400/70" />
+
+      {/* Phones: choose which payer to watch. It follows the animation until tapped. */}
+      <div className="mb-3 flex justify-center lg:hidden">
+        <div role="group" aria-label="Show a payer" className="flex gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1">
+          {(
+            [
+              { id: "person", label: "A person", icon: PERSON_ICON, on: "bg-signal-500 text-ink" },
+              { id: "agent", label: "An AI agent", icon: AGENT_ICON, on: "bg-agent-500 text-white" },
+            ] as const
+          ).map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              aria-pressed={shown === t.id}
+              onClick={() => setPicked(t.id)}
+              className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-colors duration-300 ${
+                shown === t.id ? t.on : "text-stone-400 hover:text-white"
+              }`}
+            >
+              <Glyph d={t.icon} className="h-3.5 w-3.5" />
+              {t.label}
+            </button>
+          ))}
         </div>
-        <div className="order-4 flex flex-col lg:order-none">
+      </div>
+
+      <div aria-hidden className="grid items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_5rem_minmax(0,0.92fr)_5rem_minmax(0,1fr)] lg:gap-0">
+        {/* Phones: both payers in one cell. Desktop: the wrapper dissolves and each takes its own column. */}
+        <div className="grid lg:contents">
+          <div className={`flex flex-col transition-opacity duration-500 max-lg:[grid-area:1/1] lg:col-start-1 lg:row-start-1 ${hide("person")}`}>
+            <HumanCheckout step={step} />
+          </div>
+          <div className={`flex flex-col transition-opacity duration-500 max-lg:[grid-area:1/1] lg:col-start-5 lg:row-start-1 ${hide("agent")}`}>
+            <AgentTerminal step={step} />
+          </div>
+        </div>
+        <div className="hidden lg:col-start-2 lg:row-start-1 lg:block">
+          <Connector active={step === 5} done={at(step, 6)} tone="signal" label="BTC → MUSD" />
+        </div>
+        {/* Phones: the payment travels down to the merchant. */}
+        <div className="flex flex-col items-center gap-1.5 lg:hidden">
+          <span className={`h-5 w-px bg-gradient-to-b ${shown === "person" ? "from-signal-400/70" : "from-agent-400/70"} to-musd-400/70`} />
+          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-stone-400">Settles in MUSD</span>
+          <span className="h-5 w-px bg-gradient-to-b from-musd-400/70 to-musd-400/20" />
+        </div>
+        <div className="flex flex-col lg:col-start-3 lg:row-start-1">
           <MerchantFeed step={step} />
         </div>
-        <Connector active={step === 8} done={at(step, 9)} tone="agent" label="0.05 MUSD" reverse />
-        <div className="order-2 flex flex-col lg:order-none">
-          <AgentTerminal step={step} />
+        <div className="hidden lg:col-start-4 lg:row-start-1 lg:block">
+          <Connector active={step === 8} done={at(step, 9)} tone="agent" label="0.05 MUSD" reverse />
         </div>
       </div>
     </div>
   );
 }
 
-function Lane({ icon, label, tone }: { icon: ReactNode; label: string; tone: "signal" | "agent" | "musd" }) {
+function Lane({ icon, label, tone, phone = true }: { icon: ReactNode; label: string; tone: "signal" | "agent" | "musd"; phone?: boolean }) {
   const color = { signal: "bg-signal-500 text-ink", agent: "bg-agent-500 text-white", musd: "bg-musd-400 text-ink" }[tone];
   return (
-    <p className="mb-2.5 flex items-center gap-2 font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-stone-400">
+    <p className={`mb-2.5 items-center gap-2 font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-stone-400 ${phone ? "flex" : "hidden lg:flex"}`}>
       <span className={`flex h-5 w-5 items-center justify-center rounded-md ${color}`}>{icon}</span>
       {label}
     </p>
@@ -69,8 +115,8 @@ function HumanCheckout({ step }: { step: number }) {
   const signing = step === 3 || step === 4;
   const paid = at(step, 5);
   return (
-    <div className="order-1 flex flex-col lg:order-none">
-      <Lane label="A person" tone="signal" icon={<Glyph d="M12 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM5 20c.8-3.6 3.6-6 7-6s6.2 2.4 7 6" />} />
+    <div className="flex flex-1 flex-col">
+      <Lane label="A person" tone="signal" phone={false} icon={<Glyph d={PERSON_ICON} />} />
       <div className="flex-1 overflow-hidden rounded-2xl bg-white text-ink shadow-lift ring-1 ring-black/5">
         <div className="flex items-center justify-between border-b border-stone-200 px-4 py-3">
           <span className="text-[13px] font-semibold tracking-tight">Merchant Store</span>
@@ -152,7 +198,7 @@ const agentLines = [
 function AgentTerminal({ step }: { step: number }) {
   return (
     <div className="flex flex-1 flex-col">
-      <Lane label="An AI agent" tone="agent" icon={<Glyph d="M12 4v3M7 7h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2zM9.5 12.5h.01M14.5 12.5h.01" />} />
+      <Lane label="An AI agent" tone="agent" phone={false} icon={<Glyph d={AGENT_ICON} />} />
       <div className="flex-1 overflow-hidden rounded-2xl border border-white/10 bg-stone-900 shadow-lift">
         <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
           <span className="flex gap-1.5">
@@ -198,13 +244,19 @@ function MerchantFeed({ step }: { step: number }) {
           {rows.map((r) => {
             const shown = at(step, r.from);
             return (
-              <li key={r.what} className={`flex items-center gap-3 px-4 py-3 transition-all duration-500 ${shown ? "opacity-100" : "opacity-0"}`}>
-                <span className={`rounded-md px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider ${r.tone}`}>{r.who}</span>
-                <span className="min-w-0 flex-1">
+              <li key={r.what} className="relative flex items-center gap-3 px-4 py-3">
+                {/* Until the payment lands: a faint empty slot, so the card never looks blank. */}
+                <span
+                  className={`absolute inset-x-4 inset-y-2 flex items-center rounded-lg border border-dashed border-stone-200 px-3 font-mono text-[10px] text-stone-400 transition-opacity duration-500 ${shown ? "opacity-0" : "opacity-100"}`}
+                >
+                  Waiting for {r.who === "Agent" ? "an agent" : "a customer"}…
+                </span>
+                <span className={`rounded-md px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider transition-opacity duration-500 ${r.tone} ${shown ? "" : "opacity-0"}`}>{r.who}</span>
+                <span className={`min-w-0 flex-1 transition-opacity duration-500 ${shown ? "" : "opacity-0"}`}>
                   <span className="block truncate text-[12px] font-medium">{r.what}</span>
                   <span className="block text-[11px] text-stone-500">{r.via}</span>
                 </span>
-                <span className={`font-mono text-[13px] font-semibold tabular-nums text-musd-700 ${shown ? "pop-in" : ""}`}>{r.amount}</span>
+                <span className={`font-mono text-[13px] font-semibold tabular-nums text-musd-700 ${shown ? "pop-in" : "opacity-0"}`}>{r.amount}</span>
               </li>
             );
           })}
