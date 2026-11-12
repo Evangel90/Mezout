@@ -28,7 +28,13 @@ export function CheckoutDuo() {
       <div aria-hidden className="grid items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_5rem_minmax(0,0.92fr)_5rem_minmax(0,1fr)] lg:gap-0">
         <HumanCheckout step={step} />
         <Connector active={step === 5} done={at(step, 6)} tone="signal" label="BTC → MUSD" />
-        <div className="order-3 flex flex-col lg:order-none">
+        {/* Phones: the two payers stack, then join on the way to the merchant. */}
+        <div className="order-3 flex flex-col items-center gap-1.5 py-1 lg:hidden">
+          <span className="h-6 w-px bg-gradient-to-b from-signal-400/70 to-agent-400/70" />
+          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-stone-400">Both settle in MUSD</span>
+          <span className="h-6 w-px bg-gradient-to-b from-agent-400/70 to-musd-400/70" />
+        </div>
+        <div className="order-4 flex flex-col lg:order-none">
           <MerchantFeed step={step} />
         </div>
         <Connector active={step === 8} done={at(step, 9)} tone="agent" label="0.05 MUSD" reverse />
@@ -72,10 +78,13 @@ function HumanCheckout({ step }: { step: number }) {
         </div>
         <div className="space-y-3 p-4">
           <div className="space-y-1 text-[12px] text-stone-600">
-            <Line l="2 × Flat white" r="11.00" />
-            <Line l="1 × Croissant" r="4.50" />
-            <Line l="Beans, 250 g" r="9.50" />
-            <div className="flex justify-between border-t border-stone-200 pt-1.5 text-[13px] font-semibold text-ink">
+            {/* Phones skip the line items to keep the hero short. */}
+            <div className="hidden space-y-1 sm:block">
+              <Line l="2 × Flat white" r="11.00" />
+              <Line l="1 × Croissant" r="4.50" />
+              <Line l="Beans, 250 g" r="9.50" />
+            </div>
+            <div className="flex justify-between text-[13px] font-semibold text-ink sm:border-t sm:border-stone-200 sm:pt-1.5">
               <span>Total</span>
               <span className="tabular-nums">25.00 MUSD</span>
             </div>
@@ -176,6 +185,7 @@ function MerchantFeed({ step }: { step: number }) {
     { from: 6, amount: "+25.00", what: "Order 1001", via: "Paid with BTC", who: "Person", tone: "bg-signal-500 text-ink" },
     { from: 9, amount: "+0.05", what: "GET /api/report", via: "Paid by an agent", who: "Agent", tone: "bg-agent-500 text-white" },
   ];
+  const total = at(step, 9) ? "25.05" : at(step, 6) ? "25.00" : "0.00";
   return (
     <div className="flex flex-1 flex-col">
       <Lane label="The merchant" tone="musd" icon={<Glyph d="M4 9l1.5-5h13L20 9M4 9h16M5 11v9h14v-9" />} />
@@ -199,9 +209,16 @@ function MerchantFeed({ step }: { step: number }) {
             );
           })}
         </ul>
-        <p className="mt-auto px-4 pb-3 pt-4 text-[11px] leading-relaxed text-stone-500">
-          Both paid through the same verified router contract. One invoice, one payment.
-        </p>
+        <div className="mt-auto flex items-end justify-between gap-3 px-4 pb-4 pt-5">
+          <span className="text-[11px] leading-snug text-stone-500">
+            Total received
+            <span className="block">Same router, exact amounts</span>
+          </span>
+          <span key={total} className={`text-right tabular-nums ${at(step, 6) ? "pop-in" : ""}`}>
+            <span className="text-[1.75rem] font-semibold leading-none tracking-[-0.04em] text-ink">{total}</span>
+            <span className="ml-1 text-[12px] font-medium text-stone-500">MUSD</span>
+          </span>
+        </div>
         <div className="flex items-center justify-between border-t border-stone-200 bg-stone-50 px-4 py-2.5 text-[11px]">
           <span className="text-stone-500">No admin keys · non-custodial</span>
           <span className="flex items-center gap-1 font-medium text-musd-700">

@@ -200,7 +200,16 @@ export default function Home() {
       <section id="hero" className="on-dark relative isolate -mt-[4.5rem] overflow-hidden bg-ink pt-[4.5rem] text-white">
         <InteractiveBackdrop />
         <div className="mx-auto max-w-7xl px-4 pb-16 pt-12 sm:px-6 sm:pb-24 sm:pt-16">
-          <div className="mx-auto max-w-6xl space-y-9 text-center">
+          <div className="mx-auto max-w-6xl space-y-7 text-center sm:space-y-9">
+            <p className="hero-in mx-auto flex w-max items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] py-1.5 pl-2.5 pr-3.5 text-[13px] text-stone-300 backdrop-blur" style={{ ["--d" as string]: "0ms" }}>
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inset-0 rounded-full bg-musd-400 opacity-60 motion-safe:animate-ping" />
+                <span className="relative h-2 w-2 rounded-full bg-musd-400" />
+              </span>
+              Live on Mezo testnet
+              <span aria-hidden className="text-stone-600">·</span>
+              <span className="text-stone-400">x402 and MCP ready</span>
+            </p>
             <h1 className="hero-in display-1 [text-wrap:balance] text-[3.1rem] sm:text-[5rem] lg:text-[6.5rem]" style={{ ["--d" as string]: "90ms" }}>
               Checkout for <span className="text-signal-400">humans</span> and <span className="text-agent-300">AI&nbsp;agents</span>.
             </h1>
@@ -218,8 +227,11 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="hero-in hero-stage mx-auto mt-14 max-w-6xl sm:mt-20" style={{ ["--d" as string]: "420ms" }}>
-            <Showcase dark />
+          {/* The headline, acted out: a person and an agent pay at once, and both land as exact MUSD. */}
+          <div className="hero-in mx-auto mt-14 max-w-6xl sm:mt-20" style={{ ["--d" as string]: "420ms" }}>
+            <div className="rounded-4xl border border-white/10 bg-white/[0.03] p-3 shadow-[0_40px_120px_-40px_rgba(0,0,0,0.8)] backdrop-blur-sm sm:p-6 lg:p-8">
+              <CheckoutDuo />
+            </div>
           </div>
         </div>
       </section>
@@ -279,7 +291,7 @@ export default function Home() {
               <BrandRow label="Plugs into" brands={STORE_BRANDS} />
               <ArrowLink href="#humans">See the checkout</ArrowLink>
             </div>
-            <div aria-hidden className="mt-auto border-t border-stone-200 bg-canvas p-5 sm:p-8">
+            <div aria-hidden className="flex flex-1 flex-col justify-center border-t border-stone-200 bg-canvas p-5 sm:p-8">
               <div className="mx-auto max-w-sm overflow-hidden rounded-xl border border-stone-200 bg-white text-sm shadow-card">
                 {methods.map((m, i) => (
                   <div key={m.name} className={`flex items-center gap-3 px-4 py-3 ${i ? "border-t border-stone-200" : ""} ${i === 1 ? "bg-signal-50/70" : ""}`}>
@@ -312,11 +324,14 @@ export default function Home() {
                 See agent payments
               </ArrowLink>
             </div>
-            <div aria-hidden className="mt-auto border-t border-white/10 bg-white/[0.03] p-5 sm:p-8">
+            <div aria-hidden className="flex flex-1 flex-col justify-center border-t border-white/10 bg-white/[0.03] p-5 sm:p-8">
               <div className="mx-auto max-w-sm space-y-1.5 rounded-xl border border-white/10 bg-stone-900 p-4 font-mono text-[12.5px]">
+                <p className="text-stone-500">task: buy the market report</p>
                 <p className="text-stone-300">GET /api/report</p>
                 <p className="text-signal-300">← 402 Payment Required · 0.05 MUSD</p>
                 <p className="text-stone-300">pay_invoice inv_7c1e…</p>
+                <p className="pl-4 text-musd-300">✓ under cap 1.00 MUSD / payment</p>
+                <p className="text-stone-300">GET /api/report  PAYMENT-SIGNATURE</p>
                 <p className="font-semibold text-musd-300">← 200 OK</p>
               </div>
             </div>
@@ -374,12 +389,16 @@ export default function Home() {
           <Heading
             center
             eyebrow="How it works"
-            title="Any way they pay. One payout."
-            body="A shopper pays with BTC while an agent pays for an API call. Both land as exact MUSD."
+            title={
+              <>
+                <span className="block">Any way they pay.</span> <span className="block">One payout.</span>
+              </>
+            }
+            body="MUSD, BTC, MEZO or a loan against Bitcoin. No gas for customers, no wallet needed for you."
           />
         </div>
-        <div className="reveal-scale rounded-4xl border border-stone-200 bg-white p-3 shadow-lift sm:p-6 lg:p-8">
-          <CheckoutDuo />
+        <div className="reveal-scale">
+          <Showcase />
         </div>
       </Section>
 
