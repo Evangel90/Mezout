@@ -67,26 +67,17 @@ export function SiteHeader() {
 
   return (
     <header className={`sticky top-0 z-40 border-b transition-[background-color,border-color,box-shadow] duration-300 ${surface}`}>
-      <nav aria-label="Main" className="relative mx-auto grid h-[4.5rem] max-w-7xl grid-cols-[1fr_auto] items-center gap-4 px-4 sm:px-6 md:grid-cols-[1fr_auto_1fr]">
+      <nav aria-label="Main" className="relative mx-auto grid h-[4.5rem] max-w-7xl grid-cols-[1fr_auto] items-center gap-4 px-4 sm:px-6 lg:grid-cols-[1fr_auto_1fr]">
         <div className="flex items-center gap-3">
           <Link href="/" aria-label="Mezout home" className="rounded-lg">
             <Wordmark dark={dark} />
           </Link>
-          <span
-            title="Mezout runs on Mezo testnet. Test tokens have no real value."
-            className={`hidden items-center gap-1.5 rounded-full px-2 py-0.5 font-mono text-[10.5px] font-medium uppercase tracking-wider sm:inline-flex ${
-              dark ? "bg-white/[0.06] text-stone-300 ring-1 ring-inset ring-white/10" : "bg-signal-50 text-signal-800 ring-1 ring-inset ring-signal-200"
-            }`}
-          >
-            <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-signal-500" />
-            Testnet
-          </span>
         </div>
         <SiteNav dark={dark} />
         <div className="flex items-center justify-end gap-1.5">
           <Link
             href="/dashboard"
-            className={`hidden rounded-full px-4 py-2 text-[15px] font-medium transition-colors md:inline ${
+            className={`hidden rounded-full px-4 py-2 text-[15px] font-medium transition-colors lg:inline ${
               dark ? "text-stone-200 hover:bg-white/10 hover:text-white" : "text-stone-700 hover:bg-stone-100 hover:text-ink"
             }`}
           >

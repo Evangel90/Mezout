@@ -41,7 +41,7 @@ export function SiteNav({ dark }: { dark: boolean }) {
   const pathname = usePathname();
   const section = useActiveSection(pathname === "/");
   return (
-    <ul className={`hidden items-center gap-0.5 rounded-full p-1 text-[15px] transition-colors md:flex ${dark ? "bg-white/[0.04] ring-1 ring-inset ring-white/10" : "bg-stone-100/70 ring-1 ring-inset ring-stone-200/70"}`}>
+    <ul className={`hidden items-center gap-0.5 rounded-full p-1 text-[15px] transition-colors lg:flex ${dark ? "bg-white/[0.04] ring-1 ring-inset ring-white/10" : "bg-stone-100/70 ring-1 ring-inset ring-stone-200/70"}`}>
       {NAV_LINKS.map((l) => {
         const page = isPage(pathname, l.href);
         const current = page || (!!l.section && section === l.section);
@@ -118,7 +118,7 @@ export function MobileMenu({ dark, onOpenChange }: { dark: boolean; onOpenChange
   const close = () => setOpen(false);
 
   return (
-    <div className="md:hidden">
+    <div className="lg:hidden">
       <button
         ref={button}
         type="button"
@@ -142,7 +142,7 @@ export function MobileMenu({ dark, onOpenChange }: { dark: boolean; onOpenChange
           id={panelId}
           ref={panel}
           aria-label="Menu"
-          className="fixed inset-x-0 bottom-0 top-[4.5rem] z-50 flex flex-col overflow-y-auto border-t border-stone-200 bg-white px-4 pb-8 pt-2 slide-in md:hidden"
+          className="fixed inset-x-0 bottom-0 top-[4.5rem] z-50 flex flex-col overflow-y-auto border-t border-stone-200 bg-white px-4 pb-8 pt-2 slide-in lg:hidden"
         >
           <ul className="divide-y divide-stone-100">
             {NAV_LINKS.map((l) => (

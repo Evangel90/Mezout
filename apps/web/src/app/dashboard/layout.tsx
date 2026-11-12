@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { MerchantArea } from "@/components/dashboard/merchant-area";
 import { Wordmark } from "@/components/site/Logo";
@@ -17,9 +18,9 @@ export default function DashboardLayout({ children }: Readonly<{ children: React
       <header className="on-dark sticky top-0 z-40 bg-ink text-white">
         <div className="flex h-14 items-center justify-between gap-3 px-4 sm:px-5">
           <div className="flex items-center gap-3">
-            <ExternalLink href="/" icon={false} aria-label="Mezout home (opens in a new tab)" className="rounded-lg">
+            <Link href="/" aria-label="Mezout home" className="rounded-lg">
               <Wordmark dark />
-            </ExternalLink>
+            </Link>
             <span aria-hidden className="hidden h-5 w-px bg-white/15 sm:block" />
             <span className="hidden text-sm text-stone-400 sm:block">Dashboard</span>
           </div>

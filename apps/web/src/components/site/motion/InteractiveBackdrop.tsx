@@ -112,7 +112,7 @@ export function InteractiveBackdrop({ variant = "hero" }: { variant?: "hero" | "
       {glows.map((g, i) => (
         <div
           key={i}
-          className={`absolute ${g.cls}`}
+          className={`absolute ${g.cls} ${i % 2 ? "ambient-b" : "ambient-a"}`}
           style={{ transform: `translate3d(calc(var(--dx) * ${g.drift}px), calc(var(--dy) * ${g.drift}px), 0)` }}
         />
       ))}

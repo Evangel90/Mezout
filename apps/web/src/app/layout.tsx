@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Suspense } from "react";
+import { NavigationProgress } from "@/components/site/NavigationProgress";
 import { SiteFooter, SiteHeader } from "@/components/site/SiteChrome";
 import "./globals.css";
 
@@ -20,10 +22,22 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Hide landing page reveal blocks before first paint (ScrollReveal shows them). Skipped with reduced motion;
+            if the page script never runs, everything is shown after 2.5 s. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{if(matchMedia("(prefers-reduced-motion: reduce)").matches||!("IntersectionObserver" in window))return;var r=document.documentElement;r.classList.add("js-reveal");setTimeout(function(){if(!r.dataset.revealReady)r.classList.remove("js-reveal")},2500)}catch(e){}})()`,
+          }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} flex min-h-screen flex-col bg-white text-ink antialiased`}
       >
+        <Suspense fallback={null}>
+          <NavigationProgress />
+        </Suspense>
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:shadow-lift"

@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 import { AgentFlow } from "@/components/site/motion/AgentFlow";
 import { CheckoutDuo } from "@/components/site/motion/CheckoutDuo";
 import { InteractiveBackdrop } from "@/components/site/motion/InteractiveBackdrop";
+import { CommandLine } from "@/components/site/CommandLine";
+import { ScrollReveal } from "@/components/site/ScrollReveal";
 import { Showcase } from "@/components/site/Showcase";
 import { AGENT_BRANDS, BrandRow, STORE_BRANDS, WorksWithStrip } from "@/components/site/WorksWith";
 
@@ -30,8 +32,6 @@ const methods = [
   { dot: "bg-rose-600", name: "Pay with MEZO", body: "Converted the same way, with the same cap." },
   { dot: "bg-signal-600", name: "Borrow against BTC", body: "They keep their Bitcoin and borrow the MUSD." },
 ];
-
-const mcpTools = ["create_invoice", "get_invoice", "list_invoices", "refund", "verify_payment", "pay_invoice", "fetch_paid_resource", "get_budget"];
 
 const guarantees = [
   { icon: "equal", title: "The exact amount", body: "Customers pay your price. You see the fee and your payout before you share a link." },
@@ -111,7 +111,7 @@ function Eyebrow({ children, tone = "ink" }: Readonly<{ children: ReactNode; ton
 
 function Heading({ eyebrow, title, body, center = false, dark = false, eyebrowTone }: Readonly<{ eyebrow: string; title: ReactNode; body?: ReactNode; center?: boolean; dark?: boolean; eyebrowTone?: "ink" | "signal" | "agent" | "light" }>) {
   return (
-    <div className={`reveal max-w-3xl space-y-5 ${center ? "mx-auto text-center" : ""}`}>
+    <div className={`reveal-group max-w-3xl space-y-5 ${center ? "mx-auto text-center" : ""}`}>
       <Eyebrow tone={eyebrowTone ?? (dark ? "light" : "ink")}>{eyebrow}</Eyebrow>
       <h2 className="display-2 [text-wrap:balance]">{title}</h2>
       {body && <p className={`text-lg leading-relaxed sm:text-xl ${dark ? "text-stone-400" : "text-stone-600"}`}>{body}</p>}
@@ -171,30 +171,20 @@ function ArrowLink({ href, children, dark = false }: Readonly<{ href: string; ch
 export default function Home() {
   return (
     <div className="overflow-x-clip">
+      <ScrollReveal />
       {/* Hero */}
       <section id="hero" className="on-dark relative isolate -mt-[4.5rem] overflow-hidden bg-ink pt-[4.5rem] text-white">
         <InteractiveBackdrop />
-        <div className="mx-auto max-w-7xl px-4 pb-16 pt-14 sm:px-6 sm:pb-24 sm:pt-20">
+        <div className="mx-auto max-w-7xl px-4 pb-16 pt-12 sm:px-6 sm:pb-24 sm:pt-16">
           <div className="mx-auto max-w-4xl space-y-8 text-center">
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-sm text-stone-300 backdrop-blur hover:border-white/30 hover:text-white"
-            >
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-musd-400 opacity-60 motion-reduce:hidden" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-musd-400" />
-              </span>
-              Live on Mezo testnet
-              <span aria-hidden>→</span>
-            </Link>
-            <h1 className="display-1 [text-wrap:balance]">
-              Get paid by <span className="text-signal-400">people</span> and <span className="text-agent-300">AI&nbsp;agents</span>.
+            <h1 className="hero-in display-1 [text-wrap:balance]" style={{ ["--d" as string]: "90ms" }}>
+              Checkout for <span className="text-signal-400">humans</span> and <span className="text-agent-300">AI&nbsp;agents</span>.
             </h1>
-            <p className="mx-auto max-w-2xl text-lg leading-relaxed text-stone-300 sm:text-xl">
-              Customers pay with Bitcoin, MUSD or MEZO. AI agents pay from code. You get the exact amount in MUSD, straight
+            <p className="hero-in mx-auto max-w-2xl text-lg leading-relaxed text-stone-300 sm:text-xl" style={{ ["--d" as string]: "180ms" }}>
+              Customers pay with Bitcoin, MUSD or MEZO. AI agents pay over x402. You get the exact amount in MUSD, straight
               to your account.
             </p>
-            <div className="flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
+            <div style={{ ["--d" as string]: "270ms" }} className="hero-in flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
               <Link href="/dashboard" className="pill-signal">
                 Start selling <span aria-hidden>→</span>
               </Link>
@@ -202,11 +192,10 @@ export default function Home() {
                 See the guides
               </Link>
             </div>
-            <p className="text-sm text-stone-500">Sign up with a passkey. No wallet needed. Testnet only.</p>
           </div>
 
-          <div className="mx-auto mt-14 max-w-6xl rounded-4xl border border-white/10 bg-white/[0.03] p-3 shadow-[0_40px_120px_-40px_rgba(0,0,0,0.8)] backdrop-blur-sm sm:mt-20 sm:p-6 lg:p-8">
-            <CheckoutDuo />
+          <div className="hero-in hero-stage mx-auto mt-12 max-w-6xl sm:mt-14" style={{ ["--d" as string]: "420ms" }}>
+            <Showcase dark />
           </div>
         </div>
       </section>
@@ -223,7 +212,7 @@ export default function Home() {
 
       {/* Facts */}
       <Section className="py-16 sm:py-20">
-        <dl className="reveal grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-4">
+        <dl className="reveal-group grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-4">
           {facts.map((f) => (
             <div key={f.value} className="space-y-3 border-l-2 border-stone-200 pl-5">
               <dt className="sr-only">{f.label}</dt>
@@ -253,7 +242,7 @@ export default function Home() {
           body="Shoppers pay from a wallet in a few taps. Agents pay from code. Either way, you get MUSD."
         />
         <div className="mt-14 grid gap-4 lg:grid-cols-2">
-          <article className="reveal flex flex-col overflow-hidden rounded-4xl border border-stone-200 bg-white shadow-card">
+          <article style={{ ["--i" as string]: 0 }} className="reveal flex flex-col overflow-hidden rounded-4xl border border-stone-200 bg-white shadow-card">
             <div className="space-y-5 p-7 sm:p-10">
               <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-signal-500 text-ink">
                 <Icon name="person" />
@@ -284,7 +273,7 @@ export default function Home() {
             </div>
           </article>
 
-          <article className="on-dark reveal flex flex-col overflow-hidden rounded-4xl bg-ink text-white shadow-card">
+          <article style={{ ["--i" as string]: 1 }} className="on-dark reveal flex flex-col overflow-hidden rounded-4xl bg-ink text-white shadow-card">
             <div className="space-y-5 p-7 sm:p-10">
               <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-agent-500 text-white">
                 <Icon name="bot" />
@@ -292,7 +281,7 @@ export default function Home() {
               <Eyebrow tone="agent">AI agents</Eyebrow>
               <h3 className="display-3">Get paid by software.</h3>
               <p className="text-stone-400">
-                Agents pay your payment links in MUSD, with no gas or pop-ups. Or charge them for each call to your API.
+                Agents pay over x402, the open standard for payments over HTTP. In MUSD, with no gas or pop-ups.
               </p>
               <BrandRow label="Runs in" brands={AGENT_BRANDS} dark />
               <ArrowLink href="#agents" dark>
@@ -342,7 +331,7 @@ export default function Home() {
             </span>
           </div>
         </div>
-        <div className="reveal relative mx-auto w-full max-w-[480px]">
+        <div className="reveal-scale relative mx-auto w-full max-w-[480px]">
           <div aria-hidden className="absolute -inset-6 -z-0 rounded-[3rem] bg-gradient-to-br from-signal-100 via-canvas to-musd-100" />
           <div className="relative rounded-4xl border border-stone-200 bg-white p-4 shadow-lift sm:p-6">
             <Motion
@@ -358,83 +347,73 @@ export default function Home() {
       {/* How it works */}
       <Section id="how" tone="canvas" className="py-20 sm:py-28">
         <div className="mb-12">
-          <Heading center eyebrow="How it works" title="Any way they pay. One payout." />
+          <Heading
+            center
+            eyebrow="How it works"
+            title="Any way they pay. One payout."
+            body="A shopper pays with BTC while an agent pays for an API call. Both land as exact MUSD."
+          />
         </div>
-        <Showcase />
+        <div className="reveal-scale rounded-4xl border border-stone-200 bg-white p-3 shadow-lift sm:p-6 lg:p-8">
+          <CheckoutDuo />
+        </div>
       </Section>
 
       {/* AI agents */}
       <Section id="agents" tone="dark" className="py-20 sm:py-28" backdrop={<InteractiveBackdrop variant="agents" />}>
-        <div className="grid gap-12 lg:grid-cols-[1fr_1fr] lg:items-end">
-          <Heading
-            dark
-            eyebrow="For AI agents"
-            eyebrowTone="agent"
-            title={
-              <>
-                AI agents are customers now. <span className="text-stone-500">Let them pay you.</span>
-              </>
-            }
-          />
-          <p className="reveal text-lg leading-relaxed text-stone-400">
-            An agent asks, sees the price, pays in MUSD and gets what it asked for. In seconds, with the same guarantees as
-            your other customers.
+        <Heading
+          center
+          dark
+          eyebrow="For AI agents"
+          eyebrowTone="agent"
+          title={
+            <>
+              Agents pay with x402. <span className="text-stone-500">You get MUSD.</span>
+            </>
+          }
+          body="Give your agent a Mezout wallet with one command. It pays your links and x402 APIs in MUSD, within the limits you set."
+        />
+
+        {/* The one thing to do: the setup command. */}
+        <div className="reveal-scale mx-auto mt-12 max-w-3xl">
+          <div className="relative">
+            <div aria-hidden className="absolute -inset-px rounded-[1.4rem] bg-gradient-to-r from-agent-500/60 via-agent-300/30 to-signal-500/50 blur-xl opacity-60" />
+            <CommandLine command="npx -y @mezout/mcp init" size="lg" />
+          </div>
+          <p className="mt-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-stone-400">
+            <span>Works in Claude, Cursor, Codex and Hermes Agent</span>
+            <span aria-hidden className="hidden text-stone-600 sm:inline">·</span>
+            <span>A cap on every payment</span>
+            <span aria-hidden className="hidden text-stone-600 sm:inline">·</span>
+            <ArrowLink href="/guides/ai-agents" dark>
+              Setup guide
+            </ArrowLink>
           </p>
         </div>
 
-        <div className="reveal mt-14">
+        <div className="reveal mt-16">
           <AgentFlow />
         </div>
 
-        <div className="mt-6 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
-          <div className="reveal space-y-5 rounded-4xl border border-white/10 bg-white/[0.03] p-7 sm:p-8">
-            <p className="eyebrow text-agent-300">MCP server</p>
-            <h3 className="display-3">Plug Mezout into your agent.</h3>
-            <p className="text-stone-400">
-              MCP is the standard AI agents use to call tools. Run{" "}
-              <code className="rounded-md bg-white/10 px-1.5 py-0.5 font-mono text-[0.85em] text-stone-200">npx -y @mezout/mcp</code> and your agent
-              can create payment links, check them, request refunds and pay, with a cap on every payment.
-            </p>
-            <BrandRow label="Works with" brands={AGENT_BRANDS} dark />
-            <ul className="flex flex-wrap gap-2">
-              {mcpTools.map((t) => (
-                <li key={t} className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 font-mono text-xs text-stone-200">
-                  {t}
-                </li>
-              ))}
-            </ul>
-            <div className="flex flex-wrap gap-3 pt-2">
-              <Link href="/docs#ai-agents" className="pill-light">
-                Set up the MCP server
-              </Link>
-              <Link href="/guides/ai-agents" className="pill-outline-dark">
-                Read the guide
-              </Link>
-            </div>
+        <div className="reveal mt-6 grid gap-8 rounded-4xl border border-white/10 bg-white/[0.03] p-7 sm:p-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
+          <div className="space-y-4">
+            <p className="eyebrow text-agent-300">Selling to agents?</p>
+            <h3 className="display-3">Price any API route.</h3>
+            <p className="text-stone-400">Wrap a route and agents pay per request over x402. Unpaid calls get a 402 with the price.</p>
+            <ArrowLink href="/guides/paywall" dark>
+              Paywall guide
+            </ArrowLink>
           </div>
-          <div className="reveal min-w-0 space-y-5 rounded-4xl border border-white/10 bg-white/[0.03] p-7 sm:p-8">
-            <p className="eyebrow text-agent-300">HTTP 402 paywall</p>
-            <h3 className="display-3">Charge agents per request.</h3>
-            <p className="text-stone-400">Wrap an API route. Unpaid calls get a price. Paid calls get the answer.</p>
-            <div className="overflow-hidden rounded-2xl border border-white/10 bg-stone-900">
-              <div className="border-b border-white/10 px-4 py-2.5 font-mono text-xs text-stone-500">app/api/report/route.ts</div>
-              <pre className="overflow-x-auto p-5 font-mono text-[13px] leading-relaxed text-stone-300">
-                <code>
-                  <span className="text-stone-500">{"// Charge agents 0.05 MUSD per request"}</span>
-                  {"\n"}
-                  <span className="text-agent-300">import</span> {"{ withMezout402 }"} <span className="text-agent-300">from</span>{" "}
-                  <span className="text-musd-300">&quot;@mezout/paywall/next&quot;</span>;{"\n\n"}
-                  <span className="text-agent-300">export const</span> GET = withMezout402({"\n"}
-                  {"  { apiKey: process.env.MEZOUT_API_KEY, price: "}
-                  <span className="text-musd-300">&quot;0.05&quot;</span>
-                  {" },\n"}
-                  {"  async (req, ctx, payment) => Response.json({ report, paidBy: payment.payer }),\n"});
-                </code>
-              </pre>
-            </div>
-            <Link href="/guides/paywall" className="pill-outline-dark">
-              Read the paywall guide
-            </Link>
+          <div className="min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-stone-900">
+            <pre className="overflow-x-auto p-5 font-mono text-[13px] leading-relaxed text-stone-300">
+              <code>
+                <span className="text-agent-300">export const</span> GET = withMezout402({"\n"}
+                {"  { apiKey, price: "}
+                <span className="text-musd-300">&quot;0.05&quot;</span>
+                {" },\n"}
+                {"  () => Response.json(report),\n"});
+              </code>
+            </pre>
           </div>
         </div>
       </Section>
@@ -451,8 +430,8 @@ export default function Home() {
           }
         />
         <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {guarantees.map((g) => (
-            <div key={g.title} className="reveal space-y-4 rounded-3xl border border-stone-200 bg-white p-7 transition-colors hover:border-stone-300">
+          {guarantees.map((g, i) => (
+            <div key={g.title} style={{ ["--i" as string]: i % 3 }} className="reveal space-y-4 rounded-3xl border border-stone-200 bg-white p-7 transition-colors hover:border-stone-300">
               <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-canvas text-ink">
                 <Icon name={g.icon} />
               </span>
@@ -520,7 +499,7 @@ export default function Home() {
           </div>
         </div>
         <ul className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {integrations.map((i) => {
+          {integrations.map((i, n) => {
             const external = i.href.startsWith("http");
             const body = (
               <>
@@ -536,7 +515,7 @@ export default function Home() {
             );
             const cls = "group flex h-full flex-col gap-3 rounded-3xl border border-stone-200 bg-white p-6 transition-all hover:-translate-y-0.5 hover:shadow-lift";
             return (
-              <li key={i.name} className="reveal">
+              <li key={i.name} className="reveal" style={{ ["--i" as string]: n % 3 }}>
                 {external ? (
                   <a href={i.href} className={cls}>
                     {body}
@@ -594,7 +573,7 @@ export default function Home() {
             covers the details.
           </p>
         </div>
-        <div className="divide-y divide-stone-200 overflow-hidden rounded-3xl border border-stone-200 bg-white">
+        <div className="reveal divide-y divide-stone-200 overflow-hidden rounded-3xl border border-stone-200 bg-white">
           {faqs.map((f, i) => (
             <details key={f.q} className="group" open={i === 0}>
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-[17px] font-medium tracking-tight hover:bg-stone-50 [&::-webkit-details-marker]:hidden">
@@ -615,9 +594,12 @@ export default function Home() {
       <section className="on-dark relative isolate overflow-hidden bg-ink text-white">
         <div
           aria-hidden
-          className="absolute inset-0 -z-10 bg-[radial-gradient(45%_70%_at_20%_100%,rgba(255,107,20,0.25),transparent_70%),radial-gradient(45%_70%_at_80%_0%,rgba(127,92,255,0.25),transparent_70%)]"
-        />
-        <div className="mx-auto max-w-4xl space-y-8 px-4 py-24 text-center sm:px-6 sm:py-32">
+          className="absolute inset-0 -z-10 overflow-hidden"
+        >
+          <div className="ambient-a absolute -bottom-1/3 -left-[10%] h-[90%] w-[60%] bg-[radial-gradient(closest-side,rgba(255,107,20,0.28),transparent)]" />
+          <div className="ambient-b absolute -right-[10%] -top-1/3 h-[90%] w-[60%] bg-[radial-gradient(closest-side,rgba(127,92,255,0.28),transparent)]" />
+        </div>
+        <div className="reveal-group mx-auto max-w-4xl space-y-8 px-4 py-24 text-center sm:px-6 sm:py-32">
           <h2 className="display-1 [text-wrap:balance]">Start getting paid.</h2>
           <p className="mx-auto max-w-xl text-lg text-stone-400">Sign up with a passkey and share your first payment link in minutes.</p>
           <div className="flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">

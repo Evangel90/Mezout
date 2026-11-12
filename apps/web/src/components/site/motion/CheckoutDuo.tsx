@@ -21,7 +21,7 @@ export function CheckoutDuo() {
   return (
     <div ref={ref} className="relative">
       <p className="sr-only">
-        An animation: a customer pays Satoshi’s Coffee Store 25.00 MUSD for a coffee order by choosing Pay with BTC.
+        An animation: a customer pays Merchant Store 25.00 MUSD for a coffee order by choosing Pay with BTC.
         At the same time an AI agent requests a paid API, gets 402 Payment Required for 0.05 MUSD, pays the invoice
         within its spending cap, retries and gets 200 OK. The merchant receives both payments as exact MUSD.
       </p>
@@ -67,7 +67,7 @@ function HumanCheckout({ step }: { step: number }) {
       <Lane label="A person" tone="signal" icon={<Glyph d="M12 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM5 20c.8-3.6 3.6-6 7-6s6.2 2.4 7 6" />} />
       <div className="flex-1 overflow-hidden rounded-2xl bg-white text-ink shadow-lift ring-1 ring-black/5">
         <div className="flex items-center justify-between border-b border-stone-200 px-4 py-3">
-          <span className="text-[13px] font-semibold tracking-tight">Satoshi’s Coffee Store</span>
+          <span className="text-[13px] font-semibold tracking-tight">Merchant Store</span>
           <span className="font-mono text-[10px] text-stone-500">Order 1001</span>
         </div>
         <div className="space-y-3 p-4">
