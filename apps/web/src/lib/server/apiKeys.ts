@@ -2,11 +2,13 @@ import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 import { and, eq, isNull } from "drizzle-orm";
 import { getAddress, hashMessage, type Address, type Hex } from "viem";
-import { keyRequestMessage } from "@mezout/sdk";
+import { getNetworkConfig, keyRequestMessage, type MezoNetwork } from "@mezout/sdk";
+import { mezoNetwork } from "../network";
 import type { Db } from "./db/client";
 import { apiKeys, merchants } from "./db/schema";
 
-export const KEY_PREFIX = "mzk_test_";
+/** This deployment's key prefix: mzk_test_ on testnet, mzk_live_ on mainnet. */
+export const KEY_PREFIX = getNetworkConfig(mezoNetwork).apiKeyPrefix;
 export const REQUEST_TTL_MS = 5 * 60_000;
 export const MAX_ACTIVE_KEYS = 5;
 
@@ -27,9 +29,10 @@ export type SignedRequest = { address: Address; issuedAt: string; signature: Hex
 export async function verifySignedRequest(
   db: Db,
   req: SignedRequest,
-  buildMessage: (address: Address, issuedAt: string) => string,
+  buildMessage: (address: Address, issuedAt: string, network: MezoNetwork) => string,
   verify: VerifySignature,
   now = Date.now(),
+  network: MezoNetwork = mezoNetwork,
 ): Promise<{ merchant: Merchant; requestHash: Hex }> {
   const issued = Date.parse(req.issuedAt);
   if (Number.isNaN(issued) || new Date(issued).toISOString() !== req.issuedAt) {
@@ -39,13 +42,16 @@ export async function verifySignedRequest(
     throw new KeyRequestError("This request has expired. Sign a new one.");
   }
   const address = getAddress(req.address);
-  const message = buildMessage(address, req.issuedAt);
+  const message = buildMessage(address, req.issuedAt, network);
   if (!(await verify({ address, message, signature: req.signature }))) {
     throw new KeyRequestError("The signature does not match the payout address.");
   }
 
-  await db.insert(merchants).values({ payoutAddress: address }).onConflictDoNothing();
-  const [merchant] = await db.select().from(merchants).where(eq(merchants.payoutAddress, address));
+  await db.insert(merchants).values({ payoutAddress: address, network }).onConflictDoNothing();
+  const [merchant] = await db
+    .select()
+    .from(merchants)
+    .where(and(eq(merchants.payoutAddress, address), eq(merchants.network, network)));
   return { merchant, requestHash: hashMessage(message) };
 }
 
@@ -55,8 +61,9 @@ export async function issueApiKey(
   req: SignedRequest,
   verify: VerifySignature,
   now = Date.now(),
+  network: MezoNetwork = mezoNetwork,
 ): Promise<{ key: string; prefix: string; merchant: Merchant }> {
-  const { merchant, requestHash } = await verifySignedRequest(db, req, keyRequestMessage, verify, now);
+  const { merchant, requestHash } = await verifySignedRequest(db, req, keyRequestMessage, verify, now, network);
   return { ...(await mintApiKey(db, merchant, requestHash)), merchant };
 }
 
@@ -70,11 +77,13 @@ export async function mintApiKey(db: Db, merchant: Merchant, requestHash: string
     throw new KeyRequestError(`A merchant can hold at most ${MAX_ACTIVE_KEYS} active keys.`);
   }
 
-  const key = KEY_PREFIX + randomBytes(24).toString("base64url");
-  const prefix = key.slice(0, KEY_PREFIX.length + 6);
+  // The key's network is the merchant's, so a testnet merchant can only ever hold mzk_test_ keys.
+  const keyPrefix = getNetworkConfig(merchant.network as MezoNetwork).apiKeyPrefix;
+  const key = keyPrefix + randomBytes(24).toString("base64url");
+  const prefix = key.slice(0, keyPrefix.length + 6);
   const inserted = await db
     .insert(apiKeys)
-    .values({ merchantId: merchant.id, prefix, keyHash: sha256(key), requestHash })
+    .values({ merchantId: merchant.id, network: merchant.network, prefix, keyHash: sha256(key), requestHash })
     .onConflictDoNothing({ target: apiKeys.requestHash })
     .returning({ id: apiKeys.id });
   if (inserted.length === 0) throw new KeyRequestError("This signed request was already used.");
@@ -102,15 +111,29 @@ export async function revokeApiKey(db: Db, merchant: Merchant, id: string): Prom
   return rows.length > 0;
 }
 
-/** Resolves `Authorization: Bearer mzk_test_…` to its merchant, or null. */
-export async function authenticate(db: Db, authorization: string | null): Promise<Merchant | null> {
+/**
+ * Resolves `Authorization: Bearer mzk_…` to its merchant, or null. Only keys of this deployment's network count: the
+ * prefix, the key's row and the merchant's row must all name it, so a test key can never act on mainnet.
+ */
+export async function authenticate(
+  db: Db,
+  authorization: string | null,
+  network: MezoNetwork = mezoNetwork,
+): Promise<Merchant | null> {
   const match = authorization?.match(/^Bearer\s+(\S+)$/i);
   const key = match?.[1];
-  if (!key?.startsWith(KEY_PREFIX)) return null;
+  if (!key?.startsWith(getNetworkConfig(network).apiKeyPrefix)) return null;
   const [row] = await db
     .select({ merchant: merchants })
     .from(apiKeys)
     .innerJoin(merchants, eq(apiKeys.merchantId, merchants.id))
-    .where(and(eq(apiKeys.keyHash, sha256(key)), isNull(apiKeys.revokedAt)));
+    .where(
+      and(
+        eq(apiKeys.keyHash, sha256(key)),
+        isNull(apiKeys.revokedAt),
+        eq(apiKeys.network, network),
+        eq(merchants.network, network),
+      ),
+    );
   return row?.merchant ?? null;
 }

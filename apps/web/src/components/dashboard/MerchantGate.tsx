@@ -4,13 +4,14 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react
 import { useSendTransaction as usePassportSendTransaction } from "@mezo-org/passport";
 import { encodeFunctionData, erc20Abi, formatUnits, hashMessage, isAddressEqual, type Address, type Hex } from "viem";
 import { useAccount, useBytecode, useDisconnect, usePublicClient, useSendTransaction, useSignMessage, useSwitchChain } from "wagmi";
-import { mezoTestnet, mezoTestnetAddresses, signInMessage } from "@mezout/sdk";
+import { signInMessage } from "@mezout/sdk";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { SignInChoice } from "@/components/dashboard/SignInChoice";
 import { Loading } from "@/components/ui";
 import { api, errorText } from "@/lib/api";
 import { MerchantContext, type Merchant } from "@/lib/merchant";
 import { loadSession, passkeySendMusd, passkeySign, saveSession, type PasskeySession } from "@/lib/passkey";
+import { addresses, network, mezoNetwork } from "@/lib/network";
 
 type Session = { merchant: Address; business_name: string | null };
 
@@ -25,11 +26,11 @@ export function MerchantGate({ children }: { children: ReactNode }) {
   const { sendTransactionAsync } = useSendTransaction();
   const { sendTransaction: passportSend } = usePassportSendTransaction();
   const { switchChainAsync } = useSwitchChain();
-  const client = usePublicClient({ chainId: mezoTestnet.id });
+  const client = usePublicClient({ chainId: network.chainId });
 
   const [passkey, setPasskey] = useState<PasskeySession | null>(null);
   useEffect(() => setPasskey(loadSession()), []);
-  const { data: code } = useBytecode({ address: walletAddress, chainId: mezoTestnet.id });
+  const { data: code } = useBytecode({ address: walletAddress, chainId: network.chainId });
   const isSmartAccount = !!code && code !== "0x";
 
   // The server session's merchant. undefined while checking.
@@ -65,7 +66,7 @@ export function MerchantGate({ children }: { children: ReactNode }) {
 
   async function startSession(address: Address, sign: (message: string) => Promise<Hex>) {
     const issuedAt = new Date().toISOString();
-    const signature = await sign(signInMessage(address, issuedAt));
+    const signature = await sign(signInMessage(address, issuedAt, mezoNetwork));
     const r = await api<Session>("/api/session", { body: { address, issuedAt, signature } });
     setSignedIn(r.merchant);
     setBusinessNameState(r.business_name);
@@ -118,21 +119,21 @@ export function MerchantGate({ children }: { children: ReactNode }) {
 
   const sendMusd = useCallback(
     async (to: Address, amount: bigint): Promise<Hex> => {
-      if (!client) throw new Error("Mezo testnet is not reachable");
+      if (!client) throw new Error(`${network.label} is not reachable`);
       if (method === "passkey" && passkey) {
         return passkeySendMusd(passkey, to, formatUnits(amount, 18), (hash) => client.waitForTransactionReceipt({ hash, timeout: 90_000 }));
       }
       const data = encodeFunctionData({ abi: erc20Abi, functionName: "transfer", args: [to, amount] });
       let hash: Hex;
       if (isSmartAccount) {
-        const result = await passportSend(mezoTestnetAddresses.musd, 0n, data);
+        const result = await passportSend(addresses.musd, 0n, data);
         if (!result?.hash) throw new Error("The wallet did not send the transfer");
         hash = result.hash as Hex;
       } else {
-        if (chainId !== mezoTestnet.id) await switchChainAsync({ chainId: mezoTestnet.id });
-        // Mezo testnet's gas estimate for a transfer is sometimes below its own minimum (EIP-7623's calldata floor),
+        if (chainId !== network.chainId) await switchChainAsync({ chainId: network.chainId });
+        // Mezo's gas estimate for a transfer is sometimes below its own minimum (EIP-7623's calldata floor),
         // which the node then rejects. An MUSD transfer uses about 35,000 gas; unused gas is not charged.
-        hash = await sendTransactionAsync({ to: mezoTestnetAddresses.musd, data, chainId: mezoTestnet.id, gas: 80_000n });
+        hash = await sendTransactionAsync({ to: addresses.musd, data, chainId: network.chainId, gas: 80_000n });
       }
       const receipt = await client.waitForTransactionReceipt({ hash, timeout: 90_000 });
       if (receipt.status !== "success") throw new Error("The transfer failed on-chain. Nothing was sent.");

@@ -1,6 +1,7 @@
 import "server-only";
 import { and, eq } from "drizzle-orm";
 import { getAddress, type Address } from "viem";
+import { mezoNetwork } from "../network";
 import type { Merchant } from "./apiKeys";
 import type { Db } from "./db/client";
 import { invoices, merchants } from "./db/schema";
@@ -69,7 +70,10 @@ export async function checkoutDetails(
   token: string,
   merchantAddress: Address,
 ): Promise<{ businessName: string | null; reference: string | null; successUrl: string | null; embedOrigins: string[] }> {
-  const [merchant] = await db.select().from(merchants).where(eq(merchants.payoutAddress, getAddress(merchantAddress)));
+  const [merchant] = await db
+    .select()
+    .from(merchants)
+    .where(and(eq(merchants.payoutAddress, getAddress(merchantAddress)), eq(merchants.network, mezoNetwork)));
   if (!merchant) return { businessName: null, reference: null, successUrl: null, embedOrigins: [] };
   const [invoice] = await db
     .select({ reference: invoices.reference, successUrl: invoices.successUrl })

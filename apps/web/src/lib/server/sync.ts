@@ -1,18 +1,21 @@
 import "server-only";
 import { waitUntil } from "@vercel/functions";
 import { getAddress, type Address } from "viem";
-import { mezoTestnetAddresses } from "@mezout/sdk";
 import { publicClient } from "./clients";
 import { getDb } from "./db/client";
 import { serverEnv } from "./env";
+import { serverNetwork } from "./network";
 import { readCursor, recordExpiries, syncPayments } from "./indexer";
 import { pruneRateLimits } from "./rateLimit";
 import { allowPrivateWebhooks, webhookSender } from "./webhookSender";
 import { dispatchDue } from "./webhooks";
 
-/** Every router whose payments Mezout records: the current one, plus v1 and v2, which still pay older links. */
+/**
+ * Every router whose payments Mezout records: the configured one plus the network's legacy routers (on testnet, v1 and
+ * v2, which still pay older links; on mainnet, none).
+ */
 export function indexedRouters(): Address[] {
-  return [...new Set([getAddress(mezoTestnetAddresses.mezoutRouterV1), getAddress(mezoTestnetAddresses.mezoutRouterV2), serverEnv.router()])];
+  return [...new Set([...serverNetwork().legacyRouters.map((r) => getAddress(r)), serverEnv.router()])];
 }
 
 export async function syncNow(maxChunks: number) {

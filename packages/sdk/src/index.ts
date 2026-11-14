@@ -1,5 +1,6 @@
 export { mezoTestnet } from "./chains";
 export { knownMezoutRouters, mezoTestnetAddresses } from "./addresses";
+export * from "./networks";
 export * from "./typedData";
 export * from "./link";
 export { mezoutRouterAbi } from "./abi/mezoutRouter";

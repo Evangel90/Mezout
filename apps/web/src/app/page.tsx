@@ -7,15 +7,19 @@ import { CommandLine } from "@/components/site/CommandLine";
 import { ScrollReveal } from "@/components/site/ScrollReveal";
 import { Showcase } from "@/components/site/Showcase";
 import { AGENT_BRANDS, BrandRow, STORE_BRANDS, WorksWithStrip } from "@/components/site/WorksWith";
+import { network } from "@/lib/network";
 
 const REPO = "https://github.com/Evangel90/Mezout"; // Only for the explicit "View on GitHub" links.
-const EXPLORER = "https://explorer.test.mezo.org/address";
-const SOURCIFY = "https://repo.sourcify.dev/31611";
+const EXPLORER = `${network.explorerUrl}/address`;
+const SOURCIFY = network.sourcifyUrl;
 
-const contracts = [
-  { name: "MezoutRouter", address: "0x7151473F1300c2529A2eEFaA517684e974A9b3E6" },
-  { name: "MezoutAccountFactory", address: "0xeE85EE32488FF2D63eFe48159ddB59e6863cdF79" },
-];
+// The deployed contracts on this network; none are listed until they exist there.
+const contracts = (
+  [
+    { name: "MezoutRouter", address: network.addresses.mezoutRouter },
+    { name: "MezoutAccountFactory", address: network.addresses.mezoutAccountFactory },
+  ] as const
+).flatMap((c) => (c.address ? [{ name: c.name, address: c.address }] : []));
 
 const builtOn = ["MUSD", "Mezo Passport", "Tigris", "Model Context Protocol", "x402", "Sourcify"];
 
@@ -523,7 +527,7 @@ export default function Home() {
             <pre className="overflow-x-auto p-5 font-mono text-[13px] leading-relaxed text-stone-300">
               <code>
                 <span className="text-stone-500">$</span> curl https://usemezout.vercel.app/v1/invoices \{"\n"}
-                {"    "}-H <span className="text-musd-300">&quot;Authorization: Bearer mzk_test_…&quot;</span> \{"\n"}
+                {"    "}-H <span className="text-musd-300">&quot;Authorization: Bearer {network.apiKeyPrefix}…&quot;</span> \{"\n"}
                 {"    "}-H <span className="text-musd-300">&quot;Content-Type: application/json&quot;</span> \{"\n"}
                 {"    "}-H <span className="text-musd-300">&quot;Idempotency-Key: order-1001&quot;</span> \{"\n"}
                 {"    "}-d <span className="text-musd-300">&apos;{`{"amount": "25.00", "reference": "Order 1001"}`}&apos;</span>

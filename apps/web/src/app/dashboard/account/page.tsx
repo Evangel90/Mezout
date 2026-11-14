@@ -5,8 +5,8 @@ import { BusinessNameForm } from "@/components/dashboard/BusinessNameForm";
 import { WithdrawCard } from "@/components/dashboard/WithdrawCard";
 import { Button, Card, CardHeader, CopyButton, ExternalLink, PageHeader, buttonClass } from "@/components/ui";
 import { useMerchant } from "@/lib/merchant";
+import { explorerAddressUrl } from "@/lib/network";
 
-const EXPLORER = "https://explorer.test.mezo.org/address";
 
 export default function AccountPage() {
   const { address, method, passkey, signOut } = useMerchant();
@@ -33,7 +33,7 @@ export default function AccountPage() {
           <p className="break-all font-mono text-sm">{address}</p>
           <div className="flex flex-wrap gap-2">
             <CopyButton text={address} label="Copy address" />
-            <ExternalLink href={`${EXPLORER}/${address}`} className={buttonClass("secondary", "sm")} iconClassName="h-4 w-4">
+            <ExternalLink href={explorerAddressUrl(address)} className={buttonClass("secondary", "sm")} iconClassName="h-4 w-4">
               View on explorer
             </ExternalLink>
           </div>

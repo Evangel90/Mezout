@@ -1,14 +1,20 @@
 import { bigint, index, integer, jsonb, numeric, pgTable, primaryKey, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 
-export const merchants = pgTable("merchants", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  payoutAddress: text("payout_address").notNull().unique(),
-  // Shown to customers at checkout. Set by the merchant from the dashboard; self-declared, not verified.
-  businessName: text("business_name"),
-  // Origins allowed to frame this merchant's checkout. Stored as normalized URL origins (scheme + host + port).
-  embedOrigins: jsonb("embed_origins").$type<string[]>().notNull().default([]),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const merchants = pgTable(
+  "merchants",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    // The Mezo network the merchant was created on: "testnet" or "mainnet". Rows of another network are never matched.
+    network: text("network").notNull().default("testnet"),
+    payoutAddress: text("payout_address").notNull(),
+    // Shown to customers at checkout. Set by the merchant from the dashboard; self-declared, not verified.
+    businessName: text("business_name"),
+    // Origins allowed to frame this merchant's checkout. Stored as normalized URL origins (scheme + host + port).
+    embedOrigins: jsonb("embed_origins").$type<string[]>().notNull().default([]),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [unique("merchants_network_payout_address_uq").on(t.network, t.payoutAddress)],
+);
 
 export const apiKeys = pgTable(
   "api_keys",
@@ -17,6 +23,8 @@ export const apiKeys = pgTable(
     merchantId: uuid("merchant_id")
       .notNull()
       .references(() => merchants.id),
+    // Matches the merchant's network and the key's prefix (mzk_test_ or mzk_live_).
+    network: text("network").notNull().default("testnet"),
     prefix: text("prefix").notNull(),
     keyHash: text("key_hash").notNull().unique(),
     // keccak256 of the wallet signature that requested the key; stops the same signature minting twice.

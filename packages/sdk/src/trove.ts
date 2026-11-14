@@ -1,5 +1,5 @@
 import type { Address, PublicClient } from "viem";
-import { mezoTestnetAddresses as A } from "./addresses";
+import { configForChainId, requireAddresses } from "./networks";
 import {
   borrowerOperationsAbi,
   hintHelpersAbi,
@@ -7,6 +7,10 @@ import {
   sortedTrovesAbi,
   troveManagerAbi,
 } from "./abi/mezo";
+
+const TROVE_ADDRESSES = ["troveManager", "priceFeed", "borrowerOperations", "hintHelpers", "sortedTroves"] as const;
+/** Mezo's trove contracts on the client's chain. A client without a chain reads testnet. */
+const addressesFor = (client: PublicClient) => requireAddresses(configForChainId(client.chain?.id), TROVE_ADDRESSES);
 
 const DECIMAL = 10n ** 18n;
 const NICR_PRECISION = 10n ** 20n;
@@ -83,6 +87,7 @@ export function troveRisk(snapshot: Pick<TroveSnapshot, "active" | "icr">): Trov
 
 /** Reads the current trove state without projecting another borrow. */
 export async function getTroveSnapshot(client: PublicClient, borrower: Address): Promise<TroveSnapshot> {
+  const A = addressesFor(client);
   const [status, price, dc] = await Promise.all([
     client.readContract({ address: A.troveManager, abi: troveManagerAbi, functionName: "getTroveStatus", args: [borrower] }),
     client.readContract({ address: A.priceFeed, abi: priceFeedAbi, functionName: "fetchPrice" }),
@@ -115,6 +120,7 @@ export function repayLimits(debt: bigint, minNetDebt: bigint, gasCompensation: b
 
 /** Reads a borrower's loan with its rate, liquidation price and repayment limits. Read-only. */
 export async function getLoanDetails(client: PublicClient, borrower: Address): Promise<LoanDetails> {
+  const A = addressesFor(client);
   const [snapshot, rate, minNetDebt, gasCompensation, dc] = await Promise.all([
     getTroveSnapshot(client, borrower),
     client.readContract({ address: A.troveManager, abi: troveManagerAbi, functionName: "getTroveInterestRate", args: [borrower] }),
@@ -137,6 +143,7 @@ export async function getLoanDetails(client: PublicClient, borrower: Address): P
 
 /** Mirrors the checks MUSD and MezoutRouter make for a debt increase of `amount`. */
 export async function quoteBorrow(client: PublicClient, borrower: Address, amount: bigint): Promise<TroveQuote> {
+  const A = addressesFor(client);
   const [status, price, rate, dc, capacity, interestRate] = await Promise.all([
     client.readContract({ address: A.troveManager, abi: troveManagerAbi, functionName: "getTroveStatus", args: [borrower] }),
     client.readContract({ address: A.priceFeed, abi: priceFeedAbi, functionName: "fetchPrice" }),
@@ -182,6 +189,7 @@ export async function getBorrowHints(
   borrower: Address,
   amount: bigint,
 ): Promise<{ upperHint: Address; lowerHint: Address }> {
+  const A = addressesFor(client);
   const [dc, rate] = await Promise.all([
     client.readContract({ address: A.troveManager, abi: troveManagerAbi, functionName: "getEntireDebtAndColl", args: [borrower] }),
     client.readContract({ address: A.borrowerOperations, abi: borrowerOperationsAbi, functionName: "borrowingRate" }),
@@ -212,6 +220,7 @@ export async function getAdjustHints(
   borrower: Address,
   change: { collIncrease?: bigint; repay?: bigint },
 ): Promise<{ upperHint: Address; lowerHint: Address }> {
+  const A = addressesFor(client);
   const [coll, principal, interest, pendingColl, pendingPrincipal, pendingInterest] = await client.readContract({
     address: A.troveManager,
     abi: troveManagerAbi,
@@ -226,6 +235,7 @@ export async function getAdjustHints(
 }
 
 async function insertHints(client: PublicClient, nicr: bigint): Promise<{ upperHint: Address; lowerHint: Address }> {
+  const A = addressesFor(client);
   const count = await client.readContract({ address: A.troveManager, abi: troveManagerAbi, functionName: "getTroveOwnersCount" });
   const trials = 15n * BigInt(Math.ceil(Math.sqrt(Number(count)))) + 1n;
   const [hint] = await client.readContract({

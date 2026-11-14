@@ -1,5 +1,6 @@
 import "server-only";
 import { getAddress, isAddress, parseEther, type Address, type Hex } from "viem";
+import { network } from "../network";
 
 function required(name: string): string {
   const v = process.env[name];
@@ -14,7 +15,7 @@ function address(name: string): Address {
 }
 
 export const serverEnv = {
-  rpcUrl: () => process.env.MEZO_RPC_URL ?? "https://rpc.test.mezo.org",
+  rpcUrl: () => process.env.MEZO_RPC_URL ?? network.chain.rpcUrls.default.http[0],
   router: () => address("NEXT_PUBLIC_ROUTER_ADDRESS"),
   relayerKey: () => required("RELAYER_PRIVATE_KEY") as Hex,
   invoiceSignerKey: () => required("INVOICE_SIGNER_PRIVATE_KEY") as Hex,

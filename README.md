@@ -100,9 +100,9 @@ Reference transactions, all relayed so the customer paid no gas:
 
 | Suite | Tests | Covers |
 | --- | --- | --- |
-| Contracts (Foundry) | 86 | Router unit and fuzz tests, swap quotes, passkey account and typed-data vectors, fork tests against live Mezo MUSD, troves, Tigris and EntryPoint |
-| Web app (Vitest) | 99 | API, idempotency, indexer, passkeys, refunds, sessions, rate limits, webhooks, fees, alerts, `/v1/verify`, the relayer queue |
-| SDK (Vitest) | 22 | Typed data, accounts, chain config, loan math (liquidation price, repayment limits, trove hints); 2 more run against the live testnet on request |
+| Contracts (Foundry) | 92 | Router unit and fuzz tests, swap quotes, passkey account and typed-data vectors, the mainnet deploy script's refusals, fork tests against live Mezo MUSD, troves, Tigris and EntryPoint (plus mainnet config checks when `MEZO_MAINNET_RPC_URL` is set) |
+| Web app (Vitest) | 107 | API, idempotency, indexer, passkeys, refunds, sessions, rate limits, webhooks, fees, alerts, `/v1/verify`, the relayer queue, network selection and test/live key isolation |
+| SDK (Vitest) | 36 | Typed data, accounts, network config (testnet default, mainnet refusals, mainnet EIP-712 domains), loan math (liquidation price, repayment limits, trove hints); 2 more run against the live testnet on request |
 | MCP server (Vitest) | 33 | Tools, spending caps, `init` and `doctor`, paying a 402 paywall end to end against fakes |
 | Paywall (Vitest) | 11 | 402 offers, proof checks, one request per invoice, the agent client's refusals |
 | Shopify app (Vitest) | 58 | Signature verification, amounts, idempotent invoices and webhook paths |
@@ -117,7 +117,7 @@ cd contracts && forge test -vv   # contracts; fork tests read Mezo testnet
 
 Try the [live app](https://usemezout.vercel.app): sign up with a passkey on `/dashboard`, create a payment link and pay it with a Mezo testnet wallet (test tokens from [faucet.test.mezo.org](https://faucet.test.mezo.org)).
 
-To run it locally (Node 20+, pnpm 9, Foundry, PostgreSQL 14+), see [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md). The plugins have their own guides in [`plugins/woocommerce`](plugins/woocommerce) and [`plugins/shopify`](plugins/shopify).
+To run it locally (Node 20+, pnpm 9, Foundry, PostgreSQL 14+), see [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md). `MEZO_NETWORK` picks the network (`testnet` by default). `mainnet` refuses to start until every address it needs is verified: see [`docs/MAINNET-CHECKLIST.md`](docs/MAINNET-CHECKLIST.md). The plugins have their own guides in [`plugins/woocommerce`](plugins/woocommerce) and [`plugins/shopify`](plugins/shopify).
 
 ```
 contracts/       Foundry: MezoutRouter, MezoutAccount and factory, tests, deploy scripts
@@ -133,7 +133,7 @@ Built with Solidity 0.8.28, Foundry, OpenZeppelin 5.6, Next.js 14, React 18, Typ
 ## What's next
 
 - **Agent wallets** with passkey-approved spending limits, building on the MCP server and HTTP 402 paywall
-- **Mainnet readiness:** passkey account recovery, an external security review, deployment on Mezo mainnet
+- **Mainnet readiness:** passkey account recovery, an external security review, deployment on Mezo mainnet (network config, verified addresses and a dry-run deploy script are ready: [`docs/MAINNET-CHECKLIST.md`](docs/MAINNET-CHECKLIST.md))
 - **Gasless payments for Bitcoin-wallet accounts**, and deeper MEZO liquidity than the current test pool
 - **Fee calibration** from measured relayer gas costs ([`docs/RELAYER_GAS_COST.md`](docs/RELAYER_GAS_COST.md))
 - **More merchant tools:** payouts to exchanges, more ecommerce platforms, in-person QR checkout

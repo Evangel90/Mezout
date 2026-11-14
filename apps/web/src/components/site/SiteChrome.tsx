@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Wordmark } from "@/components/site/Logo";
 import { MobileMenu, SiteNav } from "@/components/site/SiteNav";
+import { network } from "@/lib/network";
 
 const REPO = "https://github.com/Evangel90/Mezout";
 
@@ -164,7 +165,7 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 border-t border-white/10 px-4 py-6 text-xs sm:px-6">
-        <p>Mezout · Mezo testnet (chain 31611)</p>
+        <p>Mezout · {network.label} (chain {network.chainId})</p>
         <p>Open source. Contracts verified on Sourcify.</p>
       </div>
     </footer>

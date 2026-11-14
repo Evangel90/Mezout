@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { BaseError, ContractFunctionRevertedError, getAddress, isAddress, isAddressEqual, isHex, type Hex } from "viem";
 import { decodeSignedInvoice, getBorrowHints, linkRouter, mezoTestnetAddresses, mezoutRouterAbi } from "@mezout/sdk";
+import { serverNetwork } from "@/lib/server/network";
 import { publicClient, relayerClient } from "@/lib/server/clients";
 import { serverEnv } from "@/lib/server/env";
 import { clientIp, rateLimited, tooManyRequests } from "@/lib/server/rateLimit";
@@ -63,11 +64,19 @@ export async function POST(req: Request) {
   }
   const { invoice, signature: invoiceSig } = signed;
   // Only our own routers: the current one, v1 (links signed before swaps existed) and v2 (links signed before v3).
-  const router = linkRouter(signed);
+  const { network } = serverNetwork();
+  let router;
+  try {
+    router = linkRouter(signed, network);
+  } catch {
+    return NextResponse.json({ error: "This payment link is not valid." }, { status: 400 });
+  }
   const current = serverEnv.router();
   const isCurrent = isAddressEqual(router, current);
-  const isV2 = isAddressEqual(router, mezoTestnetAddresses.mezoutRouterV2);
-  if (!isCurrent && !isV2 && !isAddressEqual(router, mezoTestnetAddresses.mezoutRouterV1)) {
+  // v1 and v2 are testnet routers; on mainnet only the current router is honoured.
+  const testnet = network === "testnet";
+  const isV2 = testnet && isAddressEqual(router, mezoTestnetAddresses.mezoutRouterV2);
+  if (!isCurrent && !isV2 && !(testnet && isAddressEqual(router, mezoTestnetAddresses.mezoutRouterV1))) {
     return NextResponse.json({ error: "This payment link is not valid." }, { status: 400 });
   }
   if ((input.method === "MEZO" || input.method === "BTC") && !isCurrent && !isV2) {

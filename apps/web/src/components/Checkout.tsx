@@ -15,7 +15,6 @@ import {
   linkRouter,
   liquidationPrice,
   mezoDomain,
-  mezoTestnetAddresses,
   mezoutRouterAbi,
   musdAbi,
   musdDomain,
@@ -28,6 +27,7 @@ import {
   withdrawMusdTypes,
 } from "@mezout/sdk";
 import { routerAddress as currentRouter, txUrl } from "@/lib/config";
+import { addresses, network, mezoNetwork } from "@/lib/network";
 
 const QUOTE_TTL_MS = 60_000;
 const SWAP_QUOTE_TTL_MS = 15_000;
@@ -35,12 +35,12 @@ const SIG_TTL_S = 10n * 60n;
 const SWAP_TTL_S = 5n * 60n;
 // The payer signs for the quote plus 1%; the router takes only what the pool needs when the payment lands.
 const SLIPPAGE_BPS = 100n;
-// Left in a Bitcoin-wallet account that pays its own network fee; Mezo testnet fees are far below this.
+// Left in a Bitcoin-wallet account that pays its own network fee; Mezo network fees are far below this.
 const BTC_GAS_RESERVE = 10n ** 12n;
 
 const SWAP_TOKENS = {
-  BTC: { address: mezoTestnetAddresses.btcToken, domain: btcDomain },
-  MEZO: { address: mezoTestnetAddresses.mezoToken, domain: mezoDomain },
+  BTC: { address: addresses.btcToken, domain: btcDomain },
+  MEZO: { address: addresses.mezoToken, domain: mezoDomain },
 } as const;
 type SwapMethod = keyof typeof SWAP_TOKENS;
 
@@ -91,7 +91,7 @@ export function Checkout({ token, businessName, reference, successUrl, embedded,
       token={token}
       invoice={signed.invoice}
       invoiceSig={signed.signature}
-      router={linkRouter(signed)}
+      router={linkRouter(signed, mezoNetwork)}
       businessName={businessName}
       reference={reference}
       successUrl={successUrl}
@@ -174,7 +174,7 @@ function CheckoutInner({
     if (window.opener) window.close();
   }
   const { data: balance = 0n } = useReadContract({
-    address: mezoTestnetAddresses.musd,
+    address: addresses.musd,
     abi: musdAbi,
     functionName: "balanceOf",
     args: address ? [address] : undefined,
@@ -238,10 +238,10 @@ function CheckoutInner({
   });
 
   async function splitPermit(owner: Address, value: bigint) {
-    const nonce = await client!.readContract({ address: mezoTestnetAddresses.musd, abi: musdAbi, functionName: "nonces", args: [owner] });
+    const nonce = await client!.readContract({ address: addresses.musd, abi: musdAbi, functionName: "nonces", args: [owner] });
     const deadline = BigInt(Math.floor(Date.now() / 1000)) + SIG_TTL_S;
     const sig = await signTypedDataAsync({
-      domain: musdDomain(),
+      domain: musdDomain(network.chainId),
       types: permitTypes,
       primaryType: "Permit",
       message: { owner, spender: router, value, nonce, deadline },
@@ -251,7 +251,7 @@ function CheckoutInner({
 
   async function signPayment(payer: Address) {
     return signTypedDataAsync({
-      domain: routerDomain(router),
+      domain: routerDomain(router, network.chainId),
       types: paymentTypes,
       primaryType: "Payment",
       message: { invoice, payer },
@@ -294,7 +294,7 @@ function CheckoutInner({
         // Bitcoin-wallet smart accounts cannot sign MUSD permits, so they approve and pay directly.
         setStatus({ kind: "working", step: "Approve MUSD in your wallet" });
         await sendTransaction(
-          mezoTestnetAddresses.musd,
+          addresses.musd,
           0n,
           encodeFunctionData({ abi: musdAbi, functionName: "approve", args: [router, invoice.amount] }),
         );
@@ -335,14 +335,14 @@ function CheckoutInner({
       const permit = await splitPermitStep(address, invoice.amount);
       setStatus({ kind: "working", step: "Sign the borrow authorization (3 of 3)" });
       const nonce = await client!.readContract({
-        address: mezoTestnetAddresses.borrowerOperationsSignatures,
+        address: addresses.borrowerOperationsSignatures,
         abi: borrowerOperationsSignaturesAbi,
         functionName: "getNonce",
         args: [address],
       });
       const deadline = BigInt(Math.floor(Date.now() / 1000)) + SIG_TTL_S;
       const signature = await signTypedDataAsync({
-        domain: borrowerOperationsSignaturesDomain(),
+        domain: borrowerOperationsSignaturesDomain(network.chainId),
         types: withdrawMusdTypes,
         primaryType: "WithdrawMUSD",
         message: { amount: borrowed, borrower: address, recipient: address, nonce, deadline },
@@ -402,7 +402,7 @@ function CheckoutInner({
 
       setStatus({ kind: "working", step: "Sign the payment (1 of 2)" });
       const payerSig = await signTypedDataAsync({
-        domain: routerDomain(router),
+        domain: routerDomain(router, network.chainId),
         types: swapPaymentTypes,
         primaryType: "SwapPayment",
         message: { invoice, payer: address, tokenIn: tokenIn.address, ...limit },
@@ -411,7 +411,7 @@ function CheckoutInner({
       const nonce = await client!.readContract({ address: tokenIn.address, abi: musdAbi, functionName: "nonces", args: [address] });
       const permitDeadline = BigInt(Math.floor(Date.now() / 1000)) + SIG_TTL_S;
       const permitSig = await signTypedDataAsync({
-        domain: tokenIn.domain(),
+        domain: tokenIn.domain(network.chainId),
         types: permitTypes,
         primaryType: "Permit",
         message: { owner: address, spender: router, value: limit.maxAmountIn, nonce, deadline: permitDeadline },
@@ -572,7 +572,7 @@ function CheckoutInner({
                   {address && <Detail label="Paid from">
                       <span className="font-mono">{shortAddr(address)}</span>
                     </Detail>}
-                  <Detail label="Network">Mezo testnet</Detail>
+                  <Detail label="Network">{network.label}</Detail>
                   {status.kind === "sent" && (
                     <Detail label="Transaction">
                       <a href={txUrl(status.hash)} target="_blank" rel="noreferrer" className="font-mono underline underline-offset-2 hover:text-stone-600">

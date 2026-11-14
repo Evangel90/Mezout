@@ -1,5 +1,7 @@
 import "server-only";
 import { NextResponse } from "next/server";
+import { apiKeyNetwork, getNetworkConfig, type MezoNetwork } from "@mezout/sdk";
+import { mezoNetwork } from "../network";
 import { authenticate, type Merchant } from "./apiKeys";
 import { getDb } from "./db/client";
 import { rateLimited, tooManyRequests } from "./rateLimit";
@@ -14,6 +16,17 @@ export function parseJson(raw: string): unknown {
   } catch {
     return null;
   }
+}
+
+/** Why a /v1 request was refused, naming a key from the other network outright. */
+export function unauthorizedMessage(authorization: string | null, network: MezoNetwork = mezoNetwork): string {
+  const key = authorization?.match(/^Bearer\s+(\S+)$/i)?.[1];
+  const keyNetwork = key ? apiKeyNetwork(key) : undefined;
+  const { apiKeyPrefix, label } = getNetworkConfig(network);
+  if (keyNetwork && keyNetwork !== network) {
+    return `This is a ${getNetworkConfig(keyNetwork).label} API key; this server runs on ${label} and accepts only ${apiKeyPrefix} keys.`;
+  }
+  return `Missing or invalid API key. Send Authorization: Bearer ${apiKeyPrefix}…`;
 }
 
 /**
@@ -31,7 +44,7 @@ export async function requireMerchant(req: Request): Promise<Merchant | NextResp
     if (merchant && !sameOrigin(req)) return apiError(403, "Cross-site request");
   }
   if (!merchant) {
-    const res = apiError(401, "Missing or invalid API key. Send Authorization: Bearer mzk_test_…");
+    const res = apiError(401, unauthorizedMessage(authorization));
     res.headers.set("WWW-Authenticate", "Bearer");
     return res;
   }
