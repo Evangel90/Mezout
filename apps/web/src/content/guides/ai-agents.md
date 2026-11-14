@@ -27,6 +27,22 @@ It works with any agent that can run a local MCP server, including **Claude**, *
 
 **[Set up the MCP server in the docs →](/docs#ai-agents)** It takes one command or a few lines of settings for each agent.
 
+## Building with a coding agent? Add the Mezout skill
+
+If you use a coding agent such as **Claude Code**, **Codex**, **Cursor** or **Hermes Agent** to write your integration, give it the Mezout skill first. It's a short guide your agent reads when you work on Mezout code, so it knows how to create payment links, check webhook signatures, add the paywall and use the MCP server without guessing.
+
+Install it once for every agent on your computer:
+
+```bash
+npx skills add Evangel90/Mezout --skill mezout -g
+```
+
+- **For one project only:** run the same command without `-g` inside the project.
+- **Hermes Agent:** `hermes skills install Evangel90/Mezout/skills/mezout`.
+- **Already setting up the MCP server?** `npx -y @mezout/mcp init` offers to install the skill too.
+
+Then ask your agent something like "Add Mezout checkout to my order page". The skill's text is on [GitHub](https://github.com/Evangel90/Mezout/tree/main/skills/mezout).
+
 ## What you need
 
 - **To take payments:** your Mezout API key. Open the [dashboard](/dashboard), go to **Developers** and click **Create API key**.

@@ -2,6 +2,8 @@ Keep customers on your site. Embedded checkout opens Mezout's checkout in a pop-
 
 You need a server that creates payment links with the [API](/docs#create-an-invoice). Each link has a `checkout_url`. That's what you open in the pop-up.
 
+> **Using a coding agent?** Run `npx skills add Evangel90/Mezout --skill mezout -g` and it can wire this up for you. [More about the skill](/guides/ai-agents#building-with-a-coding-agent-add-the-mezout-skill).
+
 ## Set it up
 
 ### 1. Approve your site

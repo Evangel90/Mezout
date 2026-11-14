@@ -16,6 +16,8 @@ Your **payout address** is your Mezout passkey account, or the wallet you signed
 
 ## Quickstart
 
+> **Building with a coding agent?** Install the [Mezout agent skill](#agent-skill) first: `npx skills add Evangel90/Mezout --skill mezout -g`. Claude Code, Codex, Cursor and other agents then know this API, webhooks and the paywall.
+
 **1. Get an API key.** Open [the dashboard](/dashboard), create an account with a passkey or sign in with a wallet, then on **Developers** click **Create API key**.
 
 **2. Create an invoice:**

@@ -1,5 +1,6 @@
 Charge AI agents for each call to your API, in MUSD. `@mezout/paywall` wraps an API route: unpaid requests get a price, paid ones get the answer. You set the price; Mezout checks every payment.
 
+> **Using a coding agent?** Run `npx skills add Evangel90/Mezout --skill mezout -g` and it can add the paywall for you. [More about the skill](/guides/ai-agents#building-with-a-coding-agent-add-the-mezout-skill).
 
 ## How a paid request works
 
