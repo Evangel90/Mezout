@@ -357,7 +357,7 @@ Goal: go from a working testnet product to one real merchants can run on Mezo ma
 ### 1. Mainnet readiness
 
 - **External audit** of `MezoutRouter` and `MezoutAccount`, with the Wave 2 self-review as the starting point.
-- **Recovery key for passkey accounts**: a second signer (a backup passkey or a recovery address) that can replace a lost passkey only after a delay the owner can cancel, so a lost device never means lost funds.
+- **Recovery key for passkey accounts**: a second signer (a backup passkey or a recovery address) that can replace a lost passkey only after a delay the owner can cancel, so a lost device never means lost funds. Built in `MezoutAccountV2` with the dashboard flow and tests; it ships with the v2 account factory (see [Passkey recovery](ARCHITECTURE.md#passkey-recovery)).
 - **Key management**: the invoice signer and relayer keys move to a managed key service, with relayer balance limits and rotation runbooks.
 - **Deployment**: contracts deployed and verified on Mezo mainnet with mainnet addresses as immutable constructor arguments; the app, API, SDK and plugins switch by network, and testnet stays as a developer sandbox with test API keys.
 

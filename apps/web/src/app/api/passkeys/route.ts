@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { isHex, type Hex } from "viem";
-import { mezoutAccountFactoryAbi, requireAddress } from "@mezout/sdk";
-import { serverNetwork } from "@/lib/server/network";
+import { mezoutAccountFactoryAbi } from "@mezout/sdk";
+import { accountFactoryV1, accountFactoryV2 } from "@/lib/server/withdrawals";
 import { publicClient } from "@/lib/server/clients";
 import { getDb } from "@/lib/server/db/client";
 import { PasskeyError, registerPasskey } from "@/lib/server/passkeys";
@@ -25,8 +25,9 @@ export async function POST(req: Request) {
   try {
     const row = await registerPasskey(getDb(), parsed.data, async (qx, qy) => {
       // Simulating createAccount runs the contract's own key check (P256.isValidPublicKey) and returns the address.
+      // New accounts come from the v2 factory (with recovery) once it is deployed; both factories share this ABI.
       const { result } = await client.simulateContract({
-        address: requireAddress(serverNetwork(), "mezoutAccountFactory"),
+        address: accountFactoryV2() ?? accountFactoryV1(),
         abi: mezoutAccountFactoryAbi,
         functionName: "createAccount",
         args: [qx, qy],

@@ -27,7 +27,7 @@ export function saveSession(session: PasskeySession | null) {
   }
 }
 
-async function post<T>(path: string, body: unknown): Promise<T> {
+export async function post<T>(path: string, body: unknown): Promise<T> {
   const res = await fetch(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
   const json = await res.json();
   if (!res.ok) throw new Error(json.error ?? "Request failed");
@@ -93,16 +93,30 @@ export async function passkeySendMusd(
   amount: string,
   waitForReceipt: (hash: Hex) => Promise<{ logs: Log[] }>,
 ): Promise<Hex> {
-  const { quote, userOpHash } = await post<{ quote: Record<string, unknown>; userOpHash: Hex }>("/api/account/withdraw", {
+  return passkeyUserOp(session, "/api/account/withdraw", { to, amount }, waitForReceipt, "The transfer was rejected on-chain. Nothing was sent.");
+}
+
+/**
+ * Runs a sponsored user operation from a passkey account through one of Mezout's quote/submit endpoints: the server
+ * builds the operation from `fields`, the passkey signs its hash, and the relayer sends it. Resolves once it succeeded.
+ */
+export async function passkeyUserOp(
+  session: PasskeySession,
+  path: string,
+  fields: Record<string, unknown>,
+  waitForReceipt: (hash: Hex) => Promise<{ logs: Log[] }>,
+  rejected: string,
+): Promise<Hex> {
+  const { quote, userOpHash } = await post<{ quote: Record<string, unknown>; userOpHash: Hex }>(path, {
     step: "quote",
     account: session.address,
-    to,
-    amount,
+    ...fields,
   });
   const signature = await passkeySign(session, userOpHash);
-  const { hash } = await post<{ hash: Hex }>("/api/account/withdraw", {
+  const { hash } = await post<{ hash: Hex }>(path, {
     step: "submit",
     account: session.address,
+    ...fields,
     ...quote,
     signature,
   });
@@ -110,6 +124,6 @@ export async function passkeySendMusd(
     throw new Error(`Submitted, but confirmation is taking a while. Check ${txUrl(hash)}`);
   });
   const [event] = parseEventLogs({ abi: entryPoint07Abi, eventName: "UserOperationEvent", logs: receipt.logs });
-  if (!event?.args.success) throw new Error("The transfer was rejected on-chain. Nothing was sent.");
+  if (!event?.args.success) throw new Error(rejected);
   return hash;
 }

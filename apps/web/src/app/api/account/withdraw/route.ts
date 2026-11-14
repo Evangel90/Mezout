@@ -1,16 +1,17 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { BaseError, getAddress, isAddress, isHex, parseUnits, type Address, type Hex } from "viem";
-import { entryPoint07Abi, entryPoint07Address, toPackedUserOperation } from "viem/account-abstraction";
 import { publicClient, relayerClient } from "@/lib/server/clients";
 import { getDb } from "@/lib/server/db/client";
 import { passkeyByAddress, relyingParty, verifyPasskeyAssertion } from "@/lib/server/passkeys";
 import { clientIp, rateLimited, tooManyRequests } from "@/lib/server/rateLimit";
-import { RelayerBusyError, sendAsRelayer } from "@/lib/server/relayerQueue";
+import { RelayerBusyError } from "@/lib/server/relayerQueue";
 import {
+  accountFactory,
   buildWithdrawalOp,
   checkFee,
   quoteWithdrawal,
+  sponsorAndSend,
   WithdrawalError,
   type WithdrawalQuote,
 } from "@/lib/server/withdrawals";
@@ -63,7 +64,7 @@ export async function POST(req: Request) {
   try {
     if (input.step === "quote") {
       const quote = await quoteWithdrawal(client, account, to, parseUnits(input.amount, 18));
-      const { userOpHash } = buildWithdrawalOp(account, quote);
+      const { userOpHash } = buildWithdrawalOp(account, quote, quote.deployed ? undefined : await accountFactory(client, account));
       return NextResponse.json({ quote: quoteJson(quote), userOpHash });
     }
 
@@ -75,7 +76,8 @@ export async function POST(req: Request) {
       maxFeePerGas: input.maxFeePerGas,
       deployed: input.deployed,
     };
-    const { userOperation, userOpHash, maxCost } = buildWithdrawalOp(account, quote);
+    const built = buildWithdrawalOp(account, quote, quote.deployed ? undefined : await accountFactory(client, account));
+    const { userOpHash } = built;
     const signed = verifyPasskeyAssertion({
       publicKey: account.publicKey as Hex,
       challenge: userOpHash,
@@ -87,39 +89,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "The passkey signature does not match this withdrawal. Try again." }, { status: 400 });
     }
 
-    const wallet = relayerClient();
-    // Sponsor gas: top up the account's EntryPoint deposit; the EntryPoint refunds the relayer from it.
-    const deposit = await client.readContract({
-      address: entryPoint07Address,
-      abi: entryPoint07Abi,
-      functionName: "balanceOf",
-      args: [accountAddress],
-    });
-    if (deposit < maxCost) {
-      const topUp = await sendAsRelayer((nonce) =>
-        wallet.writeContract({
-          address: entryPoint07Address,
-          abi: entryPoint07Abi,
-          functionName: "depositTo",
-          args: [accountAddress],
-          value: maxCost - deposit,
-          nonce,
-        }),
-      );
-      await client.waitForTransactionReceipt({ hash: topUp });
-    }
-
-    const call = {
-      account: wallet.account,
-      address: entryPoint07Address,
-      abi: entryPoint07Abi,
-      functionName: "handleOps",
-      args: [[toPackedUserOperation({ ...userOperation, signature: input.signature })], wallet.account.address],
-    } as const;
-    const estimate = await client.estimateContractGas(call).catch(() => 0n);
-    const floor = userOperation.verificationGasLimit + userOperation.callGasLimit + 300_000n;
-    const { request } = await client.simulateContract({ ...call, gas: estimate * 13n / 10n > floor ? estimate * 13n / 10n : floor });
-    const hash = await sendAsRelayer((nonce) => wallet.writeContract({ ...request, nonce }));
+    const hash = await sponsorAndSend(client, relayerClient(), built, input.signature);
     return NextResponse.json({ hash, userOpHash });
   } catch (err) {
     if (err instanceof RelayerBusyError) return NextResponse.json({ error: err.message }, { status: 503, headers: { "retry-after": "5" } });

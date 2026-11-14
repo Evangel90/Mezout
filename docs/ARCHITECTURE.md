@@ -191,7 +191,7 @@ The customer keeps their BTC, the merchant receives the invoice less the fee, an
 
 ### Passkey merchant accounts and gasless withdrawals
 
-There is no public ERC-4337 bundler on Mezo, so Mezout's relayer acts as one. It only ever submits a single MUSD transfer out of a registered account, and it cannot sign for the account.
+There is no public ERC-4337 bundler on Mezo, so Mezout's relayer acts as one. It only ever submits a single MUSD transfer out of a registered account, or a change to its recovery settings, and it cannot sign for the account.
 
 ```mermaid
 sequenceDiagram
@@ -226,6 +226,46 @@ sequenceDiagram
 ```
 
 The account's signer is the passkey alone. Mezout never sees the private key and cannot move the funds.
+
+### Passkey recovery
+
+`MezoutAccountV2` (in [`contracts/src/account`](../contracts/src/account)) adds recovery, so a lost device no longer means a lost account. The owner picks a **recovery signer** on the Account page: a backup passkey (best on another device or a security key) or a recovery wallet address (an EOA, or a contract wallet through ERC-1271), and a waiting period of 2 to 30 days (2 by default).
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor M as Merchant, new device
+    participant R as Backup passkey or recovery wallet
+    participant D as Mezout server
+    participant A as MezoutAccountV2
+    actor O as Old passkey, if it still exists
+
+    M->>M: Create a passkey on this device (/recover)
+    M->>R: Approve StartRecovery(new key, nonce)
+    R-->>D: EIP-712 signature
+    D->>A: startRecovery, after simulating it
+    A-->>A: RecoveryStarted, ready after the delay
+    opt Not the owner's request
+        O->>A: cancelRecovery (owner-signed user operation)
+    end
+    D->>A: completeRecovery, once the delay has passed
+    A-->>A: RecoveryCompleted, the new passkey is the owner
+    M->>D: Sign a link challenge with the new passkey
+    D->>D: Check the on-chain owner, then point sign-in at the new passkey
+```
+
+Why it is safe:
+
+- **The recovery signer cannot move funds.** It is never checked in `validateUserOp` and the account has no ERC-1271 `isValidSignature`, so its only power is `startRecovery`.
+- **It cannot skip the delay.** `completeRecovery` reverts before `readyAt`, which is fixed when recovery starts. Only one recovery can be pending, so a second request cannot reset or replace the clock.
+- **The owner stays in charge.** Setting, changing or removing the recovery signer and cancelling a recovery all need the owner passkey (a call from the account itself). Changing or removing the signer also cancels a pending recovery.
+- **No replays.** The request is EIP-712 typed data whose domain names the account and the chain, and it carries `recoveryNonce`, which every change, start, cancel and completion bumps. A request cannot be reused on another account, another chain, after a cancel or after a completion.
+- **Griefing is bounded.** Strangers cannot start a recovery at all. A recovery signer that turns hostile can only keep starting recoveries; the owner cancels and removes it in one operation. The relayer simulates every request first, so bad ones cost it nothing.
+- **Limits.** Recovery protects against a lost passkey, not a stolen one: whoever holds the owner passkey can cancel recovery, just as they can move the money.
+
+Every step emits an event: `RecoverySignerSet`, `RecoverySignerRemoved`, `RecoveryStarted`, `RecoveryCancelled`, `RecoveryCompleted`. The tests, including the attacker cases, are in `contracts/test/unit/MezoutAccountRecovery.t.sol` and, through the real EntryPoint on a testnet fork, `contracts/test/fork/MezoutAccountRecovery.fork.t.sol`.
+
+**Existing accounts.** Accounts have no proxy and stay that way: an upgradeable account would let whoever controls the upgrade path replace the code that guards the funds, which is the trust Mezout's design avoids. v1 accounts therefore keep working without recovery. Recovery comes with the v2 factory, which gives a passkey a new address. Until `mezoutAccountFactoryV2` is set for the network (`packages/sdk/src/addresses.ts` for testnet, `networks.ts` for mainnet), sign-up stays on v1 and the Account page says recovery isn't available. A merchant who wants recovery on an older account can move their MUSD to a new v2 account; switching the payout address in place is not built yet.
 
 ### Invoice lifecycle
 

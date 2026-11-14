@@ -1,6 +1,6 @@
 import { defineChain, getAddress, type Address, type Chain } from "viem";
 import { mezoTestnet } from "./chains";
-import { mezoTestnetAddresses } from "./addresses";
+import { mezoTestnetAddresses, mezoutAccountFactoryV2 } from "./addresses";
 
 /**
  * Which Mezo network Mezout runs against. Testnet is the default everywhere and is the developer sandbox; mainnet is
@@ -41,6 +41,8 @@ export type MezoAddressBook = {
   /** The router new invoices are signed for. */
   mezoutRouter: Address | undefined;
   mezoutAccountFactory: Address | undefined;
+  /** MezoutAccountFactoryV2 (passkey accounts with recovery). Optional: without it sign-up stays on v1. */
+  mezoutAccountFactoryV2: Address | undefined;
 };
 export type MezoAddressKey = keyof MezoAddressBook;
 
@@ -97,6 +99,7 @@ export const testnetConfig: MezoNetworkConfig = {
     entryPoint07: mezoTestnetAddresses.entryPoint07,
     mezoutRouter: mezoTestnetAddresses.mezoutRouterV3,
     mezoutAccountFactory: mezoTestnetAddresses.mezoutAccountFactory,
+    mezoutAccountFactoryV2: mezoutAccountFactoryV2 ?? undefined,
   },
   legacyRouters: [mezoTestnetAddresses.mezoutRouterV1, mezoTestnetAddresses.mezoutRouterV2],
   sources: { musd: TESTNET_SOURCE },
@@ -140,6 +143,7 @@ export const mainnetConfig: MezoNetworkConfig = {
     // Not deployed yet: see contracts/script/DeployMainnet.s.sol and docs/MAINNET-CHECKLIST.md.
     mezoutRouter: undefined,
     mezoutAccountFactory: undefined,
+    mezoutAccountFactoryV2: undefined,
   },
   legacyRouters: [],
   sources: {
@@ -158,6 +162,7 @@ export const mainnetConfig: MezoNetworkConfig = {
     entryPoint07: "UNVERIFIED: canonical v0.7 code hash 0x8db5…fc58 is present, but no Mezo source lists it",
     mezoutRouter: "NOT DEPLOYED on mainnet",
     mezoutAccountFactory: "NOT DEPLOYED on mainnet",
+    mezoutAccountFactoryV2: "NOT DEPLOYED on mainnet",
   },
 };
 

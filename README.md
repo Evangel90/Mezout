@@ -46,7 +46,7 @@ The **contracts** enforce every money rule. The **app** signs invoices, relays p
 | Component | Code | What it does |
 | --- | --- | --- |
 | `MezoutRouter` | [`contracts/src/MezoutRouter.sol`](contracts/src/MezoutRouter.sol) | Verifies the signed invoice and payer signature, takes payment by one of four methods, pays the merchant, emits `Paid`. Holds nothing between calls |
-| `MezoutAccount` and factory | [`contracts/src/account`](contracts/src/account) | ERC-4337 account owned by a passkey, at a CREATE2 address from its public key |
+| `MezoutAccount` and factory | [`contracts/src/account`](contracts/src/account) | ERC-4337 account owned by a passkey, at a CREATE2 address from its public key. `MezoutAccountV2` adds recovery (not deployed yet) |
 | SDK | [`packages/sdk`](packages/sdk) | EIP-712 typed data, payment links, chain config, ABIs, trove and borrow-limit reads |
 | Hosted checkout | [`apps/web/src/components/Checkout.tsx`](apps/web/src/components/Checkout.tsx) | Reads balances, live quotes and the customer's trove; offers only options that will succeed |
 | Loan page | [`apps/web/src/components/loan/LoanManager.tsx`](apps/web/src/components/loan/LoanManager.tsx) | `/loan`: a borrower's debt, ratio, liquidation price, interest and redemption position, opt-in alerts, and repay, add-BTC and close actions sent from their own wallet to Mezo |
@@ -67,7 +67,7 @@ The **contracts** enforce every money rule. The **app** signs invoices, relays p
 | Non-custodial, no admin keys | Funds move customer to merchant; the router keeps nothing. No owner, pause or upgrades; addresses are immutable |
 | Paid means on-chain | Invoices become paid only from indexed `Paid` events; refunds are verified from their receipts |
 | Webhooks can be trusted | HMAC-SHA256 with a timestamp, per-endpoint secrets, and delivery only to public https addresses |
-| The relayer can't be abused | It simulates first, only calls Mezout's routers, is rate-limited, and only submits single MUSD transfers for passkey withdrawals |
+| The relayer can't be abused | It simulates first, only calls Mezout's routers, is rate-limited, and only submits single MUSD transfers or recovery-setting changes the passkey signed |
 
 The contracts use OpenZeppelin 5.6 and transient-storage reentrancy guards. They have not had an external audit; one is planned before mainnet.
 
@@ -100,9 +100,9 @@ Reference transactions, all relayed so the customer paid no gas:
 
 | Suite | Tests | Covers |
 | --- | --- | --- |
-| Contracts (Foundry) | 92 | Router unit and fuzz tests, swap quotes, passkey account and typed-data vectors, the mainnet deploy script's refusals, fork tests against live Mezo MUSD, troves, Tigris and EntryPoint (plus mainnet config checks when `MEZO_MAINNET_RPC_URL` is set) |
-| Web app (Vitest) | 116 | API, idempotency, indexer, passkeys, refunds, sessions, rate limits, webhooks, fees, alerts, borrower loan alerts (signatures, replays, rate limits, cron evaluation), `/v1/verify`, the relayer queue, network selection and test/live key isolation |
-| SDK (Vitest) | 36 | Typed data, accounts, network config (testnet default, mainnet refusals, mainnet EIP-712 domains), loan math (liquidation price, repayment limits, trove hints), redemption order with fixed loan sets; 3 more run against the live testnet on request |
+| Contracts (Foundry) | 140 | Router unit and fuzz tests, swap quotes, passkey account, recovery (attacker-first) and typed-data vectors, the mainnet deploy script's refusals, fork tests against live Mezo MUSD, troves, Tigris and EntryPoint (plus mainnet config checks when `MEZO_MAINNET_RPC_URL` is set) |
+| Web app (Vitest) | 116 | API, idempotency, indexer, passkeys, account recovery, refunds, sessions, rate limits, webhooks, fees, alerts, borrower loan alerts (signatures, replays, rate limits, cron evaluation), `/v1/verify`, the relayer queue, network selection and test/live key isolation |
+| SDK (Vitest) | 36 | Typed data, accounts, recovery requests, network config (testnet default, mainnet refusals, mainnet EIP-712 domains), loan math (liquidation price, repayment limits, trove hints), redemption order with fixed loan sets; 3 more run against the live testnet on request |
 | MCP server (Vitest) | 33 | Tools, spending caps, `init` and `doctor`, paying a 402 paywall end to end against fakes |
 | Paywall (Vitest) | 11 | 402 offers, proof checks, one request per invoice, the agent client's refusals |
 | Shopify app (Vitest) | 58 | Signature verification, amounts, idempotent invoices and webhook paths |

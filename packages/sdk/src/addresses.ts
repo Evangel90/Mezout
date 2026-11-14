@@ -27,6 +27,12 @@ export const mezoTestnetAddresses = {
 } as const satisfies Record<string, Address>;
 
 /**
+ * MezoutAccountFactoryV2: passkey accounts with recovery (MezoutAccountV2). null until it is deployed; until then new
+ * passkey accounts come from the v1 factory and have no recovery.
+ */
+export const mezoutAccountFactoryV2: Address | null = null;
+
+/**
  * Every MezoutRouter deployed on testnet. A payer signs a permit whose spender is the router named in the payment
  * link, so code that pays links it did not create (agents) should refuse any router outside this list.
  */

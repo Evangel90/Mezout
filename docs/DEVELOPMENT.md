@@ -66,6 +66,17 @@ pnpm dlx vercel deploy --prod --yes
 
 The relayer calls only the current router and the earlier ones listed in `packages/sdk/src/addresses.ts` (`mezoutRouterV1`, `mezoutRouterV2`); links signed for any other router stop working after a switch.
 
+## Deploy the passkey account factory with recovery (Mezo testnet)
+
+Needs the owner's approval first. Inside `Mezout/contracts`, with the same key and variables as above:
+
+```
+forge script script/DeployAccountFactoryV2.s.sol --rpc-url mezo_testnet --private-key $RELAYER_PRIVATE_KEY --broadcast \
+  --verify --verifier sourcify
+```
+
+Set the printed address as `mezoutAccountFactoryV2` in `packages/sdk/src/addresses.ts` (the testnet entry of `networks.ts` reads it from there; mainnet stays `undefined` until deployed and verified) and redeploy the app. From then on new passkey accounts are `MezoutAccountV2` accounts with recovery; existing accounts keep working unchanged.
+
 ## Seed the MUSD/MEZO pool (Mezo testnet)
 
 Tigris had no MUSD/MEZO pool, so Mezout creates one; the first deposit sets the price. The funding key (`TEST_PAYER_PRIVATE_KEY`, or `SEED_PRIVATE_KEY` if set) needs the MUSD, MEZO from the faucet and a little test BTC for gas. Inside `Mezout/contracts`:
