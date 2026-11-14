@@ -27,3 +27,7 @@ docs/demo/
 
 # Security self-review, kept local
 docs/SECURITY_REVIEW.md
+
+# Logo and deck PNG exports, kept local
+Mezout-logo/
+Mezout-deck/
