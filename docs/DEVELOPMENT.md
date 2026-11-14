@@ -117,4 +117,11 @@ curl -s -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron
 
 **Alerts.** Each run checks the relayer's gas balance (below `RELAYER_MIN_BALANCE_BTC`) and webhook deliveries that ran out of retries, and reports a failed run. Alerts go to `ALERT_WEBHOOK_URL` at most once per alert per window (6 hours for low balance, 1 hour otherwise); without it they are only logged.
 
+**Borrower alerts.** Borrowers turn alerts on from `/loan` (table `loan_alerts`, migration `0007`). When at least one is active, each run reads every open Mezo loan once (about 11 batched RPC calls and 3 seconds for 326 loans on testnet), then posts to each borrower's own URL when their ratio falls below a level they chose, when their loan comes near the front of the redemption line, or when the loan closes. The response's `loanAlerts` field says how many were checked, sent and failed. To check the redemption order against Mezo's SortedTroves list, inside `Mezout/packages/sdk`:
+
+```
+MEZO_LIVE=1 pnpm test                     # compares the first 25 loans
+MEZO_LIVE=1 MEZO_LIVE_FULL=1 pnpm test    # walks the whole list (about 2 minutes)
+```
+
 **Status.** `/api/health` is public. It answers 503 with `status: "degraded"` and a list of `problems` when the relayer balance is low or the indexer hasn't run for 15 minutes (which catches a scheduler that stopped). Watch it with an uptime monitor every 5 minutes.

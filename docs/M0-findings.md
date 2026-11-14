@@ -79,6 +79,20 @@ Ignore the look-alike "MUSD" token at `0xCa54…F234D` (it has a BTC pool on Tig
 | Pool creation | `PoolFactory.createPool` is permissionless, and the Tigris Router's `addLiquidity` creates a missing pool and funds it in one call |
 | Foundry and precompiles | `forge script` cannot move BTC or MEZO (its local simulation has no precompiles), so the pool is seeded with `cast` |
 
+## Redemption order (checked 14 Nov 2026)
+
+Source: `TroveManager.redeemCollateral` and `_redeemCollateralFromTrove` in `mezo-org/musd`; ABIs from `@mezo-org/musd-contracts` 1.1.0 `deployments/matsnet` (addresses match the table above).
+
+| Fact | Result |
+| --- | --- |
+| Where redemptions start | `SortedTroves.getLast()` (lowest nominal ratio), then `getPrev`; a valid `firstRedemptionHint` only skips the walk |
+| Sort key | `getNominalICR` = (coll + pending coll) × 1e20 ÷ (principal + pending principal); interest is not included |
+| Loans skipped | Current ratio (with interest) under MCR, 110% |
+| Taken per loan | min(remaining, total debt − 200 MUSD gas reserve), interest first then principal; a loan left at the reserve closes |
+| Partial redemption | Cancelled, ending the redemption, if it would leave net debt under the minimum or the hint is stale |
+| Multicall3 | Deployed at the canonical `0xcA11bde05977b3631167028862bE2a173976CA11` |
+| Live check | 326 loans at block ~16,773,600: our order (batched reads, sorted by nominal ratio) matched a full `getLast`/`getPrev` walk; the 46 differing positions were all equal-ratio ties. Computed ratios equal `getNominalICR`. The 30 lowest loans are inside about 100,000 MUSD of each other; one ~426M MUSD loan holds most of the debt |
+
 ## Account abstraction on Mezo testnet (checked 24 Oct)
 
 | Fact | Result |
