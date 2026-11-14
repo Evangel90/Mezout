@@ -1,8 +1,29 @@
 {
   "name": "@mezout/paywall",
-  "version": "0.0.0",
-  "private": true,
-  "description": "HTTP 402 pay-per-request for Mezout: Express and Next.js middleware, and an agent client (x402 v2 envelope, 'mezout' scheme).",
+  "version": "0.1.0",
+  "description": "HTTP 402 pay-per-request in MUSD for Mezout on Mezo testnet: Express and Next.js middleware, and an agent client (x402 v2 envelope, mezout scheme).",
+  "keywords": [
+    "mezout",
+    "mezo",
+    "musd",
+    "x402",
+    "http-402",
+    "paywall",
+    "ai-agents",
+    "payments",
+    "express",
+    "nextjs"
+  ],
+  "license": "MIT",
+  "homepage": "https://usemezout.vercel.app/guides/paywall",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Evangel90/Mezout.git",
+    "directory": "packages/paywall"
+  },
+  "bugs": {
+    "url": "https://github.com/Evangel90/Mezout/issues"
+  },
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
@@ -13,16 +34,57 @@
     "./client": "./src/client.ts",
     "./testing": "./src/test-fakes.ts"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "./express": {
+        "types": "./dist/express.d.ts",
+        "default": "./dist/express.js"
+      },
+      "./next": {
+        "types": "./dist/next.d.ts",
+        "default": "./dist/next.js"
+      },
+      "./client": {
+        "types": "./dist/client.d.ts",
+        "default": "./dist/client.js"
+      },
+      "./package.json": "./package.json"
+    }
+  },
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "build": "tsup"
+    "build": "tsup",
+    "prepublishOnly": "pnpm test && pnpm build"
   },
   "dependencies": {
-    "@mezout/sdk": "workspace:^",
     "viem": "^2.22.8"
   },
+  "peerDependencies": {
+    "express": ">=4"
+  },
+  "peerDependenciesMeta": {
+    "express": {
+      "optional": true
+    }
+  },
   "devDependencies": {
+    "@mezout/sdk": "workspace:^",
     "@types/express": "^5.0.0",
     "@types/node": "^20",
     "express": "5.1.0",

@@ -1,18 +1,59 @@
 {
   "name": "@mezout/embed-react",
   "version": "0.1.0",
-  "private": true,
+  "description": "React component for Mezout embedded checkout: open a Mezout payment link in a modal on your site, with a popup fallback.",
+  "keywords": [
+    "mezout",
+    "mezo",
+    "musd",
+    "bitcoin",
+    "checkout",
+    "react",
+    "payments",
+    "embedded-checkout"
+  ],
+  "license": "MIT",
+  "homepage": "https://usemezout.vercel.app/guides/embedded-checkout",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Evangel90/Mezout.git",
+    "directory": "packages/embed-react"
+  },
+  "bugs": {
+    "url": "https://github.com/Evangel90/Mezout/issues"
+  },
   "type": "module",
+  "sideEffects": false,
   "main": "./src/index.tsx",
   "types": "./src/index.tsx",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "./package.json": "./package.json"
+    }
+  },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "pnpm typecheck && pnpm build"
   },
   "peerDependencies": {
     "react": ">=18"
   },
   "devDependencies": {
     "@types/react": "^18",
-    "typescript": "^5"
+    "typescript": "^5",
+    "tsup": "8.5.0"
   }
 }

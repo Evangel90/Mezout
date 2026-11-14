@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": { "@mezout/sdk": ["../sdk/src/index.ts"] }
+  }
+}

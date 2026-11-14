@@ -2,6 +2,12 @@
 
 Charge per request in MUSD over HTTP 402. Your API answers `402 Payment Required` with a Mezout invoice; an agent pays it through the MezoutRouter (gasless, via Mezout's relay) and retries with proof; your server checks the proof with `POST /v1/verify` and serves the request. Mezo testnet (31611) only.
 
+```bash
+npm install @mezout/paywall
+```
+
+Node 20+, ESM only, TypeScript types included. `viem` is the only dependency; install `express` yourself if you use the Express middleware. Step-by-step guide: [usemezout.vercel.app/guides/paywall](https://usemezout.vercel.app/guides/paywall).
+
 ## Wire format: x402 v2 with a `mezout` scheme
 
 The envelope follows [x402 v2](https://github.com/x402-foundation/x402/tree/main/specs) (spec v2.0, 9 Dec 2025):
