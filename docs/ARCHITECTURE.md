@@ -12,7 +12,7 @@ flowchart TB
         direction LR
         CU["Customer<br/>EVM or Bitcoin wallet<br/>via Mezo Passport"]
         ME["Merchant<br/>passkey or Mezo wallet"]
-        ST["Merchant's store<br/>own backend or WooCommerce"]
+        ST["Merchant's store<br/>own backend, WooCommerce or Shopify"]
     end
 
     subgraph App["Mezout app on Vercel"]
@@ -179,7 +179,9 @@ sequenceDiagram
     end
 ```
 
-The customer keeps their BTC, the merchant is paid in full, and the loan stays well inside Mezo's own 110% liquidation threshold.
+The customer keeps their BTC, the merchant receives the invoice less the fee, and the loan stays well inside Mezo's own 110% liquidation threshold.
+
+**After the payment.** The customer owes the borrowed MUSD, plus Mezo's 0.1% borrowing fee and the trove's fixed yearly interest, to Mezo. Checkout shows the new liquidation price before they pay and links to `/loan`, which reads the trove (debt, collateral, ratio, liquidation price, interest) every 30 seconds and lets the owner's wallet call Mezo's `repayMUSD`, `addColl` or `closeTrove` directly, with sorted-trove hints from the SDK. Mezo keeps an open loan at 1,800 MUSD of net debt or more (plus a 200 MUSD gas reserve), so a partial repayment stops there; paying off everything means closing the loan. Mezout never sends these transactions itself. A refund doesn't touch the loan either: it arrives as MUSD in the customer's wallet, and the merchant's refund dialog says so.
 
 ### Passkey merchant accounts and gasless withdrawals
 

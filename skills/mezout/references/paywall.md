@@ -2,7 +2,7 @@
 
 `@mezout/paywall` puts an MUSD price on an API route. A request without payment gets `402 Payment Required` with a Mezout invoice in the [x402 v2](https://github.com/x402-foundation/x402/tree/main/specs) envelope; the agent pays it (gasless, through Mezout's relay) and retries with proof; the server confirms with `POST /v1/verify` and serves the request **once per invoice**. Mezo testnet only.
 
-The package is not on npm yet: it lives at `packages/paywall` in github.com/Evangel90/Mezout (`pnpm --filter @mezout/paywall build` makes a plain-Node `dist/` with the SDK bundled; `viem` is its only runtime dependency). Without it, implement the same flow over the REST API (see "Protocol" below).
+Install it with `npm install @mezout/paywall` (Node 20+, ESM, TypeScript types included; `viem` is its only runtime dependency, `express` an optional peer). Source: `packages/paywall` in github.com/Evangel90/Mezout. In other languages, implement the same flow over the REST API (see "Protocol" below).
 
 ## Server
 

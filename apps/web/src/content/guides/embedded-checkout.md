@@ -35,6 +35,10 @@ Mezout.open({
 
 The `@mezout/embed-react` component does the same in React:
 
+```bash
+npm install @mezout/embed-react
+```
+
 ```tsx
 <MezoutCheckout
   checkoutUrl={invoice.checkout_url}
@@ -44,7 +48,7 @@ The `@mezout/embed-react` component does the same in React:
 />
 ```
 
-It isn't published to npm yet; it's in the Mezout source code under `packages/embed-react`.
+It works in Next.js App Router pages without extra setup.
 
 ## Fulfil from your server, not the pop-up
 

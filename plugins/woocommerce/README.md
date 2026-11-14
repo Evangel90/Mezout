@@ -1,6 +1,6 @@
 # Mezout for WooCommerce
 
-A WooCommerce payment gateway for Mezout. Customers pay on Mezo with Bitcoin, MUSD or MEZO, or borrow MUSD against their BTC; the store's Mezout payout address receives the exact order total in MUSD.
+A WooCommerce payment gateway for Mezout. Customers pay on Mezo with Bitcoin, MUSD or MEZO, or borrow MUSD against their BTC; the store's Mezout payout address receives the order total in MUSD, less Mezout's platform fee (1% on testnet).
 
 - Works with the classic checkout and the block checkout, and with WooCommerce's order tables (HPOS).
 - An order is marked paid only by a signed `invoice.paid` webhook whose amount matches the order total. A customer returning to the store proves nothing.

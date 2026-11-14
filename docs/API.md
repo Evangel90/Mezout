@@ -74,7 +74,7 @@ Errors return `{ "error": "<readable message>" }`.
 
 **Rate limits.** 120 requests a minute per account across all its keys; over that, `429` with `Retry-After` (seconds until the next minute).
 
-**Idempotency.** Send an `Idempotency-Key` header (1 to 255 printable ASCII characters, such as your order number) with `POST /v1/invoices` and `POST /v1/refunds`. Retries with the same key return the first response with `Idempotent-Replayed: true`. Keys are per account and kept 24 hours. Reusing one with a different body or endpoint returns `422`; a retry while the first request runs returns `409`. `4xx` answers are replayed like successes; a `500` is not stored, so a retry runs again.
+**Idempotency.** Send an `Idempotency-Key` header (1 to 255 printable ASCII characters with no spaces, such as your order number) with `POST /v1/invoices` and `POST /v1/refunds`. Retries with the same key return the first response with `Idempotent-Replayed: true`. Keys are per account and kept 24 hours. Reusing one with a different body or endpoint returns `422`; a retry while the first request runs returns `409`. `4xx` answers are replayed like successes; a `500` is not stored, so a retry runs again.
 
 **Pagination.** `GET /v1/invoices` returns `{ "object": "list", "data": [...], "has_more": true }`, newest first. `limit` is 1 to 100 (default 20). When `has_more` is `true`, pass the last `id` as `starting_after`.
 
@@ -161,7 +161,7 @@ Add your store's origin under **Dashboard → Developers → Embedded checkout s
 <button data-mezout-checkout="CHECKOUT_URL">Pay with Mezout</button>
 ```
 
-For custom controls call `Mezout.open({ checkoutUrl, onPaid, onClose })`. The modal offers **Open in new window** for wallets that can't run in an iframe. React apps can use `@mezout/embed-react`:
+For custom controls call `Mezout.open({ checkoutUrl, onPaid, onClose })`. The modal offers **Open in new window** for wallets that can't run in an iframe. React apps can use [`@mezout/embed-react`](https://www.npmjs.com/package/@mezout/embed-react) (`npm install @mezout/embed-react`):
 
 ```tsx
 <MezoutCheckout checkoutUrl={invoice.checkout_url} open={open} onClose={() => setOpen(false)} onPaid={() => setPaid(true)} />
@@ -201,7 +201,7 @@ An invoice's `payment`:
 | `method` | `MUSD`, `BTC`, `MEZO` or `BORROW`. |
 | `amount`, `fee`, `net` | The invoice amount, Mezout's fee, and what reached your payout address. |
 | `asset_in`, `amount_in` | The token and amount the customer spent; for `BTC` and `MEZO`, including the swap on Tigris. |
-| `borrowed` | For `BORROW`, the MUSD drawn from the customer's Mezo trove; otherwise `"0"`. |
+| `borrowed` | For `BORROW`, the MUSD drawn from the customer's Mezo trove; otherwise `"0"`. The customer owes it to Mezo, not to you, and manages the loan at [`/loan`](https://usemezout.vercel.app/loan). |
 | `router` | The `MezoutRouter` that took the payment. |
 | `tx_hash`, `block_number`, `paid_at` | The transaction on the [Mezo testnet explorer](https://explorer.test.mezo.org), and its block time. |
 
@@ -545,7 +545,11 @@ npx skills add Evangel90/Mezout --skill mezout -g
 
 ### Charge agents per request
 
-[`@mezout/paywall`](https://github.com/Evangel90/Mezout/tree/main/packages/paywall) puts a price on an API route. A request without payment gets `402 Payment Required` with a Mezout invoice in the [x402 v2](https://github.com/x402-foundation/x402/tree/main/specs) format. The agent pays it, for example with `fetch_paid_resource`, and retries with proof. The paywall confirms the payment with [`POST /v1/verify`](#verify-a-payment) and serves the request once per invoice.
+[`@mezout/paywall`](https://www.npmjs.com/package/@mezout/paywall) puts a price on an API route. A request without payment gets `402 Payment Required` with a Mezout invoice in the [x402 v2](https://github.com/x402-foundation/x402/tree/main/specs) format. The agent pays it, for example with `fetch_paid_resource`, and retries with proof. The paywall confirms the payment with [`POST /v1/verify`](#verify-a-payment) and serves the request once per invoice.
+
+```bash
+npm install @mezout/paywall
+```
 
 Next.js (App Router):
 

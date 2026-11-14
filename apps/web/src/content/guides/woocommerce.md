@@ -1,4 +1,4 @@
-Mezout adds a payment method to your WooCommerce checkout. Customers pay with Bitcoin, MUSD or MEZO, or borrow MUSD against their BTC. Whatever they choose, you get the exact order total in MUSD, straight to your payout address. Mezout never holds your funds.
+Mezout adds a payment method to your WooCommerce checkout. Customers pay with Bitcoin, MUSD or MEZO, or borrow MUSD against their BTC. Whatever they choose, you get the order total in MUSD, less Mezout's platform fee (1% on testnet), straight to your payout address. Mezout never holds your funds.
 
 - Works with the classic checkout and the block checkout.
 - Orders are marked paid only when Mezout confirms the payment on Mezo.
@@ -7,7 +7,7 @@ Mezout adds a payment method to your WooCommerce checkout. Customers pay with Bi
 
 ## Before you start
 
-- **WordPress 6.5 or newer**, **PHP 8.1 or newer** and WooCommerce.
+- **WordPress 6.5 or newer**, **PHP 8.1 or newer** and **WooCommerce 8.5 or newer**.
 - **Store currency: US Dollar (USD) or Mezo USD (MUSD).** The plugin adds MUSD to the currency list.
 - **A public https address** for your store, so Mezout can tell it when an order is paid.
 

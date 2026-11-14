@@ -8,11 +8,11 @@ Stable tag: 0.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Accept Bitcoin, MUSD and MEZO on Mezo. You receive the exact order total in MUSD, straight to your own address.
+Accept Bitcoin, MUSD and MEZO on Mezo. You receive the order total in MUSD, less Mezout's platform fee, straight to your own address.
 
 == Description ==
 
-Mezout adds a payment method to your WooCommerce checkout. Customers pay on Mezo with Bitcoin, MUSD or MEZO, or borrow MUSD against their BTC. Whatever they choose, your Mezout payout address receives the exact order total in MUSD in the same transaction. Mezout never holds your funds.
+Mezout adds a payment method to your WooCommerce checkout. Customers pay on Mezo with Bitcoin, MUSD or MEZO, or borrow MUSD against their BTC. Whatever they choose, your Mezout payout address receives the order total in MUSD, less Mezout's platform fee (1% on testnet), in the same transaction. Mezout never holds your funds.
 
 * Works with the classic checkout and the block checkout.
 * Orders are marked paid only when Mezout's signed webhook confirms the payment on-chain, never because a customer returned to your store.

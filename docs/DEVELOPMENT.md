@@ -82,7 +82,7 @@ Pushing to `main` deploys production through Vercel's Git integration. For a dep
 pnpm dlx vercel deploy --prod --yes
 ```
 
-Production needs these secrets (each command asks for the value):
+Production needs every variable in `.env.example` (the app refuses to start without `NEXT_PUBLIC_ROUTER_ADDRESS`, `RELAYER_PRIVATE_KEY`, `INVOICE_SIGNER_PRIVATE_KEY` and `DATABASE_URL`), plus these secrets (each command asks for the value):
 
 ```
 pnpm dlx vercel env add WEBHOOK_SIGNING_SECRET production

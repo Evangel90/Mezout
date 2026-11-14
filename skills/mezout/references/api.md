@@ -27,7 +27,7 @@ Base URL `https://usemezout.vercel.app`. Every request: `Authorization: Bearer m
 | `success_url` | no | Up to 2,000 chars, `https` (`http` only for `localhost`). Checkout shows a "Return to …" button after payment. |
 | `expires_in` | no | Seconds, 300 to 2,592,000. Default 86,400 (24 h). |
 
-Send `Idempotency-Key: <1-255 printable ASCII>` (your order id). A retry with the same key returns the first response with `Idempotent-Replayed: true`; the same key with a different body or endpoint is `422`; a retry while the first is running is `409`. Keys are per account and kept 24 hours. `4xx` answers are replayed; a `500` isn't stored, so retrying runs again.
+Send `Idempotency-Key: <1-255 printable ASCII, no spaces>` (your order id). A retry with the same key returns the first response with `Idempotent-Replayed: true`; the same key with a different body or endpoint is `422`; a retry while the first is running is `409`. Keys are per account and kept 24 hours. `4xx` answers are replayed; a `500` isn't stored, so retrying runs again.
 
 ### The invoice object
 
@@ -96,7 +96,7 @@ The router accepts payment up to and including the second of `expires_at`; the A
 <button data-mezout-checkout="CHECKOUT_URL">Pay with Mezout</button>
 ```
 
-Or `Mezout.open({ checkoutUrl, onPaid, onClose })`. React: `@mezout/embed-react` (not on npm yet; `packages/embed-react` in github.com/Evangel90/Mezout):
+Or `Mezout.open({ checkoutUrl, onPaid, onClose })`. React: `npm install @mezout/embed-react` (ships `"use client"`, so it works in Next.js App Router):
 
 ```tsx
 <MezoutCheckout checkoutUrl={invoice.checkout_url} open={open} onClose={() => setOpen(false)} onPaid={() => setPaid(true)} />

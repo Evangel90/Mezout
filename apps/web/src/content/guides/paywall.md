@@ -1,6 +1,5 @@
 Charge AI agents for each call to your API, in MUSD. `@mezout/paywall` wraps an API route: unpaid requests get a price, paid ones get the answer. You set the price; Mezout checks every payment.
 
-> The package isn't published to npm yet: it's in the Mezout source code under `packages/paywall`.
 
 ## How a paid request works
 
@@ -18,7 +17,15 @@ Each payment buys one request. A payment can't be reused.
 
 Open the [dashboard](/dashboard), go to **Developers** and click **Create API key**. Keep it on your server, for example as `MEZOUT_API_KEY`.
 
-### 2. Wrap a route
+### 2. Install the package
+
+```bash
+npm install @mezout/paywall
+```
+
+It runs on Node 20 or later. `viem` is its only dependency.
+
+### 3. Wrap a route
 
 **Next.js (App Router):**
 
@@ -43,7 +50,7 @@ app.get("/report", mezout402({ apiKey: process.env.MEZOUT_API_KEY!, price: "0.05
 
 Here each call to `/report` costs 0.05 MUSD.
 
-### 3. Pick your options
+### 4. Pick your options
 
 | Option | What it does |
 | --- | --- |
@@ -53,7 +60,7 @@ Here each call to `/report` costs 0.05 MUSD.
 | `expiresIn` | How long each payment link lasts, in seconds. Default 600. |
 | `store` | Where used payments are remembered. See below. |
 
-### 4. Running more than one server?
+### 5. Running more than one server?
 
 By default each server remembers used payments in memory. With more than one server, pass a shared `store` with a `consume(id)` function that returns `true` only the first time it sees an id. For example, Redis `SET NX` or an insert into a unique database column.
 
