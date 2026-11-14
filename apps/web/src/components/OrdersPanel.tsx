@@ -501,6 +501,13 @@ function OrderRow({
             </Field>
           )}
           {o.pendingRefund && amountError && <Alert tone="danger">{amountError}</Alert>}
+          {o.method && o.method !== "MUSD" && (
+            <Alert tone="info">
+              {o.method === "BORROW"
+                ? `This customer borrowed against their BTC to pay. The refund arrives as MUSD in their wallet; it doesn't repay their Mezo loan by itself. They can repay it at ${typeof window === "undefined" ? "" : window.location.origin}/loan.`
+                : `This customer paid with ${o.method}. Refunds are sent in MUSD, not ${o.method}.`}
+            </Alert>
+          )}
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button variant="secondary" onClick={() => setDialog(false)}>
               Cancel

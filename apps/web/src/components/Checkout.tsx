@@ -13,6 +13,7 @@ import {
   decodeSignedInvoice,
   getTroveSnapshot,
   linkRouter,
+  liquidationPrice,
   mezoDomain,
   mezoTestnetAddresses,
   mezoutRouterAbi,
@@ -271,6 +272,12 @@ function CheckoutInner({
   async function finish(hash: Hex) {
     setStatus({ kind: "sent", hash });
     const receipt = await client!.waitForTransactionReceipt({ hash });
+    if (receipt.status !== "success") {
+      // A payment can revert after it was simulated, for example when the swap price or BTC price moved. Every
+      // transfer in it is undone, so nothing was charged.
+      setStatus({ kind: "error", message: "The payment didn't go through because prices moved while it was sent. Nothing was charged. Please try again." });
+      return;
+    }
     await refetchPaid();
     // Tell Mezout to index the payment now, so the merchant's webhook fires in seconds.
     fetch("/api/sync", {
@@ -551,7 +558,7 @@ function CheckoutInner({
                 </p>
               </section>
 
-              {borrowedToPay && <BorrowerFollowUp snapshot={followUp.data} loading={followUp.isLoading} error={followUp.isError} />}
+              {borrowedToPay && <BorrowerFollowUp snapshot={followUp.data} loading={followUp.isLoading} error={followUp.isError} address={address} />}
 
               <section className="rounded-xl border border-stone-200 p-5">
                 <h3 className="mb-4 font-semibold text-stone-900">Payment details</h3>
@@ -893,12 +900,25 @@ function BorrowDetails({ quote, loading }: { quote?: Awaited<ReturnType<typeof q
       <dd className="text-right tabular-nums">
         {pct(quote.icrBefore)} → <span className={quote.canBorrow ? "font-medium text-stone-900" : "font-medium text-red-700"}>{pct(quote.icrAfter)}</span>
       </dd>
-      <dt>Borrowing fee (0.1%)</dt>
+      <dt>Borrowing fee ({Number(formatUnits(quote.borrowRate * 100n, 18)).toLocaleString()}%)</dt>
       <dd className="text-right tabular-nums">{fmt(quote.borrowFee)} MUSD, added to your loan</dd>
-      <dt>BTC price</dt>
-      <dd className="text-right tabular-nums">${fmt(quote.price)}</dd>
+      <dt>Interest</dt>
+      <dd className="text-right tabular-nums">{(quote.interestRateBps / 100).toLocaleString()}% a year, until you repay</dd>
+      <dt>Liquidation price</dt>
+      <dd className="text-right tabular-nums">
+        ${fmt(quote.liquidationPriceAfter)} <span className="text-stone-500">(BTC now ${fmt(quote.price)})</span>
+      </dd>
       {!quote.canBorrow && (
         <dd className="col-span-2 pt-1 text-red-700">This would take your loan below the 160% safety floor or its borrowing limit.</dd>
+      )}
+      {quote.canBorrow && (
+        <dd className="col-span-2 pt-1 text-stone-500">
+          You repay Mezo, not the merchant. Track and repay your loan any time at{" "}
+          <a href="/loan" target="_blank" rel="noreferrer" className="underline underline-offset-2">
+            Your Mezo loan
+          </a>
+          .
+        </dd>
       )}
     </dl>
   );
@@ -908,10 +928,12 @@ function BorrowerFollowUp({
   snapshot,
   loading,
   error,
+  address,
 }: {
   snapshot?: Awaited<ReturnType<typeof getTroveSnapshot>>;
   loading: boolean;
   error: boolean;
+  address?: Address;
 }) {
   if (loading) return <p className="text-sm text-stone-600">Refreshing your loan position…</p>;
   if (error || !snapshot) return <p className="text-sm text-stone-600">Your payment is complete. Refresh this page to check your current loan position.</p>;
@@ -945,18 +967,23 @@ function BorrowerFollowUp({
         <dd className="text-right">{pct(snapshot.icr)}</dd>
         <dt>BTC price</dt>
         <dd className="text-right">${fmt(snapshot.price)}</dd>
+        <dt>Liquidation price</dt>
+        <dd className="text-right">${fmt(liquidationPrice(snapshot.coll, snapshot.debt))}</dd>
       </dl>
       <p className="mt-3 text-sm">{message}</p>
       {snapshot.recoveryMode && <p className="mt-2 text-sm font-medium">Mezo is in Recovery Mode. Borrowing is paused; use Mezo directly to manage your position.</p>}
       <a
-        href="https://testnet.mezo.org/borrow"
+        href={address ? `/loan?address=${address}` : "/loan"}
         target="_blank"
         rel="noreferrer"
-        className="mt-3 inline-block text-sm font-medium underline"
+        className="mt-3 inline-flex h-10 items-center rounded-lg bg-ink px-4 text-sm font-medium text-white hover:bg-stone-800"
       >
-        Open Mezo to repay MUSD or add BTC collateral
+        Track and repay this loan
       </a>
-      <p className="mt-2 text-xs opacity-80">This check refreshes while this page is open. Mezout never repays debt or moves your BTC automatically.</p>
+      <p className="mt-2 text-xs opacity-80">
+        Bookmark that page: it shows your loan&apos;s health and lets you repay MUSD, add BTC or close the loan. Mezout never repays debt or
+        moves your BTC automatically.
+      </p>
     </section>
   );
 }

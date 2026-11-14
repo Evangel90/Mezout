@@ -57,6 +57,10 @@ const faqs = [
     a: "MUSD, BTC or MEZO, or MUSD borrowed against their Bitcoin. They only see what their wallet can use. You get MUSD every time.",
   },
   {
+    q: "What happens after a customer borrows to pay?",
+    a: "You're paid in full, minus the fee, like any other payment. The customer owes the MUSD to Mezo, not to you. Checkout shows them the interest and the BTC price their loan is safe to, and they can track and repay it any time at /loan.",
+  },
+  {
     q: "Do I need a crypto wallet?",
     a: "No. Sign up with a passkey: Face ID, Touch ID, Windows Hello or your phone. You get a payout account only you control, with free withdrawals. Already on Mezo? Get paid to your wallet instead.",
   },

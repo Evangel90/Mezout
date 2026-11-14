@@ -101,6 +101,7 @@ const FOOTER = [
       { href: "/#agents", label: "AI agents" },
       { href: "/#merchants", label: "Why Mezout" },
       { href: "/dashboard", label: "Dashboard" },
+      { href: "/loan", label: "Your Mezo loan" },
     ],
   },
   {

@@ -14,6 +14,7 @@ export const troveManagerAbi = parseAbi([
   "function getTroveMaxBorrowingCapacity(address borrower) view returns (uint256)",
   "function getEntireDebtAndColl(address borrower) view returns (uint256 coll, uint256 principal, uint256 interest, uint256 pendingCollateral, uint256 pendingPrincipal, uint256 pendingInterest)",
   "function getTroveOwnersCount() view returns (uint256)",
+  "function getTroveInterestRate(address borrower) view returns (uint16)",
 ]);
 
 export const priceFeedAbi = parseAbi(["function fetchPrice() view returns (uint256)"]);
@@ -30,4 +31,12 @@ export const borrowerOperationsSignaturesAbi = parseAbi([
   "function getNonce(address user) view returns (uint256)",
 ]);
 
-export const borrowerOperationsAbi = parseAbi(["function borrowingRate() view returns (uint256)"]);
+export const borrowerOperationsAbi = parseAbi([
+  "function borrowingRate() view returns (uint256)",
+  "function minNetDebt() view returns (uint256)",
+  "function MUSD_GAS_COMPENSATION() view returns (uint256)",
+  // Called by the borrower's own wallet from the loan page; Mezout never sends these on a borrower's behalf.
+  "function repayMUSD(uint256 _amount, address _upperHint, address _lowerHint)",
+  "function addColl(address _upperHint, address _lowerHint) payable",
+  "function closeTrove()",
+]);
