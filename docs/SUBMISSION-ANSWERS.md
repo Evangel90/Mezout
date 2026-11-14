@@ -32,11 +32,12 @@ Bitcoin holders don't want to sell BTC to spend it, and merchants won't manage w
 
 ## Technologies I used
 
-- **Mezo:** MUSD, BorrowerOperations, sorted troves, PriceFeed, Mezo Passport, Tigris, BTC and MEZO permit tokens
+- **Mezo:** MUSD, BorrowerOperations, PriceFeed, Mezo Passport, Tigris, BTC and MEZO permit tokens
 - **Contracts:** Solidity 0.8.28, Foundry (86 tests incl. fork tests), OpenZeppelin 5.6, EIP-712, ERC-4337, WebAuthn/P-256, Sourcify
 - **App:** Next.js 14, TypeScript, viem, Neon Postgres, Drizzle, Vercel
-- **Integrations:** Shopify app, WooCommerce plugin, `mezout.js` and React embed, signed webhooks
-- **Agents:** MCP, x402 v2, [`@mezout/mcp`](https://www.npmjs.com/package/@mezout/mcp) and [`@mezout/paywall`](https://www.npmjs.com/package/@mezout/paywall) on npm, an [agent skill](https://github.com/Evangel90/Mezout/tree/main/skills/mezout)
+- **Integrations:** Shopify app, WooCommerce plugin, `mezout.js`, signed webhooks
+- **Agents:** MCP, x402 v2, an [agent skill](https://github.com/Evangel90/Mezout/tree/main/skills/mezout)
+- **On npm:** [`@mezout/mcp`](https://www.npmjs.com/package/@mezout/mcp), [`@mezout/paywall`](https://www.npmjs.com/package/@mezout/paywall), [`@mezout/embed-react`](https://www.npmjs.com/package/@mezout/embed-react)
 
 ## How we built it
 
@@ -56,9 +57,9 @@ Wave 1 reviewer feedback became the Wave 2 plan, all live on testnet:
 
 - Reviewer feedback made the best roadmap: proving borrow-to-pay surfaced the front-running case.
 - Signatures that don't bind their caller need a recovery path.
-- Borrowers need costs up front and a place to repay afterwards.
+- Borrowers need costs up front and a place to repay.
 - Exact-amount, idempotent payments suit agents.
-- Serverless needs explicit coordination for nonces, schedules and alerts.
+- Serverless needs explicit nonce and schedule coordination.
 
 ## What's next for Mezout
 
