@@ -4,6 +4,13 @@ Mezout ([live app](https://usemezout.vercel.app) · [docs](https://usemezout.ver
 
 Merchants sign up with a passkey (no seed phrase, no gas) and take payments through links, QR codes, an API, WooCommerce, Shopify or an embedded checkout. Borrowers track and repay their loan at [/loan](https://usemezout.vercel.app/loan). Mezout never holds funds or keys.
 
+## Product videos
+
+- [Pay any way](https://youtube.com/shorts/zyVISKU9qg4)
+- [Borrow, don't sell your BTC](https://youtube.com/shorts/Xok1jkvdRNg)
+- [AI agents checkout](https://youtube.com/shorts/D18EQD7RIhQ)
+- [Mezout checkout](https://youtube.com/shorts/ESvDsBwDNPA)
+
 ## The problem it solves
 
 Bitcoin holders don't want to sell BTC to spend it, and merchants won't manage wallets or gas. AI agents now buy things too, and need a way to pay that merchants can trust.
@@ -16,9 +23,9 @@ Bitcoin holders don't want to sell BTC to spend it, and merchants won't manage w
 ## Challenges I ran into
 
 - **Front-run borrows.** `withdrawMUSDWithSignature` doesn't bind its caller, so a copied borrow could use up the payer's nonce and block checkout. Router v3 detects it and pays from the payer's balance ([proof](https://github.com/Evangel90/Mezout/blob/main/docs/BORROW_V2_PROOF.md)).
-- **Shopify's payments API is partner-only.** We ship a manual payment method with a "Complete payment" button on the thank-you page.
+- **Shopify's payments API is partner-only.** We ship a manual payment method with a "Complete payment" button after checkout.
 - **Relayer nonce collisions** across Vercel instances, fixed with a Postgres advisory lock.
-- **Late cron runs.** GitHub Actions ran hours apart, so an external scheduler drives the indexer, with health checks and alerts.
+- **Late cron runs.** GitHub Actions ran hours apart, so an external scheduler now drives the indexer.
 - **Loan repayment limits.** Mezo's minimum debt caps repayment, and repaying without sorted-trove hints cost ~2.2M gas.
 - **Pricing a fee on testnet.** Testnet assets have no price, so we [measured relayer gas per path](https://github.com/Evangel90/Mezout/blob/main/docs/RELAYER_GAS_EVIDENCE.md) and signed the fee into each invoice.
 - **x402 expects a facilitator.** Mezout settles through its router, so the paywall uses x402 v2 with a `mezout` scheme and single-use `/v1/verify`.
@@ -33,7 +40,7 @@ Bitcoin holders don't want to sell BTC to spend it, and merchants won't manage w
 
 ## How we built it
 
-Wave 1 reviewer feedback became the Wave 2 plan. Each item is live on Mezo testnet:
+Wave 1 reviewer feedback became the Wave 2 plan, all live on testnet:
 
 1. **Router v3** survives front-run borrows, with unit and fork regressions.
 2. **Borrow-to-pay proof:** a [live v2 borrow](https://explorer.test.mezo.org/tx/0x9fe4332cb10d2c2d57f49069d20a9032f21a7ea8dd26ffbf72019cbaffbb911c) recording payer intent, payout and trove ratio (164.81% → 164.20%).
@@ -42,18 +49,15 @@ Wave 1 reviewer feedback became the Wave 2 plan. Each item is live on Mezo testn
 5. **Shopify app (M5):** a dev-store order [paid in BTC](https://explorer.test.mezo.org/tx/0x7e93416facb8b74abfaa508733465358fad9872e2774ee76a9c93bb0b369c7f6) and marked Paid from the webhook.
 6. **Embedded checkout:** a modal limited to the merchant's allowed sites.
 7. **Agent payments:** `/v1/verify`, the x402 paywall, and an MCP server set up with `npx -y @mezout/mcp init`.
-8. **Security and operations (M6):** a router self-review found no fund-loss issues; each Low finding got a regression test. Plus relayer locking, alerts and `/api/health`.
-9. **Redesign:** new landing page, dashboard and setup guides.
-
-The contracts have no upgradeability or admin keys.
+8. **Security and operations (M6):** a router self-review found no fund-loss issues; each Low finding got a regression test. Plus relayer locking and alerts.
+9. **Redesign:** new site, dashboard and guides.
 
 ## What we learned
 
 - Reviewer feedback made the best roadmap: proving borrow-to-pay surfaced the front-running case.
 - Signatures that don't bind their caller need a recovery path.
 - Borrowers need costs up front and a place to repay afterwards.
-- Platform limits shape distribution more than our own design.
-- Exact-amount, idempotent payments suit agents with little extra work.
+- Exact-amount, idempotent payments suit agents.
 - Serverless needs explicit coordination for nonces, schedules and alerts.
 
 ## What's next for Mezout
@@ -61,4 +65,4 @@ The contracts have no upgradeability or admin keys.
 - **Mainnet:** passkey recovery, an external security review and launch.
 - **Agent wallets:** passkey-approved spending limits in a separate contract.
 - **Real merchants:** a pilot, and Shopify App Store and WordPress listings.
-- **More:** deeper MEZO liquidity, gasless Bitcoin-wallet payments, re-sending links for expired Shopify invoices.
+- **More:** deeper MEZO liquidity and gasless Bitcoin-wallet payments.
