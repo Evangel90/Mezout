@@ -6,10 +6,10 @@ Merchants sign up with a passkey (no seed phrase, no gas) and take payments thro
 
 ## Product videos
 
-- [Pay any way](https://youtube.com/shorts/zyVISKU9qg4)
-- [Borrow, don't sell your BTC](https://youtube.com/shorts/Xok1jkvdRNg)
-- [AI agents checkout](https://youtube.com/shorts/D18EQD7RIhQ)
-- [Mezout checkout](https://youtube.com/shorts/ESvDsBwDNPA)
+- Pay any way: https://youtube.com/shorts/zyVISKU9qg4
+- Borrow, don't sell your BTC: https://youtube.com/shorts/Xok1jkvdRNg
+- AI agents checkout: https://youtube.com/shorts/D18EQD7RIhQ
+- Mezout checkout: https://youtube.com/shorts/ESvDsBwDNPA
 
 ## The problem it solves
 
