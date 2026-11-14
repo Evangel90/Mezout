@@ -1,4 +1,4 @@
-import { encodeAbiParameters, encodeFunctionData, type Address, type Hex } from "viem";
+import { encodeAbiParameters, encodeFunctionData, keccak256, type Address, type Hex } from "viem";
 import { ERC7821_BATCH_MODE, splitPublicKey } from "./account";
 import { mezoutAccountV2Abi } from "./abi/mezoutAccountV2";
 import { mezoTestnet } from "./chains";
@@ -33,6 +33,20 @@ export function startRecoveryTypedData(account: Address, newPublicKey: Hex, nonc
   } as const;
 }
 
+/**
+ * The challenge a recovered account's new passkey signs so Mezout links it to the account (proof of possession; the
+ * chain already says which key owns the account).
+ */
+export function recoveredPasskeyChallenge(account: Address, publicKey: Hex): Hex {
+  const { qx, qy } = splitPublicKey(publicKey);
+  return keccak256(
+    encodeAbiParameters(
+      [{ type: "string" }, { type: "address" }, { type: "bytes32" }, { type: "bytes32" }],
+      ["Mezout recovered passkey", account, qx, qy],
+    ),
+  );
+}
+
 /** An owner action on the account's recovery settings, run as a call from the account itself. */
 export type RecoveryAction =
   | { type: "setPasskey"; publicKey: Hex; delay: number }
@@ -40,7 +54,8 @@ export type RecoveryAction =
   | { type: "remove" }
   | { type: "cancel" };
 
-function actionCall(action: RecoveryAction): Hex {
+/** The call on the account itself for `action` (what the account checks; the owner signs it wrapped in execute). */
+export function encodeRecoveryCall(action: RecoveryAction): Hex {
   switch (action.type) {
     case "setPasskey": {
       const { qx, qy } = splitPublicKey(action.publicKey);
@@ -68,6 +83,6 @@ const executionsType = [
 
 /** MezoutAccountV2.execute calldata that runs `action` on the account itself (the owner passkey signs it). */
 export function encodeRecoveryAction(account: Address, action: RecoveryAction): Hex {
-  const batch = encodeAbiParameters(executionsType, [[{ target: account, value: 0n, callData: actionCall(action) }]]);
+  const batch = encodeAbiParameters(executionsType, [[{ target: account, value: 0n, callData: encodeRecoveryCall(action) }]]);
   return encodeFunctionData({ abi: mezoutAccountV2Abi, functionName: "execute", args: [ERC7821_BATCH_MODE, batch] });
 }

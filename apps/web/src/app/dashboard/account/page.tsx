@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { BusinessNameForm } from "@/components/dashboard/BusinessNameForm";
+import { RecoveryCard } from "@/components/dashboard/RecoveryCard";
 import { WithdrawCard } from "@/components/dashboard/WithdrawCard";
 import { Button, Card, CardHeader, CopyButton, ExternalLink, PageHeader, buttonClass } from "@/components/ui";
 import { useMerchant } from "@/lib/merchant";
@@ -14,7 +15,7 @@ export default function AccountPage() {
 
   return (
     <>
-      <PageHeader title="Account" description="Your business name, where your money goes, and withdrawals." />
+      <PageHeader title="Account" description="Your business name, where your money goes, withdrawals and recovery." />
       <BusinessNameForm variant="settings" />
 
       <Card className="space-y-4 p-6">
@@ -41,6 +42,7 @@ export default function AccountPage() {
       </Card>
 
       {method === "passkey" && passkey && <WithdrawCard session={passkey} />}
+      {method === "passkey" && passkey && <RecoveryCard session={passkey} />}
 
       <Card className="p-6">
         <CardHeader

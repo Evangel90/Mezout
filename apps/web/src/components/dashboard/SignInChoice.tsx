@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import type { Address } from "viem";
@@ -194,6 +195,14 @@ function PasskeyCard({
             </button>
           </p>
         </>
+      )}
+      {supported && (
+        <p className="text-center text-sm text-stone-600">
+          Lost your passkey?{" "}
+          <Link href="/recover" className={link}>
+            Recover your account
+          </Link>
+        </p>
       )}
     </Card>
   );
