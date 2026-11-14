@@ -11,7 +11,7 @@ import {
   type Hex,
 } from "viem";
 import { mezoutAccountAbi } from "./abi/mezoutAccount";
-import { mezoTestnetAddresses } from "./addresses";
+import { getNetworkConfig, requireAddress, type MezoNetwork } from "./networks";
 
 /** ERC-7821 single batch mode, the only mode MezoutAccount.execute accepts. */
 export const ERC7821_BATCH_MODE: Hex = "0x0100000000000000000000000000000000000000000000000000000000000000";
@@ -42,26 +42,30 @@ export function normalizePublicKey(publicKey: Hex): Hex {
 }
 
 /** MezoutAccount.execute calldata that sends `amount` MUSD to `to`. */
-export function encodeMusdWithdrawal(to: Address, amount: bigint): Hex {
+export function encodeMusdWithdrawal(to: Address, amount: bigint, network: MezoNetwork = "testnet"): Hex {
+  const musd = requireAddress(getNetworkConfig(network), "musd");
   const transfer = encodeFunctionData({ abi: erc20Abi, functionName: "transfer", args: [to, amount] });
-  const batch = encodeAbiParameters(executionsType, [[{ target: mezoTestnetAddresses.musd, value: 0n, callData: transfer }]]);
+  const batch = encodeAbiParameters(executionsType, [[{ target: musd, value: 0n, callData: transfer }]]);
   return encodeFunctionData({ abi: mezoutAccountAbi, functionName: "execute", args: [ERC7821_BATCH_MODE, batch] });
 }
 
 /** Returns the recipient and amount if `callData` is exactly one MUSD transfer and nothing else, otherwise null. */
-export function decodeMusdWithdrawal(callData: Hex): { to: Address; amount: bigint } | null {
+export function decodeMusdWithdrawal(
+  callData: Hex,
+  network: MezoNetwork = "testnet",
+): { to: Address; amount: bigint } | null {
   try {
     const { functionName, args } = decodeFunctionData({ abi: mezoutAccountAbi, data: callData });
     if (functionName !== "execute" || args[0] !== ERC7821_BATCH_MODE) return null;
     const [calls] = decodeAbiParameters(executionsType, args[1]);
     if (calls.length !== 1) return null;
     const [call] = calls;
-    if (!isAddressEqual(call.target, mezoTestnetAddresses.musd) || call.value !== 0n) return null;
+    if (!isAddressEqual(call.target, requireAddress(getNetworkConfig(network), "musd")) || call.value !== 0n) return null;
     const transfer = decodeFunctionData({ abi: erc20Abi, data: call.callData });
     if (transfer.functionName !== "transfer") return null;
     const [to, amount] = transfer.args;
     // Re-encoding must reproduce the input exactly, so no trailing or non-canonical bytes slip through.
-    if (encodeMusdWithdrawal(to, amount) !== callData.toLowerCase()) return null;
+    if (encodeMusdWithdrawal(to, amount, network) !== callData.toLowerCase()) return null;
     return { to: getAddress(to), amount };
   } catch {
     return null;

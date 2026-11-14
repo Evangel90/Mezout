@@ -1,5 +1,6 @@
 import { getAddress, isHex, type Address, type Hex } from "viem";
 import { mezoTestnetAddresses } from "./addresses";
+import type { MezoNetwork } from "./networks";
 import type { Invoice } from "./typedData";
 
 /** `router` is the MezoutRouter the signature is for; links made before it existed omit it. */
@@ -41,5 +42,9 @@ export function decodeSignedInvoice(token: string): SignedInvoice {
   };
 }
 
-/** The router a payment link was signed for. */
-export const linkRouter = (signed: SignedInvoice): Address => signed.router ?? mezoTestnetAddresses.mezoutRouterV1;
+/** The router a payment link was signed for. Links without one predate mainnet, so on mainnet they are refused. */
+export function linkRouter(signed: SignedInvoice, network: MezoNetwork = "testnet"): Address {
+  if (signed.router) return signed.router;
+  if (network !== "testnet") throw new Error("Malformed payment link: no router");
+  return mezoTestnetAddresses.mezoutRouterV1;
+}

@@ -1,6 +1,6 @@
 import type { Address, Hex } from "viem";
 import { mezoTestnet } from "./chains";
-import { mezoTestnetAddresses } from "./addresses";
+import { configForChainId, requireAddress } from "./networks";
 
 export type Invoice = {
   merchant: Address;
@@ -66,19 +66,19 @@ export const routerDomain = (router: Address, chainId: number = mezoTestnet.id) 
   ({ name: "MezoutRouter", version: "1", chainId, verifyingContract: router }) as const;
 
 export const musdDomain = (chainId: number = mezoTestnet.id) =>
-  ({ name: "Mezo USD", version: "1", chainId, verifyingContract: mezoTestnetAddresses.musd }) as const;
+  ({ name: "Mezo USD", version: "1", chainId, verifyingContract: requireAddress(configForChainId(chainId), "musd") }) as const;
 
-/** Permit domains of Mezo's BTC and MEZO precompile tokens, matched against their DOMAIN_SEPARATOR on testnet. */
+/** Permit domains of Mezo's BTC and MEZO precompile tokens, matched against their DOMAIN_SEPARATOR on testnet and mainnet. */
 export const btcDomain = (chainId: number = mezoTestnet.id) =>
-  ({ name: "BTC", version: "1", chainId, verifyingContract: mezoTestnetAddresses.btcToken }) as const;
+  ({ name: "BTC", version: "1", chainId, verifyingContract: requireAddress(configForChainId(chainId), "btcToken") }) as const;
 
 export const mezoDomain = (chainId: number = mezoTestnet.id) =>
-  ({ name: "MEZO", version: "1", chainId, verifyingContract: mezoTestnetAddresses.mezoToken }) as const;
+  ({ name: "MEZO", version: "1", chainId, verifyingContract: requireAddress(configForChainId(chainId), "mezoToken") }) as const;
 
 export const borrowerOperationsSignaturesDomain = (chainId: number = mezoTestnet.id) =>
   ({
     name: "BorrowerOperationsSignatures",
     version: "1",
     chainId,
-    verifyingContract: mezoTestnetAddresses.borrowerOperationsSignatures,
+    verifyingContract: requireAddress(configForChainId(chainId), "borrowerOperationsSignatures"),
   }) as const;

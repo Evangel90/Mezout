@@ -6,11 +6,14 @@
  * as proof; the server checks it with `POST /v1/verify`.
  */
 import { mezoTestnet } from "./chains";
+import { mezoMainnet } from "./networks";
 
 export const X402_VERSION = 2;
 export const MEZOUT_SCHEME = "mezout";
 /** CAIP-2 id of Mezo testnet. */
 export const MEZO_TESTNET_NETWORK = `eip155:${mezoTestnet.id}` as const;
+/** CAIP-2 id of Mezo mainnet. */
+export const MEZO_MAINNET_NETWORK = `eip155:${mezoMainnet.id}` as const;
 
 /** x402 v2 HTTP headers. Each carries base64-encoded JSON. */
 export const X402_HEADERS = {
