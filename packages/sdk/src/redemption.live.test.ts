@@ -12,7 +12,9 @@ const client = createPublicClient({ chain: mezoTestnet, transport: http() });
 
 describe.skipIf(!live)("live redemption order", () => {
   it("matches SortedTroves walked from getLast, and getNominalICR", async () => {
+    const started = Date.now();
     const queue = await getRedemptionQueue(client);
+    console.log(`getRedemptionQueue read ${queue.troves.length} loans in ${Date.now() - started} ms`);
     const size = await client.readContract({ address: A.sortedTroves, abi: sortedTrovesAbi, functionName: "getSize" });
     expect(queue.troves.length).toBe(Number(size));
 

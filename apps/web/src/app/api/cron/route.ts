@@ -4,7 +4,10 @@ import { cronFailedAlert, failedDeliveriesAlert, relayerBalanceAlert, sendAlerts
 import { publicClient, relayerClient } from "@/lib/server/clients";
 import { getDb } from "@/lib/server/db/client";
 import { serverEnv } from "@/lib/server/env";
+import { evaluateLoanAlerts } from "@/lib/server/loanAlerts";
 import { indexerTick } from "@/lib/server/sync";
+import { allowPrivateWebhooks, webhookSender } from "@/lib/server/webhookSender";
+import { getRedemptionQueue } from "@mezout/sdk";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -38,7 +41,16 @@ export async function GET(req: Request) {
     console.error("alert checks failed", err);
     return [];
   });
-  const alerted = await sendAlerts(alerts, { db, url });
+  const [alerted, loanAlerts] = await Promise.all([
+    sendAlerts(alerts, { db, url }),
+    // Borrowers' opt-in alerts: one batched read of Mezo's loans per run, and only when someone has subscribed.
+    evaluateLoanAlerts(db, () => getRedemptionQueue(publicClient()), webhookSender(allowPrivateWebhooks()), {
+      appUrl: serverEnv.appUrl(),
+    }).catch((err) => {
+      console.error("loan alert checks failed", err);
+      return { error: true };
+    }),
+  ]);
 
   const { synced, expired, webhooks } = tick;
   return NextResponse.json({
@@ -46,5 +58,6 @@ export async function GET(req: Request) {
     expired,
     webhooks,
     alerted,
+    loanAlerts,
   });
 }

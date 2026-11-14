@@ -1,4 +1,4 @@
-import { bigint, index, integer, jsonb, numeric, pgTable, primaryKey, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
+import { bigint, boolean, index, integer, jsonb, numeric, pgTable, primaryKey, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 
 export const merchants = pgTable("merchants", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -244,4 +244,29 @@ export const idempotencyKeys = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [primaryKey({ columns: [t.merchantId, t.key] })],
+);
+
+// A borrower's opt-in loan alerts (/loan). The borrower proves they own the wallet by signing the settings; the
+// scheduled job checks every active row against one batched read of Mezo's loans and posts to the borrower's URL.
+export const loanAlerts = pgTable(
+  "loan_alerts",
+  {
+    borrower: text("borrower").primaryKey(),
+    // Discord, Slack, ntfy or any https endpoint the borrower chose. Cleared when alerts are turned off.
+    url: text("url"),
+    // Whole collateral-ratio percentages, highest first, e.g. [180, 165].
+    thresholds: jsonb("thresholds").$type<number[]>().notNull().default([]),
+    redemption: boolean("redemption").notNull().default(false),
+    // The newest signed issuedAt accepted for this wallet. Older signatures are refused, so none can be replayed.
+    signedAt: timestamp("signed_at", { withTimezone: true }).notNull(),
+    // The lowest threshold the ratio was under at the last check, or null when above them all.
+    breachedThreshold: integer("breached_threshold"),
+    redemptionHigh: boolean("redemption_high").notNull().default(false),
+    // Consecutive failed posts; alerts stop after too many so a dead URL is not called forever.
+    failures: integer("failures").notNull().default(0),
+    lastAlertAt: timestamp("last_alert_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    disabledAt: timestamp("disabled_at", { withTimezone: true }),
+  },
+  (t) => [index("loan_alerts_active_idx").on(t.disabledAt)],
 );
