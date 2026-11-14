@@ -154,6 +154,15 @@ contract MezoutAccountRecoveryTest is Test {
         assertEq(account.recoveryRequestHash(newQx, newQy), _requestHash(address(account), newQx, newQy, 0));
     }
 
+    /// Same vector as packages/sdk/src/recovery.test.ts (PINNED_HASH): what the dashboard asks a recovery signer to sign.
+    function test_requestHash_pinnedVector() public {
+        vm.chainId(31611);
+        assertEq(
+            _requestHash(0x1111111111111111111111111111111111111111, newQx, newQy, 7),
+            0x3f09aa37eacfebabfc42f21e71df105157d65f58925a9fcd73dec50c52e2da02
+        );
+    }
+
     // Owner sets and removes the recovery signer
 
     function test_setRecoveryPasskey_storesAndEmits() public {
