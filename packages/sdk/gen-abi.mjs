@@ -4,6 +4,8 @@ const contracts = [
   ["MezoutRouter.sol/MezoutRouter.json", "mezoutRouter.ts", "mezoutRouterAbi"],
   ["MezoutAccount.sol/MezoutAccount.json", "mezoutAccount.ts", "mezoutAccountAbi"],
   ["MezoutAccountFactory.sol/MezoutAccountFactory.json", "mezoutAccountFactory.ts", "mezoutAccountFactoryAbi"],
+  ["MezoutAgentWallet.sol/MezoutAgentWallet.json", "mezoutAgentWallet.ts", "mezoutAgentWalletAbi"],
+  ["MezoutAgentWalletFactory.sol/MezoutAgentWalletFactory.json", "mezoutAgentWalletFactory.ts", "mezoutAgentWalletFactoryAbi"],
 ];
 for (const [artifact, file, name] of contracts) {
   const out = JSON.parse(readFileSync(new URL(`../../contracts/out/${artifact}`, import.meta.url)));

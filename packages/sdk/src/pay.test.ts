@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { keccak256, parseEther, recoverTypedDataAddress, toHex, type Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { encodeSignedInvoice } from "./link";
-import { paymentLinkToken, signMusdPayment } from "./pay";
+import { paymentLinkToken, signAgentWalletPayment, signMusdPayment } from "./pay";
 import { decodeX402Header, encodeX402Header } from "./x402";
 import { musdDomain, paymentTypes, permitTypes, routerDomain, type Invoice } from "./typedData";
 
@@ -41,6 +41,34 @@ describe("signMusdPayment", () => {
       signature: permitSig,
     });
     expect(owner).toBe(account.address);
+  });
+});
+
+describe("signAgentWalletPayment", () => {
+  it("signs the router's Payment with the agent wallet as payer, and no permit", async () => {
+    const agent = privateKeyToAccount(generatePrivateKey());
+    const wallet = "0x000000000000000000000000000000000000a11e";
+    const body = await signAgentWalletPayment({ token, wallet, signer: agent });
+    expect(body).toEqual({ method: "AGENT_WALLET", token, wallet, agent: agent.address, agentSig: expect.stringMatching(/^0x/) });
+    expect(body).not.toHaveProperty("permit");
+
+    const signer = await recoverTypedDataAddress({
+      domain: routerDomain(router),
+      types: paymentTypes,
+      primaryType: "Payment",
+      message: { invoice, payer: wallet },
+      signature: body.agentSig,
+    });
+    expect(signer).toBe(agent.address);
+    // Not valid as the agent's own checkout payment (payer = agent): the wallet address is bound in.
+    const asEoa = await recoverTypedDataAddress({
+      domain: routerDomain(router),
+      types: paymentTypes,
+      primaryType: "Payment",
+      message: { invoice, payer: agent.address },
+      signature: body.agentSig,
+    });
+    expect(asEoa).not.toBe(agent.address);
   });
 });
 

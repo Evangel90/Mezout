@@ -16,6 +16,8 @@ function address(name: string): Address {
 export const serverEnv = {
   rpcUrl: () => process.env.MEZO_RPC_URL ?? "https://rpc.test.mezo.org",
   router: () => address("NEXT_PUBLIC_ROUTER_ADDRESS"),
+  // Optional: the MezoutAgentWalletFactory whose wallets the relay may call. Unset, agent-wallet payments are off.
+  agentWalletFactory: () => (process.env.AGENT_WALLET_FACTORY_ADDRESS ? address("AGENT_WALLET_FACTORY_ADDRESS") : undefined),
   relayerKey: () => required("RELAYER_PRIVATE_KEY") as Hex,
   invoiceSignerKey: () => required("INVOICE_SIGNER_PRIVATE_KEY") as Hex,
   webhookSigningSecret: () => required("WEBHOOK_SIGNING_SECRET"),

@@ -9,5 +9,7 @@ export * from "./apiKey";
 export * from "./account";
 export { mezoutAccountAbi } from "./abi/mezoutAccount";
 export { mezoutAccountFactoryAbi } from "./abi/mezoutAccountFactory";
+export { mezoutAgentWalletAbi } from "./abi/mezoutAgentWallet";
+export { mezoutAgentWalletFactoryAbi } from "./abi/mezoutAgentWalletFactory";
 export * from "./pay";
 export * from "./x402";
