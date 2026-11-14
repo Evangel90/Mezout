@@ -37,6 +37,7 @@ export function createMezoutServer(config: Config, deps: { fetch?: typeof fetch;
   const payer: MusdPayer | null = config.payerKey
     ? createMusdPayer({
         account: privateKeyToAccount(config.payerKey),
+        agentWallet: config.agentWallet,
         appUrl: config.apiUrl,
         rpcUrl: config.rpcUrl,
         maxPerPayment: config.maxPerPayment,
@@ -186,11 +187,16 @@ export function createMezoutServer(config: Config, deps: { fetch?: typeof fetch;
     "get_budget",
     {
       title: "Spending budget",
-      description: "The paying wallet's address, and MUSD spent and remaining under this session's limits.",
+      description:
+        "The paying wallet's address, and MUSD spent and remaining under this session's limits. When paying from an agent wallet, also its session key; the wallet's on-chain limits apply as well.",
       inputSchema: {},
       annotations: { readOnlyHint: true },
     },
-    () => run(async () => ({ payer: needPayer().address, ...needPayer().budget() })),
+    () =>
+      run(async () => {
+        const p = needPayer();
+        return { payer: p.address, ...(p.sessionKey && { mode: "agent_wallet", session_key: p.sessionKey }), ...p.budget() };
+      }),
   );
 
   return server;

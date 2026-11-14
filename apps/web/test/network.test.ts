@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { verifyMessage, type Hex } from "viem";
+import { getAddress, verifyMessage, type Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import { MissingAddressError, keyRequestMessage, mainnetConfig, mezoTestnetAddresses, type MezoNetwork } from "@mezout/sdk";
+import { MissingAddressError, keyRequestMessage, mainnetConfig, mezoTestnetAddresses, testnetConfig, type MezoNetwork } from "@mezout/sdk";
 import type { Db } from "@/lib/server/db/client";
 import { authenticate, issueApiKey } from "@/lib/server/apiKeys";
-import { assertNetworkReady } from "@/lib/server/network";
+import { agentWalletFactory, assertNetworkReady } from "@/lib/server/network";
 import { unauthorizedMessage } from "@/lib/server/v1";
 import { mezoNetwork, network } from "@/lib/network";
 import { testDb } from "./db";
@@ -39,6 +39,29 @@ describe("network selection", () => {
   it("refuses a runtime MEZO_NETWORK that differs from the build", () => {
     expect(() => assertNetworkReady("testnet", { MEZO_NETWORK: "mainnet" })).toThrow(/build is for "testnet"/);
     expect(() => assertNetworkReady("testnet", { MEZO_NETWORK: "mainet" })).toThrow(/must be "testnet" or "mainnet"/);
+  });
+});
+
+describe("agent wallet factory", () => {
+  const factory = getAddress("0x00000000000000000000000000000000000000bb");
+  it("is off unless configured, and taken from AGENT_WALLET_FACTORY_ADDRESS on testnet", () => {
+    expect(testnetConfig.addresses.mezoutAgentWalletFactory).toBeUndefined();
+    expect(agentWalletFactory(testnetConfig, {})).toBeUndefined();
+    expect(agentWalletFactory(testnetConfig, { AGENT_WALLET_FACTORY_ADDRESS: factory.toLowerCase() })).toBe(factory);
+    expect(() => agentWalletFactory(testnetConfig, { AGENT_WALLET_FACTORY_ADDRESS: "0x123" })).toThrow(/not an address/);
+  });
+
+  it("is never taken from the environment on mainnet without a verified entry", () => {
+    expect(mainnetConfig.addresses.mezoutAgentWalletFactory).toBeUndefined();
+    expect(agentWalletFactory(mainnetConfig, {})).toBeUndefined();
+    expect(() => agentWalletFactory(mainnetConfig, { AGENT_WALLET_FACTORY_ADDRESS: factory })).toThrow(/No verified MezoutAgentWalletFactory/);
+    const verified = { ...mainnetConfig, addresses: { ...mainnetConfig.addresses, mezoutAgentWalletFactory: factory } } as typeof mainnetConfig;
+    expect(agentWalletFactory(verified, {})).toBe(factory);
+    expect(() => agentWalletFactory(verified, { AGENT_WALLET_FACTORY_ADDRESS: mezoTestnetAddresses.mezoutRouterV3 })).toThrow(/must be the Mezo mainnet/);
+  });
+
+  it("is checked at startup", () => {
+    expect(() => assertNetworkReady("testnet", { AGENT_WALLET_FACTORY_ADDRESS: "nope" })).toThrow(/not an address/);
   });
 });
 

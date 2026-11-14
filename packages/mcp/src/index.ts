@@ -36,7 +36,7 @@ async function serve() {
   const roles = [
     config.apiKey ? "merchant tools on" : "merchant tools off (no API key)",
     config.payerKey
-      ? `paying as ${privateKeyToAccount(config.payerKey).address}, max ${config.maxPerPayment} MUSD per payment, ${config.maxPerSession} per session`
+      ? `paying as ${config.agentWallet ? `agent wallet ${config.agentWallet} with session key ` : ""}${privateKeyToAccount(config.payerKey).address}, max ${config.maxPerPayment} MUSD per payment, ${config.maxPerSession} per session`
       : "paying off (no payer key)",
   ];
   const from = resolved.file.found ? `; settings from ${resolved.file.path} (environment variables override it)` : "";

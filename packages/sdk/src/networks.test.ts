@@ -144,3 +144,15 @@ describe("network-aware helpers", () => {
     expect(seen).not.toContain(mezoTestnetAddresses.troveManager);
   });
 });
+
+describe("optional Mezout contracts (recovery factory, agent wallet factory)", () => {
+  it("are testnet entries from addresses.ts, never required to start, and undefined on mainnet", async () => {
+    const { mezoutAccountFactoryV2, mezoutAgentWalletFactory } = await import("./addresses");
+    expect(testnetConfig.addresses.mezoutAccountFactoryV2).toBe(mezoutAccountFactoryV2 ?? undefined);
+    expect(testnetConfig.addresses.mezoutAgentWalletFactory).toBe(mezoutAgentWalletFactory ?? undefined);
+    expect(mainnetConfig.addresses.mezoutAccountFactoryV2).toBeUndefined();
+    expect(mainnetConfig.addresses.mezoutAgentWalletFactory).toBeUndefined();
+    expect(APP_REQUIRED_ADDRESSES).not.toContain("mezoutAccountFactoryV2");
+    expect(APP_REQUIRED_ADDRESSES).not.toContain("mezoutAgentWalletFactory");
+  });
+});

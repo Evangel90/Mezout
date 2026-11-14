@@ -52,6 +52,10 @@ Before signing it refuses:
 
 Tool results and logs never contain the private key or signatures.
 
+### Agent wallet mode (opt-in, not yet on testnet)
+
+Set `MEZOUT_AGENT_WALLET` to a `MezoutAgentWallet` address to pay from that wallet's MUSD instead of from the key's own. `MEZOUT_PAYER_PRIVATE_KEY` is then a *session key* the wallet's owner approved, with limits the contract enforces: per payment, per UTC day, an optional merchant allow-list and an expiry; the owner can revoke it at once. The key signs only the router's `Payment` with the wallet as payer (no permit), and the relay calls the wallet's `pay`. Before signing, the server reads the wallet's session and refuses a revoked or expired key, a merchant the owner has not allowed, or an amount over the on-chain limits; the local caps above apply too. Without `MEZOUT_AGENT_WALLET` nothing changes. See [docs/AGENT-WALLETS.md](../../docs/AGENT-WALLETS.md).
+
 ## Settings
 
 The server reads environment variables first, then `~/.mezout/mcp.json` (written by `init`; `MEZOUT_CONFIG` names another file), which uses the same names:
@@ -61,6 +65,7 @@ The server reads environment variables first, then `~/.mezout/mcp.json` (written
 | `MEZOUT_API_URL` | `https://usemezout.vercel.app` | Mezout app (API and relay). `http://localhost:3000` for local dev. |
 | `MEZOUT_API_KEY` | none | Merchant key, `mzk_test_…`, from the dashboard's **Developers** tab |
 | `MEZOUT_PAYER_PRIVATE_KEY` | none | Paying wallet's key (hex). Use a testnet-only wallet holding test MUSD. |
+| `MEZOUT_AGENT_WALLET` | none | Opt-in: pay from this agent wallet; the payer key is its session key |
 | `MEZOUT_MAX_PAYMENT_MUSD` | `1` | Largest single payment |
 | `MEZOUT_MAX_SESSION_MUSD` | `10` | Total per server process |
 | `MEZO_RPC_URL` | `https://rpc.test.mezo.org` | Mezo testnet RPC |

@@ -1,6 +1,6 @@
 import { defineChain, getAddress, type Address, type Chain } from "viem";
 import { mezoTestnet } from "./chains";
-import { mezoTestnetAddresses, mezoutAccountFactoryV2 } from "./addresses";
+import { mezoTestnetAddresses, mezoutAccountFactoryV2, mezoutAgentWalletFactory } from "./addresses";
 
 /**
  * Which Mezo network Mezout runs against. Testnet is the default everywhere and is the developer sandbox; mainnet is
@@ -43,6 +43,8 @@ export type MezoAddressBook = {
   mezoutAccountFactory: Address | undefined;
   /** MezoutAccountFactoryV2 (passkey accounts with recovery). Optional: without it sign-up stays on v1. */
   mezoutAccountFactoryV2: Address | undefined;
+  /** MezoutAgentWalletFactory, whose wallets the relay may call. Optional: without it agent-wallet payments are off. */
+  mezoutAgentWalletFactory: Address | undefined;
 };
 export type MezoAddressKey = keyof MezoAddressBook;
 
@@ -100,6 +102,7 @@ export const testnetConfig: MezoNetworkConfig = {
     mezoutRouter: mezoTestnetAddresses.mezoutRouterV3,
     mezoutAccountFactory: mezoTestnetAddresses.mezoutAccountFactory,
     mezoutAccountFactoryV2: mezoutAccountFactoryV2 ?? undefined,
+    mezoutAgentWalletFactory: mezoutAgentWalletFactory ?? undefined,
   },
   legacyRouters: [mezoTestnetAddresses.mezoutRouterV1, mezoTestnetAddresses.mezoutRouterV2],
   sources: { musd: TESTNET_SOURCE },
@@ -144,6 +147,7 @@ export const mainnetConfig: MezoNetworkConfig = {
     mezoutRouter: undefined,
     mezoutAccountFactory: undefined,
     mezoutAccountFactoryV2: undefined,
+    mezoutAgentWalletFactory: undefined,
   },
   legacyRouters: [],
   sources: {
@@ -163,6 +167,7 @@ export const mainnetConfig: MezoNetworkConfig = {
     mezoutRouter: "NOT DEPLOYED on mainnet",
     mezoutAccountFactory: "NOT DEPLOYED on mainnet",
     mezoutAccountFactoryV2: "NOT DEPLOYED on mainnet",
+    mezoutAgentWalletFactory: "NOT DEPLOYED on mainnet",
   },
 };
 

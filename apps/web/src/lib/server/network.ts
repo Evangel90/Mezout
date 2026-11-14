@@ -1,5 +1,5 @@
 import "server-only";
-import { getAddress, isAddress, isAddressEqual } from "viem";
+import { getAddress, isAddress, isAddressEqual, type Address } from "viem";
 import {
   APP_REQUIRED_ADDRESSES,
   getNetworkConfig,
@@ -16,7 +16,8 @@ type Env = Record<string, string | undefined>;
  * Checks that this deployment can run on its network, and throws an error naming everything wrong if not:
  * - MEZO_NETWORK at runtime must match the network the app was built for;
  * - every contract the app uses has a verified address on that network;
- * - on mainnet, NEXT_PUBLIC_ROUTER_ADDRESS must be the network's own MezoutRouter, never a testnet one.
+ * - on mainnet, NEXT_PUBLIC_ROUTER_ADDRESS must be the network's own MezoutRouter, never a testnet one;
+ * - AGENT_WALLET_FACTORY_ADDRESS, when set, is allowed on this network (see agentWalletFactory).
  */
 export function assertNetworkReady(built: MezoNetwork = mezoNetwork, env: Env = process.env): MezoNetworkConfig {
   const runtime = parseMezoNetwork(env.MEZO_NETWORK ?? built);
@@ -33,6 +34,7 @@ export function assertNetworkReady(built: MezoNetwork = mezoNetwork, env: Env = 
       );
     }
   }
+  agentWalletFactory(config, env); // throws on an agent-wallet factory this network does not allow
   return config;
 }
 
@@ -42,4 +44,24 @@ let checked: MezoNetworkConfig | undefined;
 export function serverNetwork(): MezoNetworkConfig {
   checked ??= assertNetworkReady();
   return checked;
+}
+
+/**
+ * The MezoutAgentWalletFactory whose wallets the relay may call, or undefined when agent-wallet payments are off.
+ * AGENT_WALLET_FACTORY_ADDRESS can name one on testnet (the network book has none until it is deployed). On mainnet
+ * only the network book's verified factory is used, and an env value that differs from it is refused, as for the router.
+ */
+export function agentWalletFactory(config: MezoNetworkConfig = serverNetwork(), env: Env = process.env): Address | undefined {
+  const book = config.addresses.mezoutAgentWalletFactory;
+  const raw = env.AGENT_WALLET_FACTORY_ADDRESS;
+  if (!raw) return book ? getAddress(book) : undefined;
+  if (!isAddress(raw)) throw new Error(`AGENT_WALLET_FACTORY_ADDRESS is not an address: "${raw}"`);
+  const fromEnv = getAddress(raw);
+  if (book && !isAddressEqual(book, fromEnv)) {
+    throw new Error(`AGENT_WALLET_FACTORY_ADDRESS must be the ${config.label} MezoutAgentWalletFactory ${getAddress(book)}, got ${fromEnv}`);
+  }
+  if (!book && config.network !== "testnet") {
+    throw new Error(`No verified MezoutAgentWalletFactory on ${config.label}; unset AGENT_WALLET_FACTORY_ADDRESS`);
+  }
+  return fromEnv;
 }

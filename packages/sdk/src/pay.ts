@@ -53,6 +53,38 @@ export async function signMusdPayment(opts: {
   return { method: "MUSD", token: opts.token, payer, payerSig, permit: splitPermitSignature(permitSig, opts.permitDeadline) };
 }
 
+/** The body `/api/relay` takes for a payment from a `MezoutAgentWallet`, signed by one of its session keys. */
+export type AgentWalletRelayBody = {
+  method: "AGENT_WALLET";
+  token: string;
+  /** The agent wallet that pays (the router's payer). */
+  wallet: Address;
+  /** The session key the owner approved on that wallet. */
+  agent: Address;
+  agentSig: Hex;
+};
+
+/**
+ * Signs a payment from an agent wallet with its session key: the router's own EIP-712 `Payment`, with the wallet as
+ * payer. No permit: the wallet approves the router itself, for exactly the invoice, inside `pay`. The relay calls
+ * `wallet.pay(invoice, invoiceSig, agent, agentSig)` and the wallet enforces the owner's limits on-chain.
+ */
+export async function signAgentWalletPayment(opts: {
+  token: string;
+  wallet: Address;
+  signer: TypedDataSigner;
+  chainId?: number;
+}): Promise<AgentWalletRelayBody> {
+  const signed = decodeSignedInvoice(opts.token);
+  const agentSig = await opts.signer.signTypedData({
+    domain: routerDomain(linkRouter(signed), opts.chainId),
+    types: paymentTypes,
+    primaryType: "Payment",
+    message: { invoice: signed.invoice, payer: opts.wallet },
+  } as TypedDataDefinition);
+  return { method: "AGENT_WALLET", token: opts.token, wallet: opts.wallet, agent: opts.signer.address, agentSig };
+}
+
 /** Extracts the payment-link token from a checkout URL (`…/pay/<token>`) or returns a bare token unchanged. */
 export function paymentLinkToken(urlOrToken: string): string {
   const trimmed = urlOrToken.trim();

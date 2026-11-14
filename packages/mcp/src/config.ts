@@ -1,4 +1,4 @@
-import { isHex, parseUnits, type Hex } from "viem";
+import { getAddress, isAddress, isHex, parseUnits, type Address, type Hex } from "viem";
 import { resolveSettings, SETTING_KEYS, settingsPath, type Env, type ResolvedSettings } from "./settings";
 
 export type Config = {
@@ -7,6 +7,11 @@ export type Config = {
   apiKey?: string;
   /** Payer key: enables pay_invoice and fetch_paid_resource. Never logged or returned. */
   payerKey?: Hex;
+  /**
+   * Opt-in: pay from this `MezoutAgentWallet` instead of from the payer key's own MUSD. The payer key is then a
+   * session key the wallet's owner approved, and the wallet enforces the owner's limits on-chain.
+   */
+  agentWallet?: Address;
   rpcUrl: string;
   maxPerPayment: string;
   maxPerSession: string;
@@ -50,6 +55,14 @@ export function loadConfig(env: Record<string, string | undefined>): Config {
     payerKey = k;
   }
 
+  const rawWallet = env.MEZOUT_AGENT_WALLET?.trim() || undefined;
+  let agentWallet: Address | undefined;
+  if (rawWallet) {
+    if (!isAddress(rawWallet, { strict: false })) throw new Error("MEZOUT_AGENT_WALLET must be the agent wallet's 0x address");
+    if (!payerKey) throw new Error("MEZOUT_AGENT_WALLET needs MEZOUT_PAYER_PRIVATE_KEY set to the wallet's session key");
+    agentWallet = getAddress(rawWallet);
+  }
+
   const maxPerPayment = decimal("MEZOUT_MAX_PAYMENT_MUSD", env.MEZOUT_MAX_PAYMENT_MUSD || "1");
   const maxPerSession = decimal("MEZOUT_MAX_SESSION_MUSD", env.MEZOUT_MAX_SESSION_MUSD || "10");
   if (parseUnits(maxPerSession, 18) < parseUnits(maxPerPayment, 18)) {
@@ -59,6 +72,7 @@ export function loadConfig(env: Record<string, string | undefined>): Config {
     apiUrl,
     apiKey,
     payerKey,
+    agentWallet,
     rpcUrl: env.MEZO_RPC_URL || "https://rpc.test.mezo.org",
     maxPerPayment,
     maxPerSession,

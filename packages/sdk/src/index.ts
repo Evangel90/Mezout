@@ -1,5 +1,5 @@
 export { mezoTestnet } from "./chains";
-export { knownMezoutRouters, mezoTestnetAddresses, mezoutAccountFactoryV2 } from "./addresses";
+export { knownMezoutRouters, mezoTestnetAddresses, mezoutAccountFactoryV2, mezoutAgentWalletFactory } from "./addresses";
 export * from "./networks";
 export * from "./typedData";
 export * from "./link";
@@ -13,6 +13,8 @@ export { mezoutAccountFactoryAbi } from "./abi/mezoutAccountFactory";
 export * from "./recovery";
 export { mezoutAccountV2Abi } from "./abi/mezoutAccountV2";
 export { mezoutAccountFactoryV2Abi } from "./abi/mezoutAccountFactoryV2";
+export { mezoutAgentWalletAbi } from "./abi/mezoutAgentWallet";
+export { mezoutAgentWalletFactoryAbi } from "./abi/mezoutAgentWalletFactory";
 export * from "./pay";
 export * from "./x402";
 export * from "./redemption";

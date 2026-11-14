@@ -33,6 +33,12 @@ export const mezoTestnetAddresses = {
 export const mezoutAccountFactoryV2: Address | null = null;
 
 /**
+ * MezoutAgentWalletFactory on testnet. null until it is deployed; the relay can also be pointed at one with
+ * AGENT_WALLET_FACTORY_ADDRESS (testnet only, see apps/web/src/lib/server/network.ts).
+ */
+export const mezoutAgentWalletFactory: Address | null = null;
+
+/**
  * Every MezoutRouter deployed on testnet. A payer signs a permit whose spender is the router named in the payment
  * link, so code that pays links it did not create (agents) should refuse any router outside this list.
  */
