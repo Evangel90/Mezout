@@ -12,15 +12,19 @@ import {
   borrowerOperationsAbi,
   getAdjustHints,
   getLoanDetails,
+  getRedemptionQueue,
+  redemptionPosition,
   liquidationPrice,
   musdAbi,
   troveRisk,
   type LoanDetails,
+  type RedemptionPosition,
   type TroveRisk,
 } from "@mezout/sdk";
 import { Alert, Badge, Button, CardHeader, ExternalLink, Field, Skeleton, UnitInput, cardClass, inputClass, useConfirm } from "@/components/ui";
 import { txUrl } from "@/lib/config";
 import { addresses, network } from "@/lib/network";
+import { LoanAlerts } from "./LoanAlerts";
 
 // Mezo's borrow page on testnet; on mainnet the Mezo dApp linked from Mezo's docs.
 const MEZO_BORROW_URL = network.borrowAppUrl ?? "https://mezo.org";
@@ -71,6 +75,16 @@ export function LoanManager({ initialAddress }: { initialAddress: Address | null
     enabled: !!borrower && !!client,
     refetchInterval: 30_000,
   });
+
+  // Every open loan, read in a few batched calls and ordered as Mezo redeems them. Shared by any borrower viewed.
+  const queue = useQuery({
+    queryKey: ["redemption-queue"],
+    queryFn: () => getRedemptionQueue(client!),
+    enabled: !!borrower && !!client && !!loan.data?.active,
+    refetchInterval: 120_000,
+    staleTime: 60_000,
+  });
+  const redemption = queue.data && borrower ? redemptionPosition(queue.data, borrower) : null;
 
   const owns = !!connected && !!borrower && isAddressEqual(connected, borrower);
 
@@ -142,7 +156,10 @@ export function LoanManager({ initialAddress }: { initialAddress: Address | null
         <NoLoan />
       ) : (
         <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-          <LoanSummary loan={loan.data} updatedAt={loan.dataUpdatedAt} />
+          <div className="space-y-6">
+            <LoanSummary loan={loan.data} updatedAt={loan.dataUpdatedAt} />
+            <RedemptionCard position={redemption} loading={queue.isLoading} failed={queue.isError} />
+          </div>
           <div className="space-y-6">
             {owns ? (
               <LoanActions borrower={borrower} loan={loan.data} onChanged={() => loan.refetch()} />
@@ -151,6 +168,7 @@ export function LoanManager({ initialAddress }: { initialAddress: Address | null
                 Connect the wallet that owns this loan to repay MUSD, add BTC or close it.
               </Alert>
             )}
+            {owns && <LoanAlerts borrower={borrower} />}
             <LoanFacts loan={loan.data} />
           </div>
         </div>
@@ -227,6 +245,56 @@ function LoanSummary({ loan, updatedAt }: { loan: LoanDetails; updatedAt: number
         </Alert>
       )}
       <p className="text-xs text-stone-500">Read from {network.label} {ago < 15 ? "just now" : `${ago} seconds ago`}; refreshes every 30 seconds.</p>
+    </section>
+  );
+}
+
+const EXPOSURE: Record<RedemptionPosition["exposure"], { tone: "success" | "warning" | "danger" | "neutral"; label: string }> = {
+  low: { tone: "success", label: "Far back in line" },
+  medium: { tone: "warning", label: "Worth watching" },
+  high: { tone: "danger", label: "Near the front" },
+  none: { tone: "neutral", label: "Not in line" },
+};
+
+/**
+ * Where the loan sits in Mezo's redemption line. Anyone can swap MUSD for BTC at $1 per MUSD; Mezo takes that BTC from
+ * the loans with the lowest ratio first, so a loan near the front can be partly or fully repaid with its own BTC.
+ */
+function RedemptionCard({ position: p, loading, failed }: { position: RedemptionPosition | null; loading: boolean; failed: boolean }) {
+  return (
+    <section className={`${cardClass} space-y-4 p-6`} aria-labelledby="loan-redemption">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 id="loan-redemption" className="text-[15px] font-semibold tracking-tight text-stone-900">
+          Redemption risk
+        </h2>
+        {p && <Badge tone={EXPOSURE[p.exposure].tone}>{EXPOSURE[p.exposure].label}</Badge>}
+      </div>
+      {loading ? (
+        <Skeleton className="h-16 w-full" />
+      ) : failed || !p ? (
+        <p className="text-sm text-stone-600">Couldn&apos;t read Mezo&apos;s redemption line just now. It refreshes every 2 minutes.</p>
+      ) : p.exposure === "none" ? (
+        <p className="text-sm text-stone-700">
+          This loan is under 110%, so redemptions skip it, but it can be liquidated. Repay MUSD or add BTC now.
+        </p>
+      ) : (
+        <>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Stat label="Place in line" value={`${p.position.toLocaleString()} of ${p.eligibleCount.toLocaleString()}`} sub="1 is redeemed first" />
+            <Stat label="MUSD in front of yours" value={`${musd(p.debtAhead)} MUSD`} sub="Redeemed from other loans before yours" />
+          </div>
+          <p className="text-sm leading-relaxed text-stone-700">
+            {p.exposure === "high"
+              ? `Your loan is near the front. A redemption of more than ${musd(p.debtAhead)} MUSD would start repaying your debt with your BTC. `
+              : p.exposure === "medium"
+                ? `Someone would have to redeem more than ${musd(p.debtAhead)} MUSD before Mezo reaches your loan. `
+                : `More than ${musd(p.debtAhead)} MUSD of other loans would be redeemed before yours. `}
+            A redemption is not a liquidation: your debt goes down by the value of the BTC taken at today&apos;s price, so you lose no money,
+            but you hold less BTC. A loan redeemed in full closes, and its leftover BTC is claimed on Mezo. Raising your ratio moves you
+            further back.
+          </p>
+        </>
+      )}
     </section>
   );
 }

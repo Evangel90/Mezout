@@ -57,6 +57,13 @@
       "when": 1794653105662,
       "tag": "0007_friendly_purifiers",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794657034437,
+      "tag": "0008_unknown_nova",
+      "breakpoints": true
     }
   ]
 }

@@ -30,7 +30,7 @@ Bitcoin holders don't want to sell their BTC to spend it. Merchants won't instal
 ![Pay any way: MUSD, BTC, MEZO and borrowing against BTC all settle as exactly 25.00 MUSD](docs/motion/svg/01-pay-any-way.svg)
 
 - **Customers pay any way.** The hosted checkout reads the customer's wallet (EVM, or Bitcoin wallets such as Xverse, Unisat and OKX through Mezo Passport) and shows only the options that will succeed. BTC and MEZO are swapped on Tigris at a live price with a signed 1% cap.
-- **Spend Bitcoin without selling it.** A customer with a Mezo loan can borrow the MUSD inside the payment. The router reverts the whole payment if the loan would end below 160% collateral, well above Mezo's 110% liquidation threshold. Before paying, checkout shows the fee, the loan's interest rate and its new liquidation price; afterwards, [`/loan`](https://usemezout.vercel.app/loan) shows the loan's health and lets the customer repay MUSD, add BTC or close it from their own wallet.
+- **Spend Bitcoin without selling it.** A customer with a Mezo loan can borrow the MUSD inside the payment. The router reverts the whole payment if the loan would end below 160% collateral, well above Mezo's 110% liquidation threshold. Before paying, checkout shows the fee, the loan's interest rate and its new liquidation price; afterwards, [`/loan`](https://usemezout.vercel.app/loan) shows the loan's health and its place in Mezo's redemption line, sends opt-in alerts to a URL the customer chooses, and lets them repay MUSD, add BTC or close it from their own wallet. Mezout never tops up a loan automatically.
 - **Gasless.** EVM-wallet customers sign; Mezout's relayer submits and pays the gas. Bitcoin-wallet accounts pay a small fee themselves for now.
 - **Merchants without a wallet.** A passkey creates a `MezoutAccount` (OpenZeppelin ERC-4337 with a WebAuthn signer) that receives payments before it is even deployed. Withdrawals are confirmed with the passkey and gasless. Merchants with a Mezo wallet can be paid straight into it instead.
 - **Merchant dashboard.** Overview (balance, recent sales, payment links with QR codes), Payments (gross, fee and net per payment, CSV export, refunds), Developers (API keys, webhooks with test events and a delivery log, embedded checkout sites) and Account (business name, payout address, withdrawals).
@@ -49,7 +49,7 @@ The **contracts** enforce every money rule. The **app** signs invoices, relays p
 | `MezoutAccount` and factory | [`contracts/src/account`](contracts/src/account) | ERC-4337 account owned by a passkey, at a CREATE2 address from its public key |
 | SDK | [`packages/sdk`](packages/sdk) | EIP-712 typed data, payment links, chain config, ABIs, trove and borrow-limit reads |
 | Hosted checkout | [`apps/web/src/components/Checkout.tsx`](apps/web/src/components/Checkout.tsx) | Reads balances, live quotes and the customer's trove; offers only options that will succeed |
-| Loan page | [`apps/web/src/components/loan/LoanManager.tsx`](apps/web/src/components/loan/LoanManager.tsx) | `/loan`: a borrower's debt, ratio, liquidation price and interest, and repay, add-BTC and close actions sent from their own wallet to Mezo |
+| Loan page | [`apps/web/src/components/loan/LoanManager.tsx`](apps/web/src/components/loan/LoanManager.tsx) | `/loan`: a borrower's debt, ratio, liquidation price, interest and redemption position, opt-in alerts, and repay, add-BTC and close actions sent from their own wallet to Mezo |
 | Relayer | [`apps/web/src/app/api/relay/route.ts`](apps/web/src/app/api/relay/route.ts) | Simulates, then submits payments and pays the gas. Only calls Mezout's routers |
 | Indexer and webhooks | [`apps/web/src/lib/server`](apps/web/src/lib/server) | `Paid` events are the only way an invoice becomes paid; signed webhooks with retries and a delivery log |
 | Merchant API | [`apps/web/src/app/v1`](apps/web/src/app/v1) | Invoices, refunds, webhook endpoints and `POST /v1/verify` |
@@ -101,8 +101,8 @@ Reference transactions, all relayed so the customer paid no gas:
 | Suite | Tests | Covers |
 | --- | --- | --- |
 | Contracts (Foundry) | 92 | Router unit and fuzz tests, swap quotes, passkey account and typed-data vectors, the mainnet deploy script's refusals, fork tests against live Mezo MUSD, troves, Tigris and EntryPoint (plus mainnet config checks when `MEZO_MAINNET_RPC_URL` is set) |
-| Web app (Vitest) | 107 | API, idempotency, indexer, passkeys, refunds, sessions, rate limits, webhooks, fees, alerts, `/v1/verify`, the relayer queue, network selection and test/live key isolation |
-| SDK (Vitest) | 36 | Typed data, accounts, network config (testnet default, mainnet refusals, mainnet EIP-712 domains), loan math (liquidation price, repayment limits, trove hints); 2 more run against the live testnet on request |
+| Web app (Vitest) | 116 | API, idempotency, indexer, passkeys, refunds, sessions, rate limits, webhooks, fees, alerts, borrower loan alerts (signatures, replays, rate limits, cron evaluation), `/v1/verify`, the relayer queue, network selection and test/live key isolation |
+| SDK (Vitest) | 36 | Typed data, accounts, network config (testnet default, mainnet refusals, mainnet EIP-712 domains), loan math (liquidation price, repayment limits, trove hints), redemption order with fixed loan sets; 3 more run against the live testnet on request |
 | MCP server (Vitest) | 33 | Tools, spending caps, `init` and `doctor`, paying a 402 paywall end to end against fakes |
 | Paywall (Vitest) | 11 | 402 offers, proof checks, one request per invoice, the agent client's refusals |
 | Shopify app (Vitest) | 58 | Signature verification, amounts, idempotent invoices and webhook paths |
