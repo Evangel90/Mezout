@@ -100,11 +100,11 @@ Reference transactions, all relayed so the customer paid no gas:
 
 | Suite | Tests | Covers |
 | --- | --- | --- |
-| Contracts (Foundry) | 140 | Router unit and fuzz tests, swap quotes, passkey account, recovery (attacker-first) and typed-data vectors, the mainnet deploy script's refusals, fork tests against live Mezo MUSD, troves, Tigris and EntryPoint (plus mainnet config checks when `MEZO_MAINNET_RPC_URL` is set) |
-| Web app (Vitest) | 116 | API, idempotency, indexer, passkeys, account recovery, refunds, sessions, rate limits, webhooks, fees, alerts, borrower loan alerts (signatures, replays, rate limits, cron evaluation), `/v1/verify`, the relayer queue, network selection and test/live key isolation |
-| SDK (Vitest) | 36 | Typed data, accounts, recovery requests, network config (testnet default, mainnet refusals, mainnet EIP-712 domains), loan math (liquidation price, repayment limits, trove hints), redemption order with fixed loan sets; 3 more run against the live testnet on request |
-| MCP server (Vitest) | 33 | Tools, spending caps, `init` and `doctor`, paying a 402 paywall end to end against fakes |
-| Paywall (Vitest) | 11 | 402 offers, proof checks, one request per invoice, the agent client's refusals |
+| Contracts (Foundry) | 177 | Router unit and fuzz tests, swap quotes, passkey account, recovery (attacker-first), agent wallets and their limits and typed-data vectors, the mainnet deploy script's refusals, fork tests against live Mezo MUSD, troves, Tigris and EntryPoint (plus mainnet config checks when `MEZO_MAINNET_RPC_URL` is set) |
+| Web app (Vitest) | 138 | API, idempotency, indexer, passkeys, account recovery, refunds, sessions, rate limits, webhooks, fees, alerts, borrower loan alerts (signatures, replays, rate limits, cron evaluation), `/v1/verify`, the relayer queue, network selection, test/live key isolation and the agent-wallet factory rule |
+| SDK (Vitest) | 49 | Typed data, accounts, recovery requests, network config (testnet default, mainnet refusals, mainnet EIP-712 domains), loan math (liquidation price, repayment limits, trove hints), redemption order with fixed loan sets; 3 more run against the live testnet on request |
+| MCP server (Vitest) | 38 | Tools, spending caps, `init` and `doctor`, paying a 402 paywall end to end against fakes |
+| Paywall (Vitest) | 17 | 402 offers, proof checks, one request per invoice, the agent client's refusals |
 | Shopify app (Vitest) | 58 | Signature verification, amounts, idempotent invoices and webhook paths |
 | WooCommerce (PHP) | | Signature verification and amounts |
 
