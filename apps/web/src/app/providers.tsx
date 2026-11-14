@@ -5,11 +5,12 @@ import { useState, type ReactNode } from "react";
 import { RainbowKitProvider, lightTheme } from "@rainbow-me/rainbowkit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider } from "wagmi";
-import { PassportProvider, getConfig, mezoTestnet } from "@mezo-org/passport";
+import { PassportProvider, getConfig, mezoMainnet, mezoTestnet } from "@mezo-org/passport";
+import { mezoNetwork } from "@/lib/network";
 
 const wagmiConfig = getConfig({
   appName: "Mezout",
-  mezoNetwork: "testnet",
+  mezoNetwork,
   walletConnectProjectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? "mezout-local",
   ssr: true,
 });
@@ -22,8 +23,8 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider initialChain={mezoTestnet} theme={walletTheme}>
-          <PassportProvider environment="testnet">{children}</PassportProvider>
+        <RainbowKitProvider initialChain={mezoNetwork === "mainnet" ? mezoMainnet : mezoTestnet} theme={walletTheme}>
+          <PassportProvider environment={mezoNetwork}>{children}</PassportProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>

@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { createPublicClient, formatUnits, getAddress, http, isAddress, parseUnits, type Hex } from "viem";
-import { mezoTestnet } from "@mezout/sdk";
 import { Alert, Button, CardHeader, Dialog, ExternalLink, Field, UnitInput, cardClass, formatAmount, inputClass } from "@/components/ui";
 import { txUrl } from "@/lib/config";
 import { passkeySendMusd, type PasskeySession } from "@/lib/passkey";
 import { useMusdBalance } from "@/lib/useMusdBalance";
+import { network } from "@/lib/network";
 
-const client = createPublicClient({ chain: mezoTestnet, transport: http() });
+const client = createPublicClient({ chain: network.chain, transport: http() });
 const AMOUNT = /^\d+(\.\d{1,18})?$/;
 
 /** Withdrawals from a passkey smart account. The passkey signs; Mezout's relayer pays the gas. */

@@ -2,6 +2,7 @@ import "server-only";
 import { randomBytes } from "node:crypto";
 import { and, eq, gt } from "drizzle-orm";
 import { signInMessage } from "@mezout/sdk";
+import { mezoNetwork } from "../network";
 import { sha256, verifySignedRequest, type Merchant, type SignedRequest, type VerifySignature } from "./apiKeys";
 import type { Db } from "./db/client";
 import { merchants, sessions } from "./db/schema";
@@ -36,7 +37,9 @@ export async function sessionMerchant(db: Db, token: string | undefined, now = D
     .select({ merchant: merchants })
     .from(sessions)
     .innerJoin(merchants, eq(sessions.merchantId, merchants.id))
-    .where(and(eq(sessions.tokenHash, sha256(token)), gt(sessions.expiresAt, new Date(now))));
+    .where(
+      and(eq(sessions.tokenHash, sha256(token)), gt(sessions.expiresAt, new Date(now)), eq(merchants.network, mezoNetwork)),
+    );
   return row?.merchant ?? null;
 }
 

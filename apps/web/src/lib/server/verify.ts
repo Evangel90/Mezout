@@ -1,6 +1,7 @@
 import "server-only";
 import { formatUnits, getAddress, isAddressEqual, isHex, parseEventLogs, type Hex, type PublicClient } from "viem";
-import { MEZO_TESTNET_NETWORK, MEZOUT_SCHEME, mezoTestnetAddresses, mezoutRouterAbi } from "@mezout/sdk";
+import { MEZOUT_SCHEME, mezoutRouterAbi, requireAddress } from "@mezout/sdk";
+import { network } from "../network";
 import type { Merchant } from "./apiKeys";
 import type { Db } from "./db/client";
 import { findInvoiceView, invoiceStatus, METHODS, type InvoiceView } from "./invoices";
@@ -52,8 +53,8 @@ const invalid = (view: InvoiceView, invalidReason: InvalidReason, detail: string
 /** Compares x402 terms with the invoice, so proof for a cheaper invoice cannot settle a dearer request. */
 function requirementsMismatch(view: InvoiceView, merchant: Merchant, req: NonNullable<VerifyInput["requirements"]>): string | null {
   if (req.scheme !== undefined && req.scheme !== MEZOUT_SCHEME) return `scheme must be "${MEZOUT_SCHEME}"`;
-  if (req.network !== undefined && req.network !== MEZO_TESTNET_NETWORK) return `network must be ${MEZO_TESTNET_NETWORK}`;
-  if (req.asset !== undefined && !(isHex(req.asset) && isAddressEqual(req.asset, mezoTestnetAddresses.musd))) return "asset must be MUSD";
+  if (req.network !== undefined && req.network !== network.caip2) return `network must be ${network.caip2}`;
+  if (req.asset !== undefined && !(isHex(req.asset) && isAddressEqual(req.asset, requireAddress(network, "musd")))) return "asset must be MUSD";
   if (req.amount !== undefined && req.amount !== view.row.amount) return "amount does not match the invoice";
   if (req.payTo !== undefined && !(isHex(req.payTo) && isAddressEqual(req.payTo, getAddress(merchant.payoutAddress)))) {
     return "payTo does not match the invoice's merchant";
@@ -120,7 +121,7 @@ export async function verifyInvoicePayment(
   try {
     receipt = await chain.getTransactionReceipt({ hash: input.transaction });
   } catch {
-    return invalid(view, "transaction_not_found", "No mined transaction with that hash on Mezo testnet.");
+    return invalid(view, "transaction_not_found", `No mined transaction with that hash on ${network.label}.`);
   }
   if (receipt.status !== "success") return invalid(view, "transaction_failed", "The transaction reverted.");
 

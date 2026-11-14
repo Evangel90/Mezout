@@ -8,11 +8,11 @@ import {
 } from "viem/account-abstraction";
 import {
   encodeMusdWithdrawal,
-  mezoTestnet,
-  mezoTestnetAddresses,
   mezoutAccountFactoryAbi,
+  requireAddress,
   splitPublicKey,
 } from "@mezout/sdk";
+import { serverNetwork } from "./network";
 import type { Passkey } from "./passkeys";
 
 // Deployment through initCode costs ~1.6M gas; WebAuthn validation is far cheaper with Mezo's P-256 precompile.
@@ -41,7 +41,7 @@ export async function quoteWithdrawal(
 ): Promise<WithdrawalQuote> {
   const sender = account.accountAddress as Address;
   const [balance, nonce, gasPrice, deployed] = await Promise.all([
-    client.readContract({ address: mezoTestnetAddresses.musd, abi: erc20Abi, functionName: "balanceOf", args: [sender] }),
+    client.readContract({ address: requireAddress(serverNetwork(), "musd"), abi: erc20Abi, functionName: "balanceOf", args: [sender] }),
     client.readContract({ address: entryPoint07Address, abi: entryPoint07Abi, functionName: "getNonce", args: [sender, 0n] }),
     client.getGasPrice(),
     isDeployed(client, sender),
@@ -62,10 +62,10 @@ export function buildWithdrawalOp(account: Passkey, quote: WithdrawalQuote) {
     ...(deployed
       ? {}
       : {
-          factory: mezoTestnetAddresses.mezoutAccountFactory,
+          factory: requireAddress(serverNetwork(), "mezoutAccountFactory"),
           factoryData: encodeFunctionData({ abi: mezoutAccountFactoryAbi, functionName: "createAccount", args: [qx, qy] }),
         }),
-    callData: encodeMusdWithdrawal(quote.to, quote.amount),
+    callData: encodeMusdWithdrawal(quote.to, quote.amount, serverNetwork().network),
     callGasLimit: GAS.call,
     verificationGasLimit: deployed ? GAS.verification : GAS.verificationDeploy,
     preVerificationGas: GAS.preVerification,
@@ -77,7 +77,7 @@ export function buildWithdrawalOp(account: Passkey, quote: WithdrawalQuote) {
     userOperation,
     entryPointAddress: entryPoint07Address,
     entryPointVersion: "0.7",
-    chainId: mezoTestnet.id,
+    chainId: serverNetwork().chainId,
   });
   const maxCost = (GAS.call + userOperation.verificationGasLimit + GAS.preVerification) * quote.maxFeePerGas;
   return { userOperation, userOpHash, maxCost };

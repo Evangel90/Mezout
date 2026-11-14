@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import type { Hex } from "viem";
-import { MEZO_TESTNET_NETWORK } from "@mezout/sdk";
+import { network } from "@/lib/network";
 import { publicClient } from "@/lib/server/clients";
 import { getDb } from "@/lib/server/db/client";
 import { serverEnv } from "@/lib/server/env";
@@ -68,7 +68,7 @@ export async function POST(req: Request) {
         object: "verification",
         isValid: true,
         payer: result.payment.payer,
-        network: MEZO_TESTNET_NETWORK,
+        network: network.caip2,
         transaction: result.payment.tx_hash,
         payment: result.payment,
         invoice,
@@ -78,7 +78,7 @@ export async function POST(req: Request) {
         isValid: false,
         invalidReason: result.invalidReason,
         message: result.detail,
-        network: MEZO_TESTNET_NETWORK,
+        network: network.caip2,
         invoice,
       };
   return NextResponse.json(body, { headers: { "cache-control": "no-store" } });

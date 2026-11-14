@@ -1,8 +1,9 @@
 import "server-only";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { PublicKey, WebAuthnP256 } from "ox";
 import { getAddress, type Address, type Hex } from "viem";
 import { decodeWebAuthnSignature, normalizePublicKey, splitPublicKey } from "@mezout/sdk";
+import { mezoNetwork } from "../network";
 import type { Db } from "./db/client";
 import { merchants, passkeys } from "./db/schema";
 
@@ -36,8 +37,11 @@ export async function registerPasskey(
     throw new PasskeyError("This passkey's public key is not a valid P-256 key");
   }
 
-  await db.insert(merchants).values({ payoutAddress: address }).onConflictDoNothing();
-  const [merchant] = await db.select().from(merchants).where(eq(merchants.payoutAddress, address));
+  await db.insert(merchants).values({ payoutAddress: address, network: mezoNetwork }).onConflictDoNothing();
+  const [merchant] = await db
+    .select()
+    .from(merchants)
+    .where(and(eq(merchants.payoutAddress, address), eq(merchants.network, mezoNetwork)));
   const [row] = await db
     .insert(passkeys)
     .values({ merchantId: merchant.id, credentialId: input.credentialId, publicKey, accountAddress: address })

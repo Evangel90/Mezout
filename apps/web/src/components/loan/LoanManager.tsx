@@ -13,8 +13,6 @@ import {
   getAdjustHints,
   getLoanDetails,
   liquidationPrice,
-  mezoTestnet,
-  mezoTestnetAddresses,
   musdAbi,
   troveRisk,
   type LoanDetails,
@@ -22,10 +20,12 @@ import {
 } from "@mezout/sdk";
 import { Alert, Badge, Button, CardHeader, ExternalLink, Field, Skeleton, UnitInput, cardClass, inputClass, useConfirm } from "@/components/ui";
 import { txUrl } from "@/lib/config";
+import { addresses, network } from "@/lib/network";
 
-const MEZO_BORROW_URL = "https://testnet.mezo.org/borrow";
+// Mezo's borrow page on testnet; on mainnet the Mezo dApp linked from Mezo's docs.
+const MEZO_BORROW_URL = network.borrowAppUrl ?? "https://mezo.org";
 const AMOUNT = /^\d+(\.\d{1,18})?$/;
-/** BTC kept back in the wallet for network fees when adding collateral; Mezo testnet fees are far below this. */
+/** BTC kept back in the wallet for network fees when adding collateral; Mezo network fees are far below this. */
 const BTC_GAS_RESERVE = 10n ** 14n;
 const E18 = 10n ** 18n;
 
@@ -63,7 +63,7 @@ export function LoanManager({ initialAddress }: { initialAddress: Address | null
   const [lookup, setLookup] = useState(initialAddress ?? "");
   const [viewing, setViewing] = useState<Address | null>(initialAddress);
   const borrower = viewing ?? connected ?? null;
-  const client = usePublicClient({ chainId: mezoTestnet.id });
+  const client = usePublicClient({ chainId: network.chainId });
 
   const loan = useQuery({
     queryKey: ["loan", borrower],
@@ -136,7 +136,7 @@ export function LoanManager({ initialAddress }: { initialAddress: Address | null
         <LoanSkeleton />
       ) : loan.isError || !loan.data ? (
         <Alert tone="danger" title="Couldn't read this loan from Mezo" action={<Button variant="secondary" size="sm" onClick={() => loan.refetch()}>Try again</Button>}>
-          Mezo testnet may be busy. Your loan is unaffected.
+          {network.label} may be busy. Your loan is unaffected.
         </Alert>
       ) : !loan.data.active ? (
         <NoLoan />
@@ -226,7 +226,7 @@ function LoanSummary({ loan, updatedAt }: { loan: LoanDetails; updatedAt: number
           Borrowing at checkout is paused.
         </Alert>
       )}
-      <p className="text-xs text-stone-500">Read from Mezo testnet {ago < 15 ? "just now" : `${ago} seconds ago`}; refreshes every 30 seconds.</p>
+      <p className="text-xs text-stone-500">Read from {network.label} {ago < 15 ? "just now" : `${ago} seconds ago`}; refreshes every 30 seconds.</p>
     </section>
   );
 }
@@ -304,9 +304,9 @@ function LoanFacts({ loan }: { loan: LoanDetails }) {
 type Action = "repay" | "add" | "close";
 
 function LoanActions({ borrower, loan, onChanged }: { borrower: Address; loan: LoanDetails; onChanged: () => void }) {
-  const client = usePublicClient({ chainId: mezoTestnet.id });
+  const client = usePublicClient({ chainId: network.chainId });
   const { chainId } = useAccount();
-  const { data: code } = useBytecode({ address: borrower, chainId: mezoTestnet.id });
+  const { data: code } = useBytecode({ address: borrower, chainId: network.chainId });
   const isSmartAccount = !!code && code !== "0x";
   const { sendTransactionAsync } = useSendTransaction();
   const { sendTransaction: passportSend } = usePassportSendTransaction();
@@ -323,7 +323,7 @@ function LoanActions({ borrower, loan, onChanged }: { borrower: Address; loan: L
     queryKey: ["loan-balances", borrower],
     queryFn: async () => {
       const [musdBal, btcBal] = await Promise.all([
-        client!.readContract({ address: mezoTestnetAddresses.musd, abi: musdAbi, functionName: "balanceOf", args: [borrower] }),
+        client!.readContract({ address: addresses.musd, abi: musdAbi, functionName: "balanceOf", args: [borrower] }),
         client!.getBalance({ address: borrower }),
       ]);
       return { musd: musdBal, btc: btcBal };
@@ -362,25 +362,25 @@ function LoanActions({ borrower, loan, onChanged }: { borrower: Address; loan: L
       : null;
 
   async function send(data: Hex, txValue: bigint, label: string, success: string) {
-    if (!client) throw new Error("Mezo testnet is not reachable");
+    if (!client) throw new Error(`${network.label} is not reachable`);
     setBusy(label);
     setError(null);
     setDone(null);
     try {
       let hash: Hex;
       if (isSmartAccount) {
-        const result = await passportSend(mezoTestnetAddresses.borrowerOperations, txValue, data);
+        const result = await passportSend(addresses.borrowerOperations, txValue, data);
         if (!result?.hash) throw new Error("The wallet did not send the transaction");
         hash = result.hash as Hex;
       } else {
-        if (chainId !== mezoTestnet.id) await switchChainAsync({ chainId: mezoTestnet.id });
+        if (chainId !== network.chainId) await switchChainAsync({ chainId: network.chainId });
         // Simulate first, so a change Mezo would reject fails here with its reason instead of costing gas.
-        const gas = await client.estimateGas({ account: borrower, to: mezoTestnetAddresses.borrowerOperations, data, value: txValue });
+        const gas = await client.estimateGas({ account: borrower, to: addresses.borrowerOperations, data, value: txValue });
         hash = await sendTransactionAsync({
-          to: mezoTestnetAddresses.borrowerOperations,
+          to: addresses.borrowerOperations,
           data,
           value: txValue,
-          chainId: mezoTestnet.id,
+          chainId: network.chainId,
           gas: (gas * 13n) / 10n,
         });
       }

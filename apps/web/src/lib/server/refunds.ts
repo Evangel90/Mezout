@@ -1,7 +1,8 @@
 import "server-only";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { erc20Abi, formatUnits, getAddress, isAddressEqual, parseEventLogs, type Hex, type PublicClient } from "viem";
-import { mezoTestnetAddresses } from "@mezout/sdk";
+import { requireAddress } from "@mezout/sdk";
+import { network } from "../network";
 import type { Merchant } from "./apiKeys";
 import type { Db } from "./db/client";
 import { invoices, payments, refunds } from "./db/schema";
@@ -151,7 +152,7 @@ export async function completeRefund(
   const sent = parseEventLogs({ abi: erc20Abi, eventName: "Transfer", logs: receipt.logs })
     .filter(
       (l) =>
-        isAddressEqual(l.address, mezoTestnetAddresses.musd) &&
+        isAddressEqual(l.address, requireAddress(network, "musd")) &&
         isAddressEqual(l.args.from, getAddress(payment.merchant)) &&
         isAddressEqual(l.args.to, getAddress(payment.payer)),
     )
