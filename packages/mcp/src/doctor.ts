@@ -48,7 +48,11 @@ export async function runDoctor(io: DoctorIO): Promise<number> {
 
   line(config.apiKey ? "ok" : "warn", config.apiKey ? `API key set${from("MEZOUT_API_KEY")}` : "no API key: merchant tools are off");
   const address = config.payerKey ? privateKeyToAccount(config.payerKey).address : null;
-  line(address ? "ok" : "warn", address ? `paying wallet ${address}${from("MEZOUT_PAYER_PRIVATE_KEY")}` : "no payer key: paying tools are off");
+  if (config.agentWallet && address) {
+    line("ok", `paying from agent wallet ${config.agentWallet}${from("MEZOUT_AGENT_WALLET")} with session key ${address}; its on-chain limits apply`);
+  } else {
+    line(address ? "ok" : "warn", address ? `paying wallet ${address}${from("MEZOUT_PAYER_PRIVATE_KEY")}` : "no payer key: paying tools are off");
+  }
   line("info", `caps: ${config.maxPerPayment} MUSD per payment, ${config.maxPerSession} MUSD per session; app ${config.apiUrl}; RPC ${config.rpcUrl}`);
 
   const rpc = async (method: string, params: unknown[]) => {
@@ -66,7 +70,7 @@ export async function runDoctor(io: DoctorIO): Promise<number> {
     const chainId = Number(await rpc("eth_chainId", []));
     line(chainId === 31611 ? "ok" : "fail", `RPC chain ${chainId}${chainId === 31611 ? " (Mezo testnet)" : ": Mezout pays on Mezo testnet (31611) only"}`);
     if (address) {
-      const data = encodeFunctionData({ abi: erc20Abi, functionName: "balanceOf", args: [address] });
+      const data = encodeFunctionData({ abi: erc20Abi, functionName: "balanceOf", args: [config.agentWallet ?? address] });
       const raw = await rpc("eth_call", [{ to: mezoTestnetAddresses.musd, data }, "latest"]);
       const balance = decodeFunctionResult({ abi: erc20Abi, functionName: "balanceOf", data: raw });
       line(balance > 0n ? "ok" : "warn", `payer holds ${formatUnits(balance, 18)} MUSD${balance > 0n ? "" : ": get test MUSD at https://faucet.test.mezo.org"}`);

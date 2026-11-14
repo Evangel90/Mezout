@@ -6,7 +6,21 @@ export const MERCHANT: Address = "0x7049Fcb3a331481a1EE860eb041cf0F9A133E264";
 export const API_KEY = "mzk_test_fake";
 export const APP = "https://mezout.test";
 
-type FakeInvoice = { id: string; token: string; amount: string; reference: string | null; expires_at: string; tx?: Hex; payer?: Address };
+export type FakeAgentWallet = {
+  address: Address;
+  agent: Address;
+  maxPerPayment: bigint;
+  maxPerDay: bigint;
+  remainingToday: bigint;
+  /** Unix seconds; 0 = not approved or revoked. */
+  validUntil: bigint;
+  /** Allowed merchants; undefined = any. */
+  merchants?: Address[];
+  /** The router the wallet pays through; defaults to the fake's router. */
+  router?: Address;
+};
+
+type FakeInvoice ={ id: string; token: string; amount: string; reference: string | null; expires_at: string; tx?: Hex; payer?: Address };
 
 /**
  * An in-memory Mezout: /v1/invoices, /v1/verify, /api/relay and /api/sync, enough for the paywall and the payer.
@@ -17,6 +31,8 @@ export class FakeMezout {
   relayBodies: unknown[] = [];
   calls: string[] = [];
   router: Address = mezoTestnetAddresses.mezoutRouterV3;
+  /** An on-chain agent wallet with one session, as `MezoutAgentWallet`'s views report it. */
+  agentWallet?: FakeAgentWallet;
   private n = 0;
 
   invoiceByOrder(orderId: Hex) {
@@ -71,18 +87,26 @@ export class FakeMezout {
     if (url.pathname === "/api/relay") {
       this.relayBodies.push(body);
       const signed = decodeSignedInvoice(body.token);
+      // An agent-wallet payment: the session key signs the Payment with the wallet as payer (no permit).
+      const agentMode = body.method === "AGENT_WALLET";
+      const payer = getAddress(agentMode ? body.wallet : body.payer);
       const signer = await recoverTypedDataAddress({
         domain: routerDomain(linkRouter(signed)),
         types: paymentTypes,
         primaryType: "Payment",
-        message: { invoice: signed.invoice, payer: body.payer },
-        signature: body.payerSig,
+        message: { invoice: signed.invoice, payer },
+        signature: agentMode ? body.agentSig : body.payerSig,
       });
-      if (signer !== getAddress(body.payer)) return json(422, { error: "Your payment signature did not match this invoice." });
+      if (signer !== getAddress(agentMode ? body.agent : body.payer)) {
+        return json(422, { error: "Your payment signature did not match this invoice." });
+      }
+      if (agentMode && (!this.agentWallet || this.agentWallet.address !== payer || this.agentWallet.validUntil === 0n)) {
+        return json(422, { error: "AgentNotApproved" });
+      }
       const inv = this.invoiceByOrder(signed.invoice.orderId);
       if (!inv || inv.tx) return json(422, { error: "This invoice has already been paid." });
       inv.tx = keccak256(toHex(`tx:${inv.id}`));
-      inv.payer = getAddress(body.payer);
+      inv.payer = payer;
       return json(200, { hash: inv.tx });
     }
     if (url.pathname === "/api/sync") return json(200, { recorded: 1 });
@@ -108,6 +132,16 @@ export class FakeMezout {
       getChainId: async () => opts.chainId ?? 31611,
       readContract: (async ({ functionName, args }: { functionName: string; args: unknown[] }) => {
         if (functionName === "paid") return !!this.invoiceByOrder(args[0] as Hex)?.tx;
+        const w = this.agentWallet;
+        if (w) {
+          const isAgent = !!args?.[0] && getAddress(args[0] as Address) === w.agent;
+          if (functionName === "router") return w.router ?? this.router;
+          if (functionName === "sessions") return isAgent ? [w.maxPerPayment, w.maxPerDay, w.validUntil, 1n, !!w.merchants] : [0n, 0n, 0n, 0n, false];
+          if (functionName === "remainingToday") return isAgent && w.validUntil !== 0n ? w.remainingToday : 0n;
+          if (functionName === "canPayMerchant") {
+            return isAgent && w.validUntil !== 0n && (!w.merchants || w.merchants.includes(getAddress(args[1] as Address)));
+          }
+        }
         if (functionName === "balanceOf") return parseUnits(opts.balance ?? "100", 18);
         if (functionName === "nonces") return 0n;
         throw new Error(`unexpected read ${functionName}`);

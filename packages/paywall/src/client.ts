@@ -20,9 +20,11 @@ import {
   mezoTestnet,
   MEZOUT_SCHEME,
   mezoTestnetAddresses,
+  mezoutAgentWalletAbi,
   mezoutRouterAbi,
   musdAbi,
   paymentLinkToken,
+  signAgentWalletPayment,
   signMusdPayment,
   X402_HEADERS,
   X402_VERSION,
@@ -45,6 +47,11 @@ export type PayerOptions = {
   maxPerPayment: string;
   /** Total this payer may spend while the process runs, in MUSD (decimal string). */
   maxPerSession: string;
+  /**
+   * Pay from this `MezoutAgentWallet` instead of from `account`'s own MUSD. `account` is then a session key the
+   * wallet's owner approved, and the wallet enforces the owner's limits on-chain (the caps above still apply too).
+   */
+  agentWallet?: Address;
   rpcUrl?: string;
   chain?: ChainClient;
   fetch?: typeof fetch;
@@ -78,6 +85,36 @@ export function createMusdPayer(opts: PayerOptions) {
   const maxPerSession = parseUnits(opts.maxPerSession, 18);
   let spent = 0n;
   let reserved = 0n;
+  const agentWallet = opts.agentWallet ? getAddress(opts.agentWallet) : undefined;
+
+  /**
+   * Reads the wallet's on-chain session for this key and refuses, before signing, anything the wallet would revert:
+   * so the agent gets a clear reason and the relay is not asked to simulate a payment that cannot settle.
+   */
+  async function checkAgentWallet(wallet: Address, router: Address, merchant: Address, amount: bigint) {
+    const agent = opts.account.address;
+    const read = <T>(functionName: string, args: unknown[] = []) =>
+      chain.readContract({ address: wallet, abi: mezoutAgentWalletAbi, functionName, args } as never) as Promise<T>;
+    const [walletRouter, session, remaining, merchantOk] = await Promise.all([
+      read<Address>("router"),
+      read<readonly [bigint, bigint, bigint, bigint, boolean]>("sessions", [agent]),
+      read<bigint>("remainingToday", [agent]),
+      read<boolean>("canPayMerchant", [agent, merchant]),
+    ]);
+    if (!isAddressEqual(walletRouter, router)) {
+      throw new PaymentRefused("The link was made for a different Mezout router than the agent wallet pays through.");
+    }
+    const [maxPerPayment, , validUntil] = session;
+    if (validUntil === 0n) throw new PaymentRefused("This session key is not approved on the agent wallet (or was revoked).");
+    if (validUntil * 1000n < BigInt(now())) throw new PaymentRefused("This session key's approval on the agent wallet has expired.");
+    if (!merchantOk) throw new PaymentRefused("The agent wallet's owner has not allowed this merchant.");
+    if (amount > maxPerPayment) {
+      throw new PaymentRefused(`${formatUnits(amount, 18)} MUSD is over the agent wallet's per-payment limit of ${formatUnits(maxPerPayment, 18)} MUSD.`);
+    }
+    if (amount > remaining) {
+      throw new PaymentRefused(`${formatUnits(amount, 18)} MUSD is over what the agent wallet allows today (${formatUnits(remaining, 18)} MUSD left).`);
+    }
+  }
 
   /**
    * Pays one link. `expect.amount` and `expect.merchant` must match the link exactly (a 402 requirement's terms);
@@ -119,23 +156,29 @@ export function createMusdPayer(opts: PayerOptions) {
     try {
       const chainId = await chain.getChainId();
       if (chainId !== mezoTestnet.id) throw new PaymentRefused(`The RPC is chain ${chainId}; Mezout agents pay on Mezo testnet (31611) only.`);
-      const payer = opts.account.address;
-      const [paid, balance, nonce] = await Promise.all([
+      const payer = agentWallet ?? opts.account.address;
+      const [paid, balance] = await Promise.all([
         chain.readContract({ address: router, abi: mezoutRouterAbi, functionName: "paid", args: [invoice.orderId] }),
         chain.readContract({ address: mezoTestnetAddresses.musd, abi: musdAbi, functionName: "balanceOf", args: [payer] }),
-        chain.readContract({ address: mezoTestnetAddresses.musd, abi: musdAbi, functionName: "nonces", args: [payer] }),
       ]);
       if (paid) throw new PaymentRefused("This invoice has already been paid.");
       if (balance < invoice.amount) {
         throw new PaymentRefused(`The payer holds ${formatUnits(balance, 18)} MUSD; the invoice needs ${formatUnits(invoice.amount, 18)}.`);
       }
 
-      const body = await signMusdPayment({
-        token,
-        signer: opts.account,
-        musdNonce: nonce,
-        permitDeadline: BigInt(Math.floor(now() / 1000) + 600),
-      });
+      let body: unknown;
+      if (agentWallet) {
+        await checkAgentWallet(agentWallet, router, invoice.merchant, invoice.amount);
+        body = await signAgentWalletPayment({ token, wallet: agentWallet, signer: opts.account });
+      } else {
+        const nonce = await chain.readContract({ address: mezoTestnetAddresses.musd, abi: musdAbi, functionName: "nonces", args: [payer] });
+        body = await signMusdPayment({
+          token,
+          signer: opts.account,
+          musdNonce: nonce,
+          permitDeadline: BigInt(Math.floor(now() / 1000) + 600),
+        });
+      }
       const res = await doFetch(`${appUrl}/api/relay`, {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -170,7 +213,10 @@ export function createMusdPayer(opts: PayerOptions) {
 
   return {
     pay,
-    address: opts.account.address,
+    /** The address that pays: the agent wallet when one is set, else the key's own address. */
+    address: agentWallet ?? opts.account.address,
+    /** The session key, when paying from an agent wallet. */
+    sessionKey: agentWallet ? opts.account.address : undefined,
     /** Spending so far and what is left under the session cap, in MUSD. */
     budget: () => ({
       spent: formatUnits(spent, 18),

@@ -6,6 +6,7 @@ import { dirname, join } from "node:path";
 export const SETTING_KEYS = [
   "MEZOUT_API_KEY",
   "MEZOUT_PAYER_PRIVATE_KEY",
+  "MEZOUT_AGENT_WALLET",
   "MEZOUT_MAX_PAYMENT_MUSD",
   "MEZOUT_MAX_SESSION_MUSD",
   "MEZOUT_API_URL",
