@@ -48,7 +48,7 @@ export function serverNetwork(): MezoNetworkConfig {
 
 /**
  * The MezoutAgentWalletFactory whose wallets the relay may call, or undefined when agent-wallet payments are off.
- * AGENT_WALLET_FACTORY_ADDRESS can name one on testnet (the network book has none until it is deployed). On mainnet
+ * AGENT_WALLET_FACTORY_ADDRESS can override the network book's factory on testnet. On mainnet
  * only the network book's verified factory is used, and an env value that differs from it is refused, as for the router.
  */
 export function agentWalletFactory(config: MezoNetworkConfig = serverNetwork(), env: Env = process.env): Address | undefined {

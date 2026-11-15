@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getAddress, verifyMessage, type Hex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import { MissingAddressError, keyRequestMessage, mainnetConfig, mezoTestnetAddresses, testnetConfig, type MezoNetwork } from "@mezout/sdk";
+import { MissingAddressError, keyRequestMessage, mainnetConfig, mezoTestnetAddresses, mezoutAgentWalletFactory, testnetConfig, type MezoNetwork } from "@mezout/sdk";
 import type { Db } from "@/lib/server/db/client";
 import { authenticate, issueApiKey } from "@/lib/server/apiKeys";
 import { agentWalletFactory, assertNetworkReady } from "@/lib/server/network";
@@ -44,11 +44,19 @@ describe("network selection", () => {
 
 describe("agent wallet factory", () => {
   const factory = getAddress("0x00000000000000000000000000000000000000bb");
-  it("is off unless configured, and taken from AGENT_WALLET_FACTORY_ADDRESS on testnet", () => {
-    expect(testnetConfig.addresses.mezoutAgentWalletFactory).toBeUndefined();
-    expect(agentWalletFactory(testnetConfig, {})).toBeUndefined();
-    expect(agentWalletFactory(testnetConfig, { AGENT_WALLET_FACTORY_ADDRESS: factory.toLowerCase() })).toBe(factory);
+  it("uses the deployed testnet factory, and accepts AGENT_WALLET_FACTORY_ADDRESS only when it matches", () => {
+    const deployed = getAddress(mezoutAgentWalletFactory!);
+    expect(testnetConfig.addresses.mezoutAgentWalletFactory).toBe(deployed);
+    expect(agentWalletFactory(testnetConfig, {})).toBe(deployed);
+    expect(agentWalletFactory(testnetConfig, { AGENT_WALLET_FACTORY_ADDRESS: deployed.toLowerCase() })).toBe(deployed);
+    expect(() => agentWalletFactory(testnetConfig, { AGENT_WALLET_FACTORY_ADDRESS: factory })).toThrow(/must be the/);
     expect(() => agentWalletFactory(testnetConfig, { AGENT_WALLET_FACTORY_ADDRESS: "0x123" })).toThrow(/not an address/);
+  });
+
+  it("is off on testnet without a book entry unless AGENT_WALLET_FACTORY_ADDRESS names one", () => {
+    const bare = { ...testnetConfig, addresses: { ...testnetConfig.addresses, mezoutAgentWalletFactory: undefined } } as typeof testnetConfig;
+    expect(agentWalletFactory(bare, {})).toBeUndefined();
+    expect(agentWalletFactory(bare, { AGENT_WALLET_FACTORY_ADDRESS: factory.toLowerCase() })).toBe(factory);
   });
 
   it("is never taken from the environment on mainnet without a verified entry", () => {

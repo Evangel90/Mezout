@@ -68,7 +68,7 @@ The relayer calls only the current router and the earlier ones listed in `packag
 
 ## Deploy the passkey account factory with recovery (Mezo testnet)
 
-Needs the owner's approval first. Inside `Mezout/contracts`, with the same key and variables as above:
+Deployed 15 Nov 2026 at `0x5FcE37d5584630926f2c37b3Fd1969067dCC4C5F` (already in `addresses.ts`). To redeploy, which needs the owner's approval first: inside `Mezout/contracts`, with the same key and variables as above:
 
 ```
 forge script script/DeployAccountFactoryV2.s.sol --rpc-url mezo_testnet --private-key $RELAYER_PRIVATE_KEY --broadcast \

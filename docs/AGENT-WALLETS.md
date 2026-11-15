@@ -1,6 +1,6 @@
 # Agent wallets with spending limits (Wave 4 design)
 
-Status: built and unit-tested on a branch; **not deployed and not reviewed**. The router is unchanged.
+Status: unit-tested and deployed to Mezo testnet only: `MezoutAgentWalletFactory` [`0xA7316a0A276516620cCa0c6A9E19e0DE775d6A2c`](https://explorer.test.mezo.org/address/0xA7316a0A276516620cCa0c6A9E19e0DE775d6A2c) (router v3, block 16,797,922, verified on Sourcify). **Not independently reviewed; no live agent-wallet payment yet.** The router is unchanged.
 
 An AI agent can already pay through `@mezout/mcp` with a raw private key, with caps that only the MCP process enforces. An agent wallet moves those caps on-chain: the owner keeps the money in a contract, and the agent holds only a session key that the contract limits.
 
@@ -65,7 +65,7 @@ Funding stays with the owner, never with the agent. A later `topUpByBorrow` on t
 ## Before a testnet deploy
 
 - Owner sign-off on the open decisions below, and an independent review of the two contracts.
-- Deploy `MezoutAgentWalletFactory(routerV3)` with `forge create` (no script yet), add its address to `@mezout/sdk` addresses, set `AGENT_WALLET_FACTORY_ADDRESS` on the relay, and run one live payment from a test wallet (proof as in `docs/BORROW_V2_PROOF.md`).
+- ~~Deploy `MezoutAgentWalletFactory(routerV3)` and add its address to `@mezout/sdk`~~ (done 15 Nov 2026). Run one live payment from a test wallet (proof as in `docs/BORROW_V2_PROOF.md`).
 - A dashboard screen to create a wallet and approve or revoke keys with the passkey; until then the owner calls the contract directly.
 - Measure `pay` gas on testnet (at most about 250k in unit tests with a mock MUSD; the relay's floor is 450k).
 

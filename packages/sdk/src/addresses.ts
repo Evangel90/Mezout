@@ -27,16 +27,17 @@ export const mezoTestnetAddresses = {
 } as const satisfies Record<string, Address>;
 
 /**
- * MezoutAccountFactoryV2: passkey accounts with recovery (MezoutAccountV2). null until it is deployed; until then new
- * passkey accounts come from the v1 factory and have no recovery.
+ * MezoutAccountFactoryV2: passkey accounts with recovery (MezoutAccountV2). Deployed on testnet 15 Nov 2026 at block
+ * 16,797,908 (tx 0xd4bcab646440bb0efb5dbd2b615e383a7cd75a08a23e2aae77d3c55485c386d0), verified on Sourcify.
  */
-export const mezoutAccountFactoryV2: Address | null = null;
+export const mezoutAccountFactoryV2: Address | null = "0x5FcE37d5584630926f2c37b3Fd1969067dCC4C5F";
 
 /**
- * MezoutAgentWalletFactory on testnet. null until it is deployed; the relay can also be pointed at one with
+ * MezoutAgentWalletFactory on testnet (router v3). Deployed 15 Nov 2026 at block 16,797,922 (tx
+ * 0xc77f26e1ae73e487b9b29760d0c5e7f1f0a896d401f9f4b660280f088910e386), verified on Sourcify. The relay can also be pointed at one with
  * AGENT_WALLET_FACTORY_ADDRESS (testnet only, see apps/web/src/lib/server/network.ts).
  */
-export const mezoutAgentWalletFactory: Address | null = null;
+export const mezoutAgentWalletFactory: Address | null = "0xA7316a0A276516620cCa0c6A9E19e0DE775d6A2c";
 
 /**
  * Every MezoutRouter deployed on testnet. A payer signs a permit whose spender is the router named in the payment

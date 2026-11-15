@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { getAddress, keccak256, type Address, type Hex, type PublicClient } from "viem";
-import { encodeRecoveryAction, mezoTestnetAddresses, type RecoveryAction } from "@mezout/sdk";
+import { encodeRecoveryAction, mezoTestnetAddresses, mezoutAccountFactoryV2, type RecoveryAction } from "@mezout/sdk";
 import type { Db } from "@/lib/server/db/client";
 import { passkeyByAddress, passkeysByCredential, registerPasskey, type Passkey } from "@/lib/server/passkeys";
 import {
@@ -20,7 +20,7 @@ const DAY = 86_400;
 const wallet = getAddress("0x36A95C939Fa70F29421261C770160645Efa9F9E4");
 
 /** A stand-in chain: just the reads the recovery code makes. */
-function fakeClient(opts: { deployed?: boolean; v1?: boolean; reverts?: boolean; state?: Record<string, unknown> } = {}) {
+function fakeClient(opts: { deployed?: boolean; v1?: boolean; reverts?: boolean; v2Predicts?: Address; state?: Record<string, unknown> } = {}) {
   const state: Record<string, unknown> = {
     recoverySigner: [0, "0x0000000000000000000000000000000000000000", `0x${"00".repeat(32)}`, `0x${"00".repeat(32)}`, 0n],
     pendingRecovery: [`0x${"00".repeat(32)}`, `0x${"00".repeat(32)}`, 0n],
@@ -32,6 +32,8 @@ function fakeClient(opts: { deployed?: boolean; v1?: boolean; reverts?: boolean;
   const client = {
     getCode: async () => (opts.deployed === false ? undefined : "0x6080"),
     readContract: async ({ functionName }: { functionName: string }) => {
+      // The v2 factory's prediction: by default a different address, so the account is a v1 one.
+      if (functionName === "getAddress") return opts.v2Predicts ?? wallet;
       if (opts.v1) throw new Error("execution reverted");
       return state[functionName];
     },
@@ -86,9 +88,14 @@ describe("recovery status", () => {
     expect(s.pending).toBeNull();
   });
 
-  it("reports v1 accounts, and undeployed ones before the v2 factory exists, as unsupported", async () => {
+  it("reports v1 accounts, deployed or not, as unsupported", async () => {
     expect((await readRecoveryStatus(fakeClient({ v1: true }).client, row)).supported).toBe(false);
     expect((await readRecoveryStatus(fakeClient({ deployed: false }).client, row)).supported).toBe(false);
+  });
+
+  it("reports an undeployed account the v2 factory would deploy as supported", async () => {
+    const s = await readRecoveryStatus(fakeClient({ deployed: false, v2Predicts: row.accountAddress as Address }).client, row);
+    expect(s).toMatchObject({ supported: true, deployed: false, signer: null });
   });
 });
 
@@ -136,9 +143,12 @@ describe("owner actions", () => {
     expect(op.userOperation.callData).toBe(encodeRecoveryAction(row.accountAddress as Address, action));
     expect(op.userOperation.factory).toBeUndefined();
     expect((await buildRecoveryOp(client, row, quote, { type: "remove" })).userOpHash).not.toBe(op.userOpHash);
-    // Undeployed: deploys through the v1 factory until the v2 factory is configured.
+    // Undeployed: deploys through whichever factory predicts the account's address.
     const fresh = await buildRecoveryOp(client, row, { ...quote, deployed: false }, action);
     expect(fresh.userOperation.factory).toBe(mezoTestnetAddresses.mezoutAccountFactory);
+    const v2 = fakeClient({ v2Predicts: row.accountAddress as Address }).client;
+    const freshV2 = await buildRecoveryOp(v2, row, { ...quote, deployed: false }, action);
+    expect(freshV2.userOperation.factory).toBe(mezoutAccountFactoryV2);
   });
 });
 

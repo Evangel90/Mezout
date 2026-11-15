@@ -46,7 +46,7 @@ The **contracts** enforce every money rule. The **app** signs invoices, relays p
 | Component | Code | What it does |
 | --- | --- | --- |
 | `MezoutRouter` | [`contracts/src/MezoutRouter.sol`](contracts/src/MezoutRouter.sol) | Verifies the signed invoice and payer signature, takes payment by one of four methods, pays the merchant, emits `Paid`. Holds nothing between calls |
-| `MezoutAccount` and factory | [`contracts/src/account`](contracts/src/account) | ERC-4337 account owned by a passkey, at a CREATE2 address from its public key. `MezoutAccountV2` adds recovery (not deployed yet) |
+| `MezoutAccount` and factory | [`contracts/src/account`](contracts/src/account) | ERC-4337 account owned by a passkey, at a CREATE2 address from its public key. `MezoutAccountV2` adds recovery (factory v2 on testnet: [`0x5FcE…4C5F`](https://explorer.test.mezo.org/address/0x5FcE37d5584630926f2c37b3Fd1969067dCC4C5F)) |
 | SDK | [`packages/sdk`](packages/sdk) | EIP-712 typed data, payment links, chain config, ABIs, trove and borrow-limit reads |
 | Hosted checkout | [`apps/web/src/components/Checkout.tsx`](apps/web/src/components/Checkout.tsx) | Reads balances, live quotes and the customer's trove; offers only options that will succeed |
 | Loan page | [`apps/web/src/components/loan/LoanManager.tsx`](apps/web/src/components/loan/LoanManager.tsx) | `/loan`: a borrower's debt, ratio, liquidation price, interest and redemption position, opt-in alerts, and repay, add-BTC and close actions sent from their own wallet to Mezo |

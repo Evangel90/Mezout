@@ -375,7 +375,7 @@ flowchart LR
 - The wallet only allows calls to Mezout's routers within those limits, enforced on-chain; the owner can revoke the agent at any time.
 - Optional funding by borrowing MUSD against the owner's BTC, so the agent spends without the owner selling Bitcoin, under the same 160% floor.
 - A separate contract with its own review. The router's trust model and safety floor stay unchanged.
-- Wave 4 design and first build (not deployed): [AGENT-WALLETS.md](AGENT-WALLETS.md).
+- Wave 4 design and first build (factory on testnet, not reviewed): [AGENT-WALLETS.md](AGENT-WALLETS.md).
 
 ### 3. Better payments for every customer
 
