@@ -32,3 +32,8 @@ docs/SECURITY_REVIEW.md
 # Logo and deck PNG exports, kept local
 Mezout-logo/
 Mezout-deck/
+
+# Hackathon form responses, kept local
+docs/SUBMISSION-ANSWERS.md
+docs/WAVE1-SUBMISSION.md
+docs/WAVE2-UPDATES.md

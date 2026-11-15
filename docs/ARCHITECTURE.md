@@ -318,5 +318,5 @@ Saving the plugin settings checks the API key and registers the store's webhook 
 - **No MUSD/MEZO liquidity on testnet.** We created and seeded our own Tigris pool.
 - **The explorer can't verify Cancun builds.** The contracts need transient storage, so they are verified on Sourcify instead, with exact matches.
 
-The full list, with what we learned, is in [`docs/SUBMISSION-ANSWERS.md`](SUBMISSION-ANSWERS.md). What we checked on-chain before designing anything is in [`docs/M0-findings.md`](M0-findings.md).
+What we checked on-chain before designing anything is in [`docs/M0-findings.md`](M0-findings.md).
 
