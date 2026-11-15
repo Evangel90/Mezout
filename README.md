@@ -2,7 +2,7 @@
 
 **Pay with Bitcoin. Get paid in MUSD.**
 
-Mezout is checkout for Mezo. Customers pay with MUSD, BTC or MEZO, or borrow MUSD against their Bitcoin so they never have to sell it. Merchants are paid in stable MUSD, with the platform fee shown before they share a link. Merchants sign up with a passkey instead of a wallet, customers with EVM wallets pay no gas, and Mezout plugs into a store through payment links, a REST API, WooCommerce, Shopify or an embedded checkout.
+Mezout is checkout for Mezo. Customers pay with MUSD, BTC or MEZO, or borrow MUSD against their Bitcoin so they never have to sell it. Merchants are paid in stable MUSD, with the platform fee shown before they share a link. Merchants sign up with a passkey instead of a wallet, customers with EVM wallets pay no gas, and Mezout plugs into a store through payment links, a REST API, WooCommerce, Shopify or an embedded checkout. AI agents pay too, per request over HTTP 402, within spending limits.
 
 Built for the Mezo Buildathon (Access & Distribution). Live on Mezo testnet.
 
@@ -33,9 +33,11 @@ Bitcoin holders don't want to sell their BTC to spend it. Merchants won't instal
 - **Spend Bitcoin without selling it.** A customer with a Mezo loan can borrow the MUSD inside the payment. The router reverts the whole payment if the loan would end below 160% collateral, well above Mezo's 110% liquidation threshold. Before paying, checkout shows the fee, the loan's interest rate and its new liquidation price; afterwards, [`/loan`](https://usemezout.vercel.app/loan) shows the loan's health and its place in Mezo's redemption line, sends opt-in alerts to a URL the customer chooses, and lets them repay MUSD, add BTC or close it from their own wallet. Mezout never tops up a loan automatically.
 - **Gasless.** EVM-wallet customers sign; Mezout's relayer submits and pays the gas. Bitcoin-wallet accounts pay a small fee themselves for now.
 - **Merchants without a wallet.** A passkey creates a `MezoutAccount` (OpenZeppelin ERC-4337 with a WebAuthn signer) that receives payments before it is even deployed. Withdrawals are confirmed with the passkey and gasless. Merchants with a Mezo wallet can be paid straight into it instead.
+- **Passkey recovery.** From the dashboard's Account page a merchant can add a backup passkey or recovery wallet. If the passkey is lost, the backup starts a swap at [`/recover`](https://usemezout.vercel.app/recover) that takes effect only after a 2 to 30 day wait, which the owner can cancel. The backup can never move funds. Recovery needs a `MezoutAccountV2`; existing accounts are unchanged.
 - **Merchant dashboard.** Overview (balance, recent sales, payment links with QR codes), Payments (gross, fee and net per payment, CSV export, refunds), Developers (API keys, webhooks with test events and a delivery log, embedded checkout sites) and Account (business name, payout address, withdrawals).
 - **Integrations.** A [REST API](docs/API.md) with idempotency keys and rate limits; signed webhooks (`invoice.paid`, `invoice.expired`, `refund.completed`, `refund.canceled`) retried for 24 hours, with [a dependency-free receiver](examples/webhook-receiver); the [WooCommerce plugin](plugins/woocommerce); the [Shopify app](plugins/shopify); and an embedded checkout (`/mezout.js` or [`@mezout/embed-react`](packages/embed-react)).
 - **Agent payments.** A [Mezout MCP server](packages/mcp) (set up with `npx -y @mezout/mcp init`; [guide](https://usemezout.vercel.app/docs#ai-agents)) and an [agent skill](skills/mezout) (`npx skills add Evangel90/Mezout --skill mezout -g`) let AI agents create, check, refund and pay invoices within spending caps, and [`@mezout/paywall`](packages/paywall) charges per API request over HTTP 402 in the x402 v2 format, confirmed with `POST /v1/verify`.
+- **Agent wallets.** For on-chain limits, the owner keeps MUSD in a [`MezoutAgentWallet`](docs/AGENT-WALLETS.md) and the agent holds only a session key. The contract caps each payment and each UTC day, can restrict merchants, expires, and can be revoked instantly; the key can do nothing but pay a Mezout invoice. The MCP server and paywall client use it when `MEZOUT_AGENT_WALLET` is set. Deployed on testnet, not yet independently reviewed or used for a live payment.
 
 Diagrams of every payment path, passkey withdrawals and the invoice lifecycle are in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
@@ -47,6 +49,7 @@ The **contracts** enforce every money rule. The **app** signs invoices, relays p
 | --- | --- | --- |
 | `MezoutRouter` | [`contracts/src/MezoutRouter.sol`](contracts/src/MezoutRouter.sol) | Verifies the signed invoice and payer signature, takes payment by one of four methods, pays the merchant, emits `Paid`. Holds nothing between calls |
 | `MezoutAccount` and factory | [`contracts/src/account`](contracts/src/account) | ERC-4337 account owned by a passkey, at a CREATE2 address from its public key. `MezoutAccountV2` adds recovery (factory v2 on testnet: [`0x5FcE…4C5F`](https://explorer.test.mezo.org/address/0x5FcE37d5584630926f2c37b3Fd1969067dCC4C5F)) |
+| `MezoutAgentWallet` and factory | [`contracts/src/agent`](contracts/src/agent) | Holds an owner's MUSD and lets approved session keys pay Mezout invoices within per-payment, per-day, merchant and expiry limits ([design](docs/AGENT-WALLETS.md)) |
 | SDK | [`packages/sdk`](packages/sdk) | EIP-712 typed data, payment links, chain config, ABIs, trove and borrow-limit reads |
 | Hosted checkout | [`apps/web/src/components/Checkout.tsx`](apps/web/src/components/Checkout.tsx) | Reads balances, live quotes and the customer's trove; offers only options that will succeed |
 | Loan page | [`apps/web/src/components/loan/LoanManager.tsx`](apps/web/src/components/loan/LoanManager.tsx) | `/loan`: a borrower's debt, ratio, liquidation price, interest and redemption position, opt-in alerts, and repay, add-BTC and close actions sent from their own wallet to Mezo |
@@ -79,6 +82,8 @@ The contracts use OpenZeppelin 5.6 and transient-storage reentrancy guards. They
 | MezoutRouter (current) | [`0x7151473F1300c2529A2eEFaA517684e974A9b3E6`](https://explorer.test.mezo.org/address/0x7151473F1300c2529A2eEFaA517684e974A9b3E6): MUSD, borrow, MEZO and BTC |
 | Earlier routers | v2 [`0xe132f9a1c8dbc31015C3Cf4eE8706c9031bFa431`](https://explorer.test.mezo.org/address/0xe132f9a1c8dbc31015C3Cf4eE8706c9031bFa431) and v1 [`0xAF79AB1cdB38c0C3944bB9440614B58871Ba6199`](https://explorer.test.mezo.org/address/0xAF79AB1cdB38c0C3944bB9440614B58871Ba6199), still paying older links (MUSD only) |
 | MezoutAccountFactory | [`0xeE85EE32488FF2D63eFe48159ddB59e6863cdF79`](https://explorer.test.mezo.org/address/0xeE85EE32488FF2D63eFe48159ddB59e6863cdF79) |
+| MezoutAccountFactoryV2 (recovery) | [`0x5FcE37d5584630926f2c37b3Fd1969067dCC4C5F`](https://explorer.test.mezo.org/address/0x5FcE37d5584630926f2c37b3Fd1969067dCC4C5F) |
+| MezoutAgentWalletFactory | [`0xA7316a0A276516620cCa0c6A9E19e0DE775d6A2c`](https://explorer.test.mezo.org/address/0xA7316a0A276516620cCa0c6A9E19e0DE775d6A2c) |
 | Tigris MUSD/MEZO pool | [`0x8eb88d745B0aFFF9D71AbC40d7F550Cded7bB342`](https://explorer.test.mezo.org/address/0x8eb88d745B0aFFF9D71AbC40d7F550Cded7bB342), created by Mezout with test tokens |
 | EntryPoint v0.7 | `0x0000000071727De22E5E9d8BAf0edAc6f37da032` (canonical) |
 | Invoice signer / fee recipient | `0x289E256BF9Fb2ce0AF3186B015c371C5b3965943` / `0x36A95C939Fa70F29421261C770160645Efa9F9E4` |
@@ -93,6 +98,10 @@ Reference transactions, all relayed so the customer paid no gas:
 | Invoice from production `POST /v1/invoices` | 12.5 MUSD | [`0xf80d…2ade`](https://explorer.test.mezo.org/tx/0xf80ddf1aa4f9618eb00942606741d017941355fe568b314d87b11e9fd20e2ade) |
 | Pay with BTC (script / checkout) | 1 MUSD for 0.0000127 BTC | [`0x264e…a06b`](https://explorer.test.mezo.org/tx/0x264ee62d25265c7686153f0962ad96d8dc44272fc07e2ef297de5dab8819a06b), [`0x79d8…afff`](https://explorer.test.mezo.org/tx/0x79d84d8a7e4d523b08c757c4e0870107b3fe30d0fd9fdc7827b3e491c544afff) |
 | Pay with MEZO (checkout) | 2 MUSD for 2.052 MEZO | [`0x3c7e…126a`](https://explorer.test.mezo.org/tx/0x3c7ea6fb940eb06f93c1d276129ab94a7dec6d625efa10422918722a0cb8126a) |
+| Borrow on router v3 (checkout) | MUSD borrowed inside the payment | [`0x1547…9208`](https://explorer.test.mezo.org/tx/0x1547b49437c76c1c7baf9ba9eafe2d383b284db49ba6d1f442198a566c9d9208) |
+| Borrow on router v2 ([proof](docs/BORROW_V2_PROOF.md)) | loan ratio 164.81% → 164.20% | [`0x9fe4…911c`](https://explorer.test.mezo.org/tx/0x9fe4332cb10d2c2d57f49069d20a9032f21a7ea8dd26ffbf72019cbaffbb911c) |
+| Shopify dev-store order, paid in BTC | 1 MUSD + 0.01 fee | [`0x7e93…c7f6`](https://explorer.test.mezo.org/tx/0x7e93416facb8b74abfaa508733465358fad9872e2774ee76a9c93bb0b369c7f6) |
+| Loan repayment from `/loan` | | [`0xa4cb…c3df`](https://explorer.test.mezo.org/tx/0xa4cbad190237d8b10ff921c3e027f09e3f89e4ed620e866188bd1e8473dac3df) |
 | Passkey withdrawal (deploys the account) | 2 MUSD | [`0x1a64…e478`](https://explorer.test.mezo.org/tx/0x1a6425e129bd79336a399f2016c75374d3ebfdc34d3815f1cb53c7ffe433e478) |
 | Passkey withdrawal after signing back in | | [`0x0963…2f43`](https://explorer.test.mezo.org/tx/0x09633b328d2fc193d6f2c128004b053d67480a717e35d729eceead8939692f43) |
 
@@ -120,7 +129,7 @@ Try the [live app](https://usemezout.vercel.app): sign up with a passkey on `/da
 To run it locally (Node 20+, pnpm 9, Foundry, PostgreSQL 14+), see [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md). `MEZO_NETWORK` picks the network (`testnet` by default). `mainnet` refuses to start until every address it needs is verified: see [`docs/MAINNET-CHECKLIST.md`](docs/MAINNET-CHECKLIST.md). The plugins have their own guides in [`plugins/woocommerce`](plugins/woocommerce) and [`plugins/shopify`](plugins/shopify).
 
 ```
-contracts/       Foundry: MezoutRouter, MezoutAccount and factory, tests, deploy scripts
+contracts/       Foundry: MezoutRouter, passkey accounts and recovery, agent wallets, tests, deploy scripts
 apps/web/        Next.js 14: landing page, checkout, dashboard, REST API, relayer, indexer
 packages/        SDK, React embedded checkout, MCP server and HTTP 402 paywall
 plugins/         WooCommerce gateway (PHP) and Shopify app
@@ -132,10 +141,10 @@ Built with Solidity 0.8.28, Foundry, OpenZeppelin 5.6, Next.js 14, React 18, Typ
 
 ## What's next
 
-- **Agent wallets** with passkey-approved spending limits, building on the MCP server and HTTP 402 paywall
-- **Mainnet readiness:** passkey account recovery, an external security review, deployment on Mezo mainnet (network config, verified addresses and a dry-run deploy script are ready: [`docs/MAINNET-CHECKLIST.md`](docs/MAINNET-CHECKLIST.md))
+- **An external security review** of the router, passkey recovery and agent wallets, then **launch on Mezo mainnet** (network config, verified addresses and a dry-run deploy script are ready: [`docs/MAINNET-CHECKLIST.md`](docs/MAINNET-CHECKLIST.md))
+- **Real merchants:** a pilot, and Shopify App Store and WordPress plugin listings
+- **Agent wallets:** a first live payment, a dashboard to approve and revoke agent keys with a passkey, and the owner sign-off on the open design decisions
 - **Gasless payments for Bitcoin-wallet accounts**, and deeper MEZO liquidity than the current test pool
-- **Fee calibration** from measured relayer gas costs ([`docs/RELAYER_GAS_COST.md`](docs/RELAYER_GAS_COST.md))
 - **More merchant tools:** payouts to exchanges, more ecommerce platforms, in-person QR checkout
 
 ## License
